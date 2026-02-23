@@ -379,7 +379,7 @@
         "iso_2": "BG",
         "iso_3": "BGR",
         "phone_code": "359",
-        "currency_code": "BGN",
+        "currency_code": "EUR",
         "flag_emoji": "🇧🇬",
         "capital": "Sofia",
         "native": "България"
@@ -599,7 +599,7 @@
         "iso_2": "HR",
         "iso_3": "HRV",
         "phone_code": "385",
-        "currency_code": "HRK",
+        "currency_code": "EUR",
         "flag_emoji": "🇭🇷",
         "capital": "Zagreb",
         "native": "Hrvatska"
@@ -621,7 +621,7 @@
         "iso_2": "CW",
         "iso_3": "CUW",
         "phone_code": "599",
-        "currency_code": "ANG",
+        "currency_code": "XCG",
         "flag_emoji": "🇨🇼",
         "capital": "Willemstad",
         "native": "Curaçao"
@@ -1534,7 +1534,7 @@
         "iso_2": "MR",
         "iso_3": "MRT",
         "phone_code": "222",
-        "currency_code": "MRO",
+        "currency_code": "MRU",
         "flag_emoji": "🇲🇷",
         "capital": "Nouakchott",
         "native": "موريتانيا"
@@ -2128,7 +2128,7 @@
         "iso_2": "ST",
         "iso_3": "STP",
         "phone_code": "239",
-        "currency_code": "STD",
+        "currency_code": "STN",
         "flag_emoji": "🇸🇹",
         "capital": "Sao Tome",
         "native": "São Tomé e Príncipe"
@@ -2205,7 +2205,7 @@
         "iso_2": "SX",
         "iso_3": "SXM",
         "phone_code": "1721",
-        "currency_code": "ANG",
+        "currency_code": "XCG",
         "flag_emoji": "🇸🇽",
         "capital": "Philipsburg",
         "native": "Sint Maarten"
@@ -2656,7 +2656,7 @@
         "iso_2": "VE",
         "iso_3": "VEN",
         "phone_code": "58",
-        "currency_code": "VEF",
+        "currency_code": "VES",
         "flag_emoji": "🇻🇪",
         "capital": "Caracas",
         "native": "Venezuela"
@@ -2744,7 +2744,7 @@
         "iso_2": "ZW",
         "iso_3": "ZWE",
         "phone_code": "263",
-        "currency_code": "ZWL",
+        "currency_code": "ZWG",
         "flag_emoji": "🇿🇼",
         "capital": "Harare",
         "native": "Zimbabwe"
