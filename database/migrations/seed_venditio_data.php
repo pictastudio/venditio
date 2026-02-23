@@ -32,17 +32,20 @@ return new class extends Migration
             ->sort()
             ->values()
             ->mapWithKeys(function (string $code): array {
-                $currency = Currency::query()->firstOrCreate(
-                    ['code' => $code],
-                    [
-                        'name' => $code,
-                        'symbol' => null,
-                        'exchange_rate' => 1,
-                        'decimal_places' => 2,
-                        'is_enabled' => true,
-                        'is_default' => false,
-                    ]
-                );
+                $createData = [
+                    'name' => $code,
+                    'symbol' => null,
+                    'exchange_rate' => 1,
+                    'decimal_places' => 2,
+                    'is_enabled' => true,
+                    'is_default' => false,
+                ];
+
+                if ($code === 'EUR') {
+                    $createData['is_default'] = true;
+                }
+
+                $currency = Currency::query()->firstOrCreate(['code' => $code], $createData);
 
                 return [$code => $currency->getKey()];
             });

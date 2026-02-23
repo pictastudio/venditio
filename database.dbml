@@ -48,6 +48,7 @@ Table cart_lines {
   id bigint [pk, increment, not null]
   cart_id bigint [not null, ref: > carts.id]
   product_id bigint [not null, ref: > products.id]
+  currency_id bigint [not null, ref: > currencies.id]
   discount_id bigint [ref: > discounts.id]
   product_name varchar(255) [not null]
   product_sku varchar(255) [not null]
@@ -200,6 +201,7 @@ Table discounts {
 Table inventories {
   id bigint [pk, increment, not null]
   product_id bigint [not null, ref: > products.id]
+  currency_id bigint [not null, ref: > currencies.id]
   stock mediumint [not null, default: 0]
   stock_reserved mediumint [not null, default: 0, note: 'reserved quantity']
   stock_available mediumint [not null, default: 0, note: 'available quantity']
@@ -236,6 +238,7 @@ Table order_lines {
   id bigint [pk, increment, not null]
   order_id bigint [not null, ref: > orders.id]
   product_id bigint [not null, ref: > products.id]
+  currency_id bigint [not null, ref: > currencies.id]
   discount_id bigint [ref: > discounts.id]
   product_name varchar(255) [not null]
   product_sku varchar(255) [not null]

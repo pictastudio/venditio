@@ -3,9 +3,10 @@
 namespace PictaStudio\Venditio\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\{Artisan, Schema};
 use Orchestra\Testbench\TestCase as Orchestra;
 use PictaStudio\Translatable\TranslatableServiceProvider;
+use PictaStudio\Venditio\Models\Currency;
 use PictaStudio\Venditio\VenditioServiceProvider;
 use ReflectionClass;
 
@@ -29,6 +30,18 @@ class TestCase extends Orchestra
         Factory::guessFactoryNamesUsing(
             fn (string $modelName) => 'PictaStudio\\Venditio\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
         );
+
+        if (Schema::hasTable('currencies') && !Currency::query()->exists()) {
+            Currency::query()->create([
+                'name' => 'EUR',
+                'code' => 'EUR',
+                'symbol' => 'EUR',
+                'exchange_rate' => 1,
+                'decimal_places' => 2,
+                'is_enabled' => true,
+                'is_default' => true,
+            ]);
+        }
     }
 
     public function getEnvironmentSetUp($app)

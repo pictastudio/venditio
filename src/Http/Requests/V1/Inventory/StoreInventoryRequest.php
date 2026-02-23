@@ -18,6 +18,7 @@ class StoreInventoryRequest extends FormRequest
     {
         return [
             'product_id' => ['required', 'integer', Rule::exists($this->tableFor('product'), 'id')],
+            'currency_id' => ['nullable', 'integer', Rule::exists($this->tableFor('currency'), 'id')],
             'stock' => ['sometimes', 'integer', 'min:0'],
             'stock_reserved' => ['sometimes', 'integer', 'min:0'],
             'stock_min' => ['nullable', 'integer', 'min:0'],

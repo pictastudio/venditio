@@ -112,6 +112,46 @@ it('creates a cart through api with lines', function () {
         ->assertJsonPath('lines.0.qty', 2);
 });
 
+it('copies inventory currency_id into cart lines', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+
+    $lineCurrencyId = Currency::query()->firstOrCreate(
+        ['code' => 'USD'],
+        ['name' => 'USD', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
+    $product = createCartProduct($taxClass);
+    $product->inventory()->updateOrCreate([], ['currency_id' => $lineCurrencyId]);
+    $product = $product->refresh();
+
+    $user = createUserForCart('user-cart-line-currency@example.test');
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $response = postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 1],
+        ],
+    ])->assertCreated();
+
+    $cartId = $response->json('id');
+
+    getJson($prefix . '/carts/' . $cartId)
+        ->assertOk()
+        ->assertJsonPath('lines.0.currency_id', $lineCurrencyId);
+
+    $cartLineModel = config('venditio.models.cart_line');
+
+    expect((int) $cartLineModel::query()
+        ->where('cart_id', $cartId)
+        ->value('currency_id'))
+        ->toBe($lineCurrencyId);
+});
+
 it('uses the shipping address country tax rate when calculating cart line VAT', function () {
     $taxClass = TaxClass::factory()->create();
     setupCartTaxEnvironment($taxClass);

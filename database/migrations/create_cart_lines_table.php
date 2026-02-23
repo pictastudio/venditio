@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use PictaStudio\Venditio\Models\{Cart, Discount, Product};
+use PictaStudio\Venditio\Models\{Cart, Currency, Discount, Product};
 
 return new class extends Migration
 {
@@ -13,6 +13,7 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(Cart::class);
             $table->foreignIdFor(Product::class);
+            $table->foreignIdFor(Currency::class);
             $table->foreignIdFor(Discount::class)->nullable()->index();
             $table->string('product_name');
             $table->string('product_sku');

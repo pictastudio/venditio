@@ -5,6 +5,7 @@ namespace PictaStudio\Venditio\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\ValidationException;
 use PictaStudio\Venditio\Events\ProductStockBelowMinimum;
 use PictaStudio\Venditio\Models\Traits\{HasHelperMethods, LogsActivity};
 
@@ -40,6 +41,16 @@ class Inventory extends Model
     protected static function booted(): void
     {
         static::saving(function (self $inventory) {
+            if (blank($inventory->currency_id)) {
+                $inventory->currency_id = static::resolveDefaultCurrencyId();
+            }
+
+            if (blank($inventory->currency_id)) {
+                throw ValidationException::withMessages([
+                    'currency_id' => ['No default currency configured.'],
+                ]);
+            }
+
             $inventory->stock_available = (int) $inventory->stock - (int) $inventory->stock_reserved;
         });
 
@@ -61,8 +72,35 @@ class Inventory extends Model
         });
     }
 
+    private static function resolveDefaultCurrencyId(): ?int
+    {
+        $currencyModel = resolve_model('currency');
+        $defaultCurrency = $currencyModel::query()
+            ->where('is_default', true)
+            ->first();
+
+        if ($defaultCurrency) {
+            return $defaultCurrency->getKey();
+        }
+
+        $fallbackCurrency = $currencyModel::query()->first();
+
+        if (!$fallbackCurrency) {
+            return null;
+        }
+
+        $fallbackCurrency->update(['is_default' => true]);
+
+        return $fallbackCurrency->getKey();
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(resolve_model('product'));
+    }
+
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('currency'));
     }
 }

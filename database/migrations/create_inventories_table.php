@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use PictaStudio\Venditio\Models\Currency;
 use PictaStudio\Venditio\Models\Product;
 
 return new class extends Migration
@@ -12,6 +13,7 @@ return new class extends Migration
         Schema::create('inventories', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(Product::class);
+            $table->foreignIdFor(Currency::class);
             $table->mediumInteger('stock')->default(0);
             $table->mediumInteger('stock_reserved')->default(0)->comment('quantity of stock that has been reserved (for pending orders or for other reasons)');
             $table->mediumInteger('stock_available')->default(0)->comment('quantity of stock available for sale');

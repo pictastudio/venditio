@@ -128,3 +128,43 @@ it('returns 422 when creating an order from a cart with a non eligible cart tota
     ])->assertUnprocessable()
         ->assertJsonPath('errors.discount_code.0', 'The discount code [TEST10] is invalid or not eligible for cart total discounts.');
 });
+
+it('copies inventory currency_id from cart lines to order lines', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupOrderDiscountValidationTaxEnvironment($taxClass);
+    $user = createOrderDiscountValidationUser('user-order-line-currency@example.test');
+
+    $lineCurrencyId = Currency::query()->firstOrCreate(
+        ['code' => 'USD'],
+        ['name' => 'USD', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
+    $product = createOrderDiscountValidationProduct($taxClass);
+    $product->inventory()->updateOrCreate([], ['currency_id' => $lineCurrencyId]);
+    $product = $product->refresh();
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $cartId = postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 1],
+        ],
+    ])->assertCreated()->json('id');
+
+    $response = postJson($prefix . '/orders', [
+        'cart_id' => $cartId,
+    ])->assertOk();
+
+    $response->assertJsonPath('lines.0.currency_id', $lineCurrencyId);
+
+    $orderLineModel = config('venditio.models.order_line');
+
+    expect((int) $orderLineModel::query()
+        ->where('order_id', (int) $response->json('id'))
+        ->value('currency_id'))
+        ->toBe($lineCurrencyId);
+});

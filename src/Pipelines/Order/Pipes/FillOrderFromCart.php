@@ -33,6 +33,7 @@ class FillOrderFromCart
 
             return $orderLine->fill([
                 'product_id' => $cartLine->product_id,
+                'currency_id' => $cartLine->currency_id,
                 'discount_id' => $cartLine->discount_id,
                 'discount_code' => $cartLine->discount_code,
                 'discount_amount' => $cartLine->discount_amount,

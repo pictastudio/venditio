@@ -6,6 +6,7 @@ use Closure;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\ValidationException;
 use PictaStudio\Venditio\Contracts\ProductPriceResolverInterface;
 use PictaStudio\Venditio\Dto\Contracts\CartLineDtoContract;
 
@@ -35,8 +36,10 @@ class FillProductInformations
         ]);
 
         $cartLine->product()->associate($product);
+        $currencyId = $this->resolveCurrencyIdForProduct($product);
 
         $cartLine->fill([
+            'currency_id' => $currencyId,
             'unit_price' => $resolvedPricing['unit_price'] ?? 0,
             'purchase_price' => $resolvedPricing['purchase_price'] ?? null,
             'product_name' => $product->name,
@@ -63,6 +66,41 @@ class FillProductInformations
                 'priceListPrices.priceList',
             ])
             ->firstWhere('id', $productId);
+    }
+
+    private function resolveCurrencyIdForProduct(Model $product): int
+    {
+        $currencyId = data_get($product, 'inventory.currency_id')
+            ?? $this->resolveDefaultCurrencyId();
+
+        if (blank($currencyId)) {
+            throw ValidationException::withMessages([
+                'currency_id' => ['No default currency configured.'],
+            ]);
+        }
+
+        return (int) $currencyId;
+    }
+
+    private function resolveDefaultCurrencyId(): ?int
+    {
+        $defaultCurrency = query('currency')
+            ->where('is_default', true)
+            ->first();
+
+        if ($defaultCurrency) {
+            return (int) $defaultCurrency->getKey();
+        }
+
+        $fallbackCurrency = query('currency')->first();
+
+        if (!$fallbackCurrency) {
+            return null;
+        }
+
+        $fallbackCurrency->update(['is_default' => true]);
+
+        return (int) $fallbackCurrency->getKey();
     }
 
     private function checkPayloadValidity(array $line): void

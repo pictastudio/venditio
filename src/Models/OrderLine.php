@@ -50,6 +50,11 @@ class OrderLine extends Model
         return $this->belongsTo(resolve_model('product'));
     }
 
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('currency'));
+    }
+
     public function discount(): BelongsTo
     {
         return $this->belongsTo(resolve_model('discount'));
