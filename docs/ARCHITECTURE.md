@@ -18,6 +18,7 @@ It is headless by design: host applications own authentication, UI, and renderin
 - `src/Actions`: reusable state-changing operations
 - `src/Pipelines`: cart, cart-line, and order orchestration pipelines
 - `src/Discounts`: discount calculators, context, rules, usage recording
+- `src/Shipping`: shipping calculators and zone matcher implementations
 - `src/Validations`: validation contract implementations
 - `config/venditio.php`: package behavior configuration
 - `database/migrations`: installable schema source of truth
@@ -102,6 +103,7 @@ Main configuration sections:
 - `product_variants`
 - `price_lists`
 - `discounts`
+- `shipping`
 - `commands`
 - `scopes`
 

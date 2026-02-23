@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ShippingStatusController, TaxClassController};
+use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ShippingCarrierController, ShippingRateController, ShippingRateTierController, ShippingStatusController, ShippingZoneController, ShippingZoneMemberController, TaxClassController};
 
 /*
 |--------------------------------------------------------------------------
@@ -27,6 +27,8 @@ Route::post('carts/{cart}/add_lines', [CartController::class, 'addLines'])->name
 Route::post('carts/{cart}/remove_lines', [CartController::class, 'removeLines'])->name('carts.removeLines');
 Route::post('carts/{cart}/add_discount', [CartController::class, 'addDiscount'])->name('carts.addDiscount');
 Route::patch('carts/{cart}/update_lines', [CartController::class, 'updateLines'])->name('carts.updateLines');
+Route::get('carts/{cart}/shipping_quotes', [CartController::class, 'shippingQuotes'])->name('carts.shippingQuotes');
+Route::post('carts/{cart}/shipping_selection', [CartController::class, 'selectShippingOption'])->name('carts.selectShippingOption');
 Route::apiResource('orders', OrderController::class);
 Route::apiResource('addresses', AddressController::class);
 Route::apiResource('brands', BrandController::class);
@@ -39,6 +41,11 @@ Route::apiResource('country_tax_classes', CountryTaxClassController::class);
 Route::apiResource('currencies', CurrencyController::class);
 Route::apiResource('tax_classes', TaxClassController::class);
 Route::apiResource('shipping_statuses', ShippingStatusController::class);
+Route::apiResource('shipping_carriers', ShippingCarrierController::class);
+Route::apiResource('shipping_zones', ShippingZoneController::class);
+Route::apiResource('shipping_zone_members', ShippingZoneMemberController::class)->only(['index', 'show', 'store', 'destroy']);
+Route::apiResource('shipping_rates', ShippingRateController::class);
+Route::apiResource('shipping_rate_tiers', ShippingRateTierController::class);
 Route::apiResource('discounts', DiscountController::class);
 Route::apiResource('discount_applications', DiscountApplicationController::class);
 Route::apiResource('product_custom_fields', ProductCustomFieldController::class);

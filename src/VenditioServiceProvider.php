@@ -9,7 +9,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Route;
 use PictaStudio\Venditio\Console\Commands\{InstallCommand, ReleaseStockForAbandonedCarts};
-use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface};
+use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, ChargeableWeightCalculatorInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface, ShippingQuoteCalculatorInterface, ShippingZoneMatcherInterface};
 use PictaStudio\Venditio\Discounts\{CartTotalDiscountCalculator, DiscountCalculator, DiscountUsageRecorder, DiscountablesResolver};
 use PictaStudio\Venditio\Dto\{CartDto, CartLineDto, OrderDto};
 use PictaStudio\Venditio\Dto\Contracts\{CartDtoContract, CartLineDtoContract, OrderDtoContract};
@@ -17,6 +17,7 @@ use PictaStudio\Venditio\Facades\Venditio as VenditioFacade;
 use PictaStudio\Venditio\Generators\{CartIdentifierGenerator, OrderIdentifierGenerator, ProductSkuGenerator};
 use PictaStudio\Venditio\Models\User;
 use PictaStudio\Venditio\Pricing\DefaultProductPriceResolver;
+use PictaStudio\Venditio\Shipping\{DefaultChargeableWeightCalculator, DefaultShippingQuoteCalculator, MostSpecificZoneMatcher};
 use Spatie\LaravelPackageTools\{Package, PackageServiceProvider};
 
 class VenditioServiceProvider extends PackageServiceProvider
@@ -52,6 +53,11 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_orders_table',
                 'create_order_lines_table',
                 'create_shipping_statuses_table',
+                'create_shipping_carriers_table',
+                'create_shipping_zones_table',
+                'create_shipping_zone_members_table',
+                'create_shipping_rates_table',
+                'create_shipping_rate_tiers_table',
                 'create_brands_table',
                 'create_product_categories_table',
                 'create_discount_applications_table',
@@ -68,6 +74,9 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_price_list_prices_table',
                 'create_carts_table',
                 'create_cart_lines_table',
+                'update_carts_table_add_shipping_fields',
+                'update_orders_table_add_shipping_fields',
+                'update_addresses_table_add_region_and_municipality',
                 'seed_venditio_data',
             ]);
         // ->hasRoute('api');
@@ -92,6 +101,7 @@ class VenditioServiceProvider extends PackageServiceProvider
         $this->bindDiscountClasses();
         $this->bindPricingClasses();
         $this->bindIdentifierGenerators();
+        $this->bindShippingClasses();
     }
 
     private function bindIdentifierGenerators(): void
@@ -141,6 +151,24 @@ class VenditioServiceProvider extends PackageServiceProvider
         $this->app->singleton(
             CartTotalDiscountCalculatorInterface::class,
             config('venditio.discounts.cart_total.calculator', CartTotalDiscountCalculator::class)
+        );
+    }
+
+    private function bindShippingClasses(): void
+    {
+        $this->app->singleton(
+            ShippingZoneMatcherInterface::class,
+            config('venditio.shipping.zone_matcher', MostSpecificZoneMatcher::class)
+        );
+
+        $this->app->singleton(
+            ChargeableWeightCalculatorInterface::class,
+            config('venditio.shipping.chargeable_weight_calculator', DefaultChargeableWeightCalculator::class)
+        );
+
+        $this->app->singleton(
+            ShippingQuoteCalculatorInterface::class,
+            config('venditio.shipping.calculator', DefaultShippingQuoteCalculator::class)
         );
     }
 

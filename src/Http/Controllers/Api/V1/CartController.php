@@ -7,9 +7,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
+use PictaStudio\Venditio\Contracts\ShippingQuoteCalculatorInterface;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Cart\{StoreCartRequest, UpdateCartRequest};
-use PictaStudio\Venditio\Http\Resources\V1\CartResource;
+use PictaStudio\Venditio\Http\Resources\V1\{CartResource, ShippingQuoteResource};
 use PictaStudio\Venditio\Models\Cart;
 use PictaStudio\Venditio\Pipelines\Cart\{CartCreationPipeline, CartUpdatePipeline};
 use PictaStudio\Venditio\Validations\Contracts\CartLineValidationRules;
@@ -183,6 +184,39 @@ class CartController extends Controller
             $cart,
             [
                 'discount_code' => $validated['discount_code'],
+            ]
+        )->load('lines');
+
+        return response()->json(CartResource::make($updatedCart));
+    }
+
+    public function shippingQuotes(Cart $cart, ShippingQuoteCalculatorInterface $shippingQuoteCalculator): JsonResource
+    {
+        $this->authorizeIfConfigured('view', $cart);
+
+        $quotes = $shippingQuoteCalculator->calculateForCart(
+            $cart->loadMissing('lines')
+        );
+
+        return ShippingQuoteResource::collection($quotes);
+    }
+
+    public function selectShippingOption(Cart $cart): JsonResponse
+    {
+        $this->authorizeIfConfigured('update', $cart);
+
+        $validated = $this->validateData(request()->all(), [
+            'shipping_rate_id' => [
+                'nullable',
+                'integer',
+                Rule::exists((new (config('venditio.models.shipping_rate')))->getTable(), 'id'),
+            ],
+        ]);
+
+        $updatedCart = $this->runCartUpdatePipeline(
+            $cart,
+            [
+                'shipping_rate_id' => $validated['shipping_rate_id'] ?? null,
             ]
         )->load('lines');
 

@@ -1,6 +1,6 @@
 <?php
 
-use PictaStudio\Venditio\{Discounts, Dto, Enums, Generators, Models, Pricing};
+use PictaStudio\Venditio\{Discounts, Dto, Enums, Generators, Models, Pricing, Shipping};
 use PictaStudio\Venditio\Facades\Venditio;
 use PictaStudio\Venditio\Pipelines\{Cart, CartLine, Order};
 use PictaStudio\Venditio\Validations;
@@ -68,6 +68,11 @@ return [
         'product_variant_option' => Models\ProductVariantOption::class,
         'price_list' => Models\PriceList::class,
         'price_list_price' => Models\PriceListPrice::class,
+        'shipping_carrier' => Models\ShippingCarrier::class,
+        'shipping_zone' => Models\ShippingZone::class,
+        'shipping_zone_member' => Models\ShippingZoneMember::class,
+        'shipping_rate' => Models\ShippingRate::class,
+        'shipping_rate_tier' => Models\ShippingRateTier::class,
     ],
 
     /*
@@ -94,6 +99,11 @@ return [
         Validations\Contracts\ProductVariantOptionValidationRules::class => Validations\ProductVariantOptionValidation::class,
         Validations\Contracts\PriceListValidationRules::class => Validations\PriceListValidation::class,
         Validations\Contracts\PriceListPriceValidationRules::class => Validations\PriceListPriceValidation::class,
+        Validations\Contracts\ShippingCarrierValidationRules::class => Validations\ShippingCarrierValidation::class,
+        Validations\Contracts\ShippingZoneValidationRules::class => Validations\ShippingZoneValidation::class,
+        Validations\Contracts\ShippingZoneMemberValidationRules::class => Validations\ShippingZoneMemberValidation::class,
+        Validations\Contracts\ShippingRateValidationRules::class => Validations\ShippingRateValidation::class,
+        Validations\Contracts\ShippingRateTierValidationRules::class => Validations\ShippingRateTierValidation::class,
     ],
 
     /*
@@ -291,6 +301,35 @@ return [
             'created_at',
             'updated_at',
             'deleted_at',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shipping
+    |--------------------------------------------------------------------------
+    |
+    */
+    'shipping' => [
+        'enabled' => env('VENDITIO_SHIPPING_ENABLED', true),
+        'calculator' => Shipping\DefaultShippingQuoteCalculator::class,
+        'zone_matcher' => Shipping\MostSpecificZoneMatcher::class,
+        'chargeable_weight_calculator' => Shipping\DefaultChargeableWeightCalculator::class,
+        'auto_select_cheapest' => true,
+        'currency_mode' => 'store_default',
+        'measurements' => [
+            'weight_unit' => 'kg',
+            'dimension_unit' => 'cm',
+        ],
+        'defaults' => [
+            'volumetric_divisor' => 5000,
+            'weight_rounding_step_kg' => 0.5,
+            'weight_rounding_mode' => 'ceil',
+        ],
+        'cache' => [
+            'enabled' => true,
+            'ttl_seconds' => 300,
+            'prefix' => 'venditio:shipping',
         ],
     ],
 

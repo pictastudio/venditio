@@ -28,6 +28,7 @@ class FillDataFromPayload
 
         $cart->fill([
             'status' => resolve_enum('cart_status')::getProcessingStatus(),
+            'shipping_rate_id' => $cartDto->getShippingRateId(),
             'addresses' => $addresses,
         ]);
 

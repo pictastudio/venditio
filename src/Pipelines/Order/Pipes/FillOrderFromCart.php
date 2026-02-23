@@ -16,8 +16,18 @@ class FillOrderFromCart
     {
         $cart = $orderDto->getCart()->loadMissing('lines');
         $order = $orderDto->toModel();
+        $shippingQuoteSnapshot = $cart->getAttribute('shipping_quote_snapshot');
+
         $order->fill([
             'status' => config('venditio.order.status_enum')::getProcessingStatus(),
+            'shipping_fee' => (float) ($cart->getAttribute('shipping_fee') ?? 0),
+            'shipping_carrier_id' => $cart->getAttribute('shipping_carrier_id'),
+            'shipping_zone_id' => $cart->getAttribute('shipping_zone_id'),
+            'shipping_rate_id' => $cart->getAttribute('shipping_rate_id'),
+            'shipping_quote_snapshot' => $shippingQuoteSnapshot,
+            'courier_code' => is_array($shippingQuoteSnapshot) && filled(data_get($shippingQuoteSnapshot, 'carrier.code'))
+                ? (string) data_get($shippingQuoteSnapshot, 'carrier.code')
+                : null,
         ]);
 
         $order->setRelation('sourceCart', $cart);

@@ -46,4 +46,14 @@ class Address extends Model
     {
         return $this->belongsTo(resolve_model('province'));
     }
+
+    public function region(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('region'));
+    }
+
+    public function municipality(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('municipality'));
+    }
 }

@@ -36,6 +36,7 @@ class Cart extends Model
             'sub_total_tax' => 'decimal:2',
             'sub_total' => 'decimal:2',
             'shipping_fee' => 'decimal:2',
+            'shipping_quote_snapshot' => 'json',
             'payment_fee' => 'decimal:2',
             'discount_amount' => 'decimal:2',
             'total_final' => 'decimal:2',
@@ -51,6 +52,21 @@ class Cart extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(resolve_model('order'));
+    }
+
+    public function shippingCarrier(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('shipping_carrier'));
+    }
+
+    public function shippingZone(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('shipping_zone'));
+    }
+
+    public function shippingRate(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('shipping_rate'));
     }
 
     public function lines(): HasMany

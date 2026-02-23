@@ -131,6 +131,8 @@ Include parameters:
 - `PATCH /carts/{cart}/update_lines`
 - `POST /carts/{cart}/remove_lines`
 - `POST /carts/{cart}/add_discount`
+- `GET /carts/{cart}/shipping_quotes`
+- `POST /carts/{cart}/shipping_selection`
 
 ### Cart Lines
 
@@ -215,6 +217,30 @@ Discount columns are first-level fields on `discounts`:
 - `POST /shipping_statuses`
 - `PATCH /shipping_statuses/{shipping_status}`
 - `DELETE /shipping_statuses/{shipping_status}`
+- `GET /shipping_carriers`
+- `GET /shipping_carriers/{shipping_carrier}`
+- `POST /shipping_carriers`
+- `PATCH /shipping_carriers/{shipping_carrier}`
+- `DELETE /shipping_carriers/{shipping_carrier}`
+- `GET /shipping_zones`
+- `GET /shipping_zones/{shipping_zone}`
+- `POST /shipping_zones`
+- `PATCH /shipping_zones/{shipping_zone}`
+- `DELETE /shipping_zones/{shipping_zone}`
+- `GET /shipping_zone_members`
+- `GET /shipping_zone_members/{shipping_zone_member}`
+- `POST /shipping_zone_members`
+- `DELETE /shipping_zone_members/{shipping_zone_member}`
+- `GET /shipping_rates`
+- `GET /shipping_rates/{shipping_rate}`
+- `POST /shipping_rates`
+- `PATCH /shipping_rates/{shipping_rate}`
+- `DELETE /shipping_rates/{shipping_rate}`
+- `GET /shipping_rate_tiers`
+- `GET /shipping_rate_tiers/{shipping_rate_tier}`
+- `POST /shipping_rate_tiers`
+- `PATCH /shipping_rate_tiers/{shipping_rate_tier}`
+- `DELETE /shipping_rate_tiers/{shipping_rate_tier}`
 
 ### Currencies
 
@@ -257,3 +283,4 @@ See `config/venditio.php` for:
 - policy enable toggle
 - price list feature flag and resolver
 - discount rule pipelines
+- shipping calculators, zone matcher, units, defaults, cache options

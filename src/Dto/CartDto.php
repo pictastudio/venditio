@@ -18,6 +18,7 @@ class CartDto extends Dto implements CartDtoContract
         private ?string $userLastName,
         private ?string $userEmail,
         private ?string $discountRef,
+        private ?int $shippingRateId,
         private ?array $addresses,
         private ?Collection $lines = null,
         private bool $linesProvided = false,
@@ -32,6 +33,7 @@ class CartDto extends Dto implements CartDtoContract
             userLastName: $data['user_last_name'] ?? null,
             userEmail: $data['user_email'] ?? null,
             discountRef: $data['discount_code'] ?? $data['discount_ref'] ?? null,
+            shippingRateId: isset($data['shipping_rate_id']) ? (int) $data['shipping_rate_id'] : null,
             addresses: $data['addresses'] ?? null,
             lines: collect($data['lines'] ?? [])
                 ->map(fn (array $line) => CartLineDto::fromArray($line)),
@@ -52,6 +54,7 @@ class CartDto extends Dto implements CartDtoContract
             'user_last_name' => $this->getUserLastName(),
             'user_email' => $this->getUserEmail(),
             'discount_code' => $this->getDiscountRef(),
+            'shipping_rate_id' => $this->getShippingRateId(),
             'addresses' => $this->getAddresses(),
         ];
     }
@@ -90,6 +93,11 @@ class CartDto extends Dto implements CartDtoContract
     public function getDiscountRef(): ?string
     {
         return $this->discountRef ?? $this->getCart()?->discount_code;
+    }
+
+    public function getShippingRateId(): ?int
+    {
+        return $this->shippingRateId ?? $this->getCart()?->shipping_rate_id;
     }
 
     public function getAddresses(): ?array

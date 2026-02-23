@@ -47,6 +47,22 @@ class OrderValidation implements OrderValidationRules
             'sub_total_tax' => ['sometimes', 'numeric', 'min:0'],
             'sub_total' => ['sometimes', 'numeric', 'min:0'],
             'shipping_fee' => ['sometimes', 'numeric', 'min:0'],
+            'shipping_carrier_id' => [
+                'nullable',
+                'integer',
+                Rule::exists($this->tableFor('shipping_carrier'), 'id'),
+            ],
+            'shipping_zone_id' => [
+                'nullable',
+                'integer',
+                Rule::exists($this->tableFor('shipping_zone'), 'id'),
+            ],
+            'shipping_rate_id' => [
+                'nullable',
+                'integer',
+                Rule::exists($this->tableFor('shipping_rate'), 'id'),
+            ],
+            'shipping_quote_snapshot' => ['nullable', 'array'],
             'payment_fee' => ['sometimes', 'numeric', 'min:0'],
             'discount_code' => ['nullable', 'string', 'max:255'],
             'discount_amount' => ['sometimes', 'numeric', 'min:0'],
@@ -91,6 +107,16 @@ class OrderValidation implements OrderValidationRules
                 'nullable',
                 'integer',
                 Rule::exists($this->tableFor('province'), 'id'),
+            ],
+            $key . '.region_id' => [
+                'nullable',
+                'integer',
+                Rule::exists($this->tableFor('region'), 'id'),
+            ],
+            $key . '.municipality_id' => [
+                'nullable',
+                'integer',
+                Rule::exists($this->tableFor('municipality'), 'id'),
             ],
         ];
     }
