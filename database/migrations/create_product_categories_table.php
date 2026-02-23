@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignIdFor(ProductCategory::class, 'parent_id')->nullable();
             $table->string('path')->nullable()->index()->comment('path of the category in the tree');
             $table->string('name');
+            $table->string('slug')->unique();
             $table->boolean('active')->default(true);
             $table->smallInteger('sort_order');
             $table->datetimes();

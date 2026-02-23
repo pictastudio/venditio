@@ -430,3 +430,151 @@ it('keeps translated slugs in sync on update', function () {
         'value' => 'abbigliamento-smart',
     ]);
 });
+
+it('rejects duplicate translated slugs for product types on create', function () {
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_types', [
+        'en' => [
+            'name' => 'Food',
+        ],
+        'it' => [
+            'name' => 'Cibo',
+        ],
+    ])->assertCreated();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_types', [
+        'en' => [
+            'name' => 'Drinks',
+        ],
+        'it' => [
+            'name' => 'Cibo',
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['it.slug']);
+});
+
+it('rejects duplicate translated slugs for product types on update', function () {
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_types', [
+        'en' => [
+            'name' => 'Food',
+        ],
+        'it' => [
+            'name' => 'Cibo',
+        ],
+    ])->assertCreated();
+
+    $productTypeResponse = postJson(config('venditio.routes.api.v1.prefix') . '/product_types', [
+        'en' => [
+            'name' => 'Drinks',
+        ],
+        'it' => [
+            'name' => 'Bevande',
+        ],
+    ])->assertCreated();
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/product_types/' . $productTypeResponse->json('id'), [
+        'it' => [
+            'name' => 'Cibo',
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['it.slug']);
+});
+
+it('rejects duplicate translated slugs for brands on create', function () {
+    postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+        'en' => [
+            'name' => 'Shoes Factory',
+        ],
+        'it' => [
+            'name' => 'Fabbrica Scarpe',
+        ],
+    ])->assertCreated();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+        'en' => [
+            'name' => 'Leather House',
+        ],
+        'it' => [
+            'name' => 'Fabbrica Scarpe',
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['it.slug']);
+});
+
+it('rejects duplicate translated slugs for brands on update', function () {
+    postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+        'en' => [
+            'name' => 'Shoes Factory',
+        ],
+        'it' => [
+            'name' => 'Fabbrica Scarpe',
+        ],
+    ])->assertCreated();
+
+    $brandResponse = postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+        'en' => [
+            'name' => 'Leather House',
+        ],
+        'it' => [
+            'name' => 'Casa in Pelle',
+        ],
+    ])->assertCreated();
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/brands/' . $brandResponse->json('id'), [
+        'it' => [
+            'name' => 'Fabbrica Scarpe',
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['it.slug']);
+});
+
+it('rejects duplicate translated slugs for product categories on create', function () {
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_categories', [
+        'sort_order' => 1,
+        'en' => [
+            'name' => 'Clothing',
+        ],
+        'it' => [
+            'name' => 'Abbigliamento',
+        ],
+    ])->assertCreated();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_categories', [
+        'sort_order' => 2,
+        'en' => [
+            'name' => 'Accessories',
+        ],
+        'it' => [
+            'name' => 'Abbigliamento',
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['it.slug']);
+});
+
+it('rejects duplicate translated slugs for product categories on update', function () {
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_categories', [
+        'sort_order' => 1,
+        'en' => [
+            'name' => 'Clothing',
+        ],
+        'it' => [
+            'name' => 'Abbigliamento',
+        ],
+    ])->assertCreated();
+
+    $categoryResponse = postJson(config('venditio.routes.api.v1.prefix') . '/product_categories', [
+        'sort_order' => 2,
+        'en' => [
+            'name' => 'Accessories',
+        ],
+        'it' => [
+            'name' => 'Accessori',
+        ],
+    ])->assertCreated();
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/product_categories/' . $categoryResponse->json('id'), [
+        'it' => [
+            'name' => 'Abbigliamento',
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['it.slug']);
+});

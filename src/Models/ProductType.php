@@ -9,6 +9,7 @@ use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
 use PictaStudio\Venditio\Models\Scopes\Active;
 use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods};
+use Spatie\Sluggable\{HasSlug, SlugOptions};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
@@ -17,6 +18,7 @@ class ProductType extends Model implements TranslatableContract
     use HasDiscounts;
     use HasFactory;
     use HasHelperMethods;
+    use HasSlug;
     use SoftDeletes;
     use Translatable;
 
@@ -52,5 +54,12 @@ class ProductType extends Model implements TranslatableContract
     public function productCustomFields(): HasMany
     {
         return $this->hasMany(resolve_model('product_custom_field'));
+    }
+
+    public function getSlugOptions(): SlugOptions
+    {
+        return SlugOptions::create()
+            ->generateSlugsFrom('name')
+            ->saveSlugsTo('slug');
     }
 }

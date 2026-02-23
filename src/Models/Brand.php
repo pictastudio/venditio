@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
 use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods, LogsActivity};
+use Spatie\Sluggable\{HasSlug, SlugOptions};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
@@ -16,6 +17,7 @@ class Brand extends Model implements TranslatableContract
     use HasDiscounts;
     use HasFactory;
     use HasHelperMethods;
+    use HasSlug;
     use LogsActivity;
     use SoftDeletes;
     use Translatable;
@@ -32,5 +34,12 @@ class Brand extends Model implements TranslatableContract
     public function products(): HasMany
     {
         return $this->hasMany(resolve_model('product'));
+    }
+
+    public function getSlugOptions(): SlugOptions
+    {
+        return SlugOptions::create()
+            ->generateSlugsFrom('name')
+            ->saveSlugsTo('slug');
     }
 }
