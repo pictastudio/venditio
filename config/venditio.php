@@ -221,6 +221,8 @@ return [
         'status_enum' => Enums\ProductStatus::class,
         'measuring_unit_enum' => Enums\ProductMeasuringUnit::class,
         'sku_generator' => Generators\ProductSkuGenerator::class,
+        'sku_prefix' => env('VENDITIO_PRODUCT_SKU_PREFIX', 'SW-'),
+        'sku_counter_padding' => (int) env('VENDITIO_PRODUCT_SKU_COUNTER_PADDING', 0),
     ],
 
     /*

@@ -49,7 +49,91 @@ it('creates a product with categories', function () {
 it('validates product creation', function () {
     postJson(config('venditio.routes.api.v1.prefix') . '/products', [])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['name', 'status', 'sku']);
+        ->assertJsonValidationErrors(['name', 'status']);
+});
+
+it('creates a product and generates sku when omitted', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/products', [
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Generated Product',
+        'status' => ProductStatus::Published,
+    ])->assertCreated();
+
+    $productId = $response->json('id');
+
+    assertDatabaseHas('products', [
+        'id' => $productId,
+        'sku' => config('venditio.product.sku_prefix') . '1',
+    ]);
+});
+
+it('validates sku uniqueness when provided on product creation', function () {
+    Product::factory()->create([
+        'sku' => 'DUPLICATE-SKU',
+    ]);
+
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/products', [
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Product with duplicate sku',
+        'sku' => 'DUPLICATE-SKU',
+        'status' => ProductStatus::Published,
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['sku']);
+});
+
+it('generates sku with configured prefix and incremental counter', function () {
+    config()->set('venditio.product.sku_prefix', 'PRD-');
+
+    Product::factory()->create([
+        'sku' => 'PRD-9',
+    ]);
+
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/products', [
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Prefixed Product',
+        'status' => ProductStatus::Published,
+    ])->assertCreated();
+
+    assertDatabaseHas('products', [
+        'id' => $response->json('id'),
+        'sku' => 'PRD-10',
+    ]);
+});
+
+it('generates sku with configured zero padded counter', function () {
+    config()->set('venditio.product.sku_prefix', 'PRD-');
+    config()->set('venditio.product.sku_counter_padding', 5);
+
+    Product::factory()->create([
+        'sku' => 'PRD-00009',
+    ]);
+
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/products', [
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Padded Product',
+        'status' => ProductStatus::Published,
+    ])->assertCreated();
+
+    assertDatabaseHas('products', [
+        'id' => $response->json('id'),
+        'sku' => 'PRD-00010',
+    ]);
 });
 
 it('assigns default product type when product_type_id is omitted and a default exists', function () {

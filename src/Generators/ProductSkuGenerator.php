@@ -2,7 +2,6 @@
 
 namespace PictaStudio\Venditio\Generators;
 
-use Illuminate\Support\Str;
 use PictaStudio\Venditio\Contracts\ProductSkuGeneratorInterface;
 use PictaStudio\Venditio\Models\Product;
 
@@ -12,59 +11,50 @@ class ProductSkuGenerator implements ProductSkuGeneratorInterface
 {
     public function forProductPayload(array $payload): string
     {
-        $name = (string) ($payload['name'] ?? 'product');
-        $seed = Str::upper(Str::slug($name, '-'));
-
-        if (blank($seed)) {
-            $seed = 'PRODUCT';
-        }
-
-        return $this->uniqueSku($seed);
+        return $this->generateIncrementalSku();
     }
 
     public function forVariant(Product $baseProduct, array $options): string
     {
-        $baseSku = filled($baseProduct->sku)
-            ? (string) $baseProduct->sku
-            : 'P' . $baseProduct->getKey();
-
-        $signature = collect($options)
-            ->filter(fn (mixed $option): bool => is_object($option))
-            ->map(fn (object $option): int => (int) ($option->id ?? 0))
-            ->filter()
-            ->sort()
-            ->implode('-');
-
-        if (blank($signature)) {
-            $signature = 'VARIANT';
-        }
-
-        return $this->uniqueSku($baseSku . '-' . $signature);
+        return $this->generateIncrementalSku();
     }
 
-    private function uniqueSku(string $seed): string
+    private function generateIncrementalSku(): string
     {
-        $normalizedSeed = mb_trim($seed);
+        $prefix = $this->resolvePrefix();
+        $padding = $this->resolveCounterPadding();
+        $counter = $this->latestGeneratedCounter($prefix) + 1;
+        $candidate = $this->buildCandidate($prefix, $counter, $padding);
 
-        if ($normalizedSeed === '') {
-            $normalizedSeed = 'SKU';
-        }
-
-        $candidate = $this->truncate($normalizedSeed);
-
-        if (!$this->skuExists($candidate)) {
-            return $candidate;
-        }
-
-        $counter = 1;
-
-        do {
-            $suffix = '-' . $counter;
-            $candidate = $this->truncate($normalizedSeed, $suffix);
+        while ($this->skuExists($candidate)) {
             $counter++;
-        } while ($this->skuExists($candidate));
+            $candidate = $this->buildCandidate($prefix, $counter, $padding);
+        }
 
         return $candidate;
+    }
+
+    private function latestGeneratedCounter(string $prefix): int
+    {
+        $model = query('product')->getModel();
+        $skuColumn = $model->qualifyColumn('sku');
+        $keyColumn = $model->qualifyColumn($model->getKeyName());
+
+        $candidates = query('product')
+            ->withoutGlobalScopes()
+            ->where('sku', 'like', $this->escapeLikePattern($prefix) . '%')
+            ->orderByDesc($keyColumn)
+            ->pluck($skuColumn);
+
+        foreach ($candidates as $candidate) {
+            $counter = $this->extractCounter((string) $candidate, $prefix);
+
+            if ($counter !== null) {
+                return $counter;
+            }
+        }
+
+        return 0;
     }
 
     private function skuExists(string $sku): bool
@@ -75,10 +65,53 @@ class ProductSkuGenerator implements ProductSkuGeneratorInterface
             ->exists();
     }
 
-    private function truncate(string $seed, string $suffix = ''): string
+    private function resolvePrefix(): string
     {
-        $maxLength = 255 - mb_strlen($suffix);
+        $prefix = mb_trim((string) config('venditio.product.sku_prefix', 'SW-'));
 
-        return mb_substr($seed, 0, max(1, $maxLength)) . $suffix;
+        if ($prefix === '') {
+            $prefix = 'SW-';
+        }
+
+        return mb_substr($prefix, 0, 240);
+    }
+
+    private function resolveCounterPadding(): int
+    {
+        return max(0, (int) config('venditio.product.sku_counter_padding', 0));
+    }
+
+    private function buildCandidate(string $prefix, int $counter, int $padding): string
+    {
+        $counterString = $this->formatCounter($counter, $padding);
+        $maxPrefixLength = max(1, 255 - mb_strlen($counterString));
+        $normalizedPrefix = mb_substr($prefix, 0, $maxPrefixLength);
+
+        return $normalizedPrefix . $counterString;
+    }
+
+    private function formatCounter(int $counter, int $padding): string
+    {
+        return str_pad((string) $counter, $padding, '0', STR_PAD_LEFT);
+    }
+
+    private function extractCounter(string $sku, string $prefix): ?int
+    {
+        if (!str_starts_with($sku, $prefix)) {
+            return null;
+        }
+
+        $counter = mb_substr($sku, mb_strlen($prefix));
+
+        if ($counter === '' || !ctype_digit($counter)) {
+            return null;
+        }
+
+        return (int) $counter;
+    }
+
+    private function escapeLikePattern(string $value): string
+    {
+        return addcslashes($value, "\\%_");
     }
 }

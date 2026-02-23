@@ -47,7 +47,7 @@ class ProductValidation implements ProductValidationRules
             'new' => ['sometimes', 'boolean'],
             'in_evidence' => ['sometimes', 'boolean'],
             'sku' => [
-                'required',
+                'nullable',
                 'string',
                 'max:255',
                 Rule::unique($this->tableFor('product'), 'sku'),
