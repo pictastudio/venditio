@@ -106,25 +106,13 @@ Table countries {
   iso_2 char(2) [not null, unique]
   iso_3 char(3) [not null, unique]
   phone_code varchar(20) [not null]
-  currency_code varchar(3) [not null]
+  currency_id bigint [not null, ref: > currencies.id]
   flag_emoji varchar(50) [not null]
   capital varchar(150) [not null]
   native varchar(150)
   created_at datetime [not null]
   updated_at datetime [not null]
   deleted_at datetime
-}
-
-Table country_currency {
-  id bigint [pk, increment, not null]
-  country_id bigint [not null, ref: > countries.id]
-  currency_id bigint [not null, ref: > currencies.id]
-  created_at datetime [not null]
-  updated_at datetime [not null]
-
-  Indexes {
-    (country_id, currency_id) [unique]
-  }
 }
 
 Table country_tax_class {

@@ -49,7 +49,6 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_country_tax_class_table',
                 'create_tax_classes_table',
                 'create_currencies_table',
-                'create_country_currency_table',
                 'create_orders_table',
                 'create_order_lines_table',
                 'create_shipping_statuses_table',

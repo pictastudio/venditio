@@ -16,18 +16,44 @@ return new class extends Migration
         $this->seedRegions();
         $this->seedProvinces();
         $this->seedMunicipalities();
-        $this->seedCurrencies();
         $this->seedTaxClasses();
         $this->seedProductTypes();
     }
 
     private function seedCountries(): void
     {
-        $countries = File::json(__DIR__ . '/../seeders/data/countries.json');
+        $countries = collect(File::json(__DIR__ . '/../seeders/data/countries.json') ?? []);
 
-        $countries = collect($countries)
-            ->map(function (array $country) {
+        $currencyIdsByCode = $countries
+            ->pluck('currency_code')
+            ->filter()
+            ->map(fn (mixed $code): string => mb_strtoupper((string) $code))
+            ->unique()
+            ->sort()
+            ->values()
+            ->mapWithKeys(function (string $code): array {
+                $currency = Currency::query()->firstOrCreate(
+                    ['code' => $code],
+                    [
+                        'name' => $code,
+                        'symbol' => null,
+                        'exchange_rate' => 1,
+                        'decimal_places' => 2,
+                        'is_enabled' => true,
+                        'is_default' => false,
+                    ]
+                );
+
+                return [$code => $currency->getKey()];
+            });
+
+        $countries = $countries
+            ->map(function (array $country) use ($currencyIdsByCode): array {
+                $currencyCode = mb_strtoupper((string) ($country['currency_code'] ?? ''));
+                unset($country['currency_code']);
+
                 return array_merge($country, [
+                    'currency_id' => $currencyIdsByCode->get($currencyCode),
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -39,25 +65,6 @@ return new class extends Migration
         Country::insert($countries);
 
         Country::reguard();
-    }
-
-    private function seedCurrencies(): void
-    {
-        $currency = Currency::query()
-            ->create([
-                'name' => 'Euro',
-                'code' => 'EUR',
-                'symbol' => '€',
-                'exchange_rate' => 1,
-                'is_enabled' => true,
-                'is_default' => true,
-            ]);
-
-        $countryId = Country::where('iso_2', 'IT')->value('id');
-
-        if ($countryId) {
-            $currency->countries()->attach($countryId);
-        }
     }
 
     private function seedRegions(): void

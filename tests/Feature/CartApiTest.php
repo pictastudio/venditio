@@ -4,7 +4,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Cart, Country, CountryTaxClass, Product, TaxClass, User};
+use PictaStudio\Venditio\Models\{Cart, Country, CountryTaxClass, Currency, Product, TaxClass, User};
 
 use function Pest\Laravel\{assertSoftDeleted, deleteJson, getJson, patchJson, postJson};
 
@@ -27,12 +27,17 @@ beforeEach(function () {
 
 function setupCartTaxEnvironment(TaxClass $taxClass): void
 {
+    $currencyId = Currency::query()->firstOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
     $country = Country::query()->create([
         'name' => 'Italy',
         'iso_2' => 'IT',
         'iso_3' => 'ITA',
         'phone_code' => '+39',
-        'currency_code' => 'EUR',
+        'currency_id' => $currencyId,
         'flag_emoji' => 'it',
         'capital' => 'Rome',
         'native' => 'Italia',
@@ -113,12 +118,17 @@ it('uses the shipping address country tax rate when calculating cart line VAT', 
     $product = createCartProduct($taxClass);
     $user = createUserForCart('user-country-tax@example.test');
 
+    $currencyId = Currency::query()->firstOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
     $otherCountry = Country::query()->create([
         'name' => 'Germany',
         'iso_2' => 'DE',
         'iso_3' => 'DEU',
         'phone_code' => '+49',
-        'currency_code' => 'EUR',
+        'currency_id' => $currencyId,
         'flag_emoji' => 'de',
         'capital' => 'Berlin',
         'native' => 'Deutschland',

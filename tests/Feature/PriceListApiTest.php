@@ -3,7 +3,7 @@
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Contracts\ProductPriceResolverInterface;
-use PictaStudio\Venditio\Models\{Country, CountryTaxClass, PriceList, PriceListPrice, Product, TaxClass};
+use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, PriceList, PriceListPrice, Product, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, deleteJson, getJson, patchJson, postJson};
 
@@ -36,12 +36,17 @@ function pl_createProduct(float $inventoryPrice = 100): Product
 
 function pl_setupTaxEnvironment(TaxClass $taxClass): void
 {
+    $currencyId = Currency::query()->firstOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
     $country = Country::query()->create([
         'name' => 'Italy',
         'iso_2' => 'IT',
         'iso_3' => 'ITA',
         'phone_code' => '+39',
-        'currency_code' => 'EUR',
+        'currency_id' => $currencyId,
         'flag_emoji' => 'it',
         'capital' => 'Rome',
         'native' => 'Italia',

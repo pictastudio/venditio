@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PictaStudio\Venditio\Models\{Country, Municipality, Province, Region};
+use PictaStudio\Venditio\Models\{Country, Currency, Municipality, Province, Region};
 
 use function Pest\Laravel\{deleteJson, getJson, patchJson, postJson};
 
@@ -9,12 +9,17 @@ uses(RefreshDatabase::class);
 
 function createCountryForMunicipality(string $iso2, string $iso3, string $name): Country
 {
+    $currencyId = Currency::query()->firstOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
     return Country::query()->create([
         'name' => $name,
         'iso_2' => $iso2,
         'iso_3' => $iso3,
         'phone_code' => '+39',
-        'currency_code' => 'EUR',
+        'currency_id' => $currencyId,
         'flag_emoji' => mb_strtolower($iso2),
         'capital' => 'Capital',
         'native' => $name,

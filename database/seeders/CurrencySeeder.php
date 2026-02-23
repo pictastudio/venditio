@@ -3,26 +3,32 @@
 namespace PictaStudio\Venditio\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use PictaStudio\Venditio\Models\{Country, Currency};
+use Illuminate\Support\Facades\File;
+use PictaStudio\Venditio\Models\Currency;
 
 class CurrencySeeder extends Seeder
 {
     public function run(): void
     {
-        $currency = Currency::query()
-            ->create([
-                'name' => 'Euro',
-                'code' => 'EUR',
-                'symbol' => '€',
-                'exchange_rate' => 1,
-                'is_enabled' => true,
-                'is_default' => true,
-            ]);
-
-        $countryId = Country::where('iso_2', 'IT')->value('id');
-
-        if ($countryId) {
-            $currency->countries()->attach($countryId);
-        }
+        collect(File::json(__DIR__ . '/data/countries.json') ?? [])
+            ->pluck('currency_code')
+            ->filter()
+            ->map(fn (mixed $code): string => mb_strtoupper((string) $code))
+            ->unique()
+            ->sort()
+            ->values()
+            ->each(function (string $code): void {
+                Currency::query()->firstOrCreate(
+                    ['code' => $code],
+                    [
+                        'name' => $code,
+                        'symbol' => null,
+                        'exchange_rate' => 1,
+                        'decimal_places' => 2,
+                        'is_enabled' => true,
+                        'is_default' => false,
+                    ]
+                );
+            });
     }
 }

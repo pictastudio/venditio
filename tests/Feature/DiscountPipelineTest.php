@@ -5,7 +5,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use PictaStudio\Venditio\Dto\{CartDto, OrderDto};
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Country, CountryTaxClass, DiscountApplication, Product, ProductCategory, TaxClass, User};
+use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, DiscountApplication, Product, ProductCategory, TaxClass, User};
 use PictaStudio\Venditio\Pipelines\Cart\{CartCreationPipeline, CartUpdatePipeline};
 use PictaStudio\Venditio\Pipelines\Order\OrderCreationPipeline;
 
@@ -28,12 +28,17 @@ beforeEach(function () {
 
 function setupTaxEnvironment(TaxClass $taxClass): void
 {
+    $currencyId = Currency::query()->firstOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
     $country = Country::query()->create([
         'name' => 'Italy',
         'iso_2' => 'IT',
         'iso_3' => 'ITA',
         'phone_code' => '+39',
-        'currency_code' => 'EUR',
+        'currency_id' => $currencyId,
         'flag_emoji' => 'it',
         'capital' => 'Rome',
         'native' => 'Italia',

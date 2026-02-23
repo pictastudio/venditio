@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\{BelongsToMany, HasMany};
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, BelongsToMany, HasMany};
 use PictaStudio\Venditio\Models\Traits\HasHelperMethods;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -30,6 +30,11 @@ class Country extends Model
             ->withPivot('rate');
     }
 
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('currency'));
+    }
+
     public function addresses(): HasMany
     {
         return $this->hasMany(resolve_model('address'));
@@ -38,11 +43,5 @@ class Country extends Model
     public function regions(): HasMany
     {
         return $this->hasMany(resolve_model('region'));
-    }
-
-    public function currencies(): BelongsToMany
-    {
-        return $this->belongsToMany(resolve_model('currency'), 'country_currency')
-            ->withTimestamps();
     }
 }

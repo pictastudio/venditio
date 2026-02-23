@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\{Event, Schema};
 use PictaStudio\Venditio\Dto\{CartDto, OrderDto};
 use PictaStudio\Venditio\Enums\ProductStatus;
 use PictaStudio\Venditio\Events\ProductStockBelowMinimum;
-use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Product, TaxClass, User};
+use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, Product, TaxClass, User};
 use PictaStudio\Venditio\Pipelines\Cart\CartCreationPipeline;
 use PictaStudio\Venditio\Pipelines\Order\OrderCreationPipeline;
 
@@ -29,12 +29,17 @@ beforeEach(function () {
 
 function setupStockTaxEnvironment(TaxClass $taxClass): void
 {
+    $currencyId = Currency::query()->firstOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
     $country = Country::query()->create([
         'name' => 'Italy',
         'iso_2' => 'IT',
         'iso_3' => 'ITA',
         'phone_code' => '+39',
-        'currency_code' => 'EUR',
+        'currency_id' => $currencyId,
         'flag_emoji' => 'it',
         'capital' => 'Rome',
         'native' => 'Italia',

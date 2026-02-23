@@ -21,12 +21,10 @@ class StoreCountryRequest extends FormRequest
             'iso_2' => ['required', 'string', 'size:2', 'unique:countries,iso_2'],
             'iso_3' => ['required', 'string', 'size:3', 'unique:countries,iso_3'],
             'phone_code' => ['required', 'string', 'max:20'],
-            'currency_code' => ['required', 'string', 'size:3'],
+            'currency_id' => ['required', 'integer', Rule::exists($this->tableFor('currency'), 'id')],
             'flag_emoji' => ['required', 'string', 'max:50'],
             'capital' => ['required', 'string', 'max:150'],
             'native' => ['nullable', 'string', 'max:150'],
-            'currency_ids' => ['sometimes', 'array'],
-            'currency_ids.*' => ['integer', Rule::exists($this->tableFor('currency'), 'id')],
         ];
     }
 
