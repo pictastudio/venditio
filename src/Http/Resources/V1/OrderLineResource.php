@@ -26,7 +26,13 @@ class OrderLineResource extends JsonResource
 
     protected function getRelationshipsToInclude(): array
     {
-        return [];
+        return [
+            'order' => OrderResource::make($this->whenLoaded('order')),
+            'product' => ProductResource::make($this->whenLoaded('product')),
+            'currency' => CurrencyResource::make($this->whenLoaded('currency')),
+            'discount' => DiscountResource::make($this->whenLoaded('discount')),
+            'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+        ];
     }
 
     protected function transformAttributes(): array

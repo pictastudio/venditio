@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PictaStudio\Venditio\Http\Resources\Traits\{CanTransformAttributes, HasAttributesToExclude};
 
-class PriceListResource extends JsonResource
+class UserResource extends JsonResource
 {
     use CanTransformAttributes;
     use HasAttributesToExclude;
@@ -27,8 +27,10 @@ class PriceListResource extends JsonResource
     protected function getRelationshipsToInclude(): array
     {
         return [
-            'price_list_prices' => PriceListPriceResource::collection($this->whenLoaded('priceListPrices')),
-            'products' => ProductResource::collection($this->whenLoaded('products')),
+            'carts' => CartResource::collection($this->whenLoaded('carts')),
+            'orders' => OrderResource::collection($this->whenLoaded('orders')),
+            'addresses' => AddressResource::collection($this->whenLoaded('addresses')),
+            'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
         ];
     }
 

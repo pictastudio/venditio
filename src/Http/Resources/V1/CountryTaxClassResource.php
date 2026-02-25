@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PictaStudio\Venditio\Http\Resources\Traits\{CanTransformAttributes, HasAttributesToExclude};
 
-class GenericModelResource extends JsonResource
+class CountryTaxClassResource extends JsonResource
 {
     use CanTransformAttributes;
     use HasAttributesToExclude;
@@ -26,11 +26,16 @@ class GenericModelResource extends JsonResource
 
     protected function getRelationshipsToInclude(): array
     {
-        return [];
+        return [
+            'country' => CountryResource::make($this->whenLoaded('country')),
+            'tax_class' => TaxClassResource::make($this->whenLoaded('taxClass')),
+        ];
     }
 
     protected function transformAttributes(): array
     {
-        return [];
+        return [
+            //
+        ];
     }
 }

@@ -7,7 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Arr;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Currency\{StoreCurrencyRequest, UpdateCurrencyRequest};
-use PictaStudio\Venditio\Http\Resources\V1\GenericModelResource;
+use PictaStudio\Venditio\Http\Resources\V1\CurrencyResource;
 use PictaStudio\Venditio\Models\Currency;
 
 use function PictaStudio\Venditio\Helpers\Functions\query;
@@ -18,7 +18,7 @@ class CurrencyController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', Currency::class);
 
-        return GenericModelResource::collection(
+        return CurrencyResource::collection(
             $this->applyBaseFilters(query('currency'), request()->all(), 'currency')
         );
     }
@@ -36,14 +36,14 @@ class CurrencyController extends Controller
             $currency->countries()->sync($countryIds);
         }
 
-        return GenericModelResource::make($currency);
+        return CurrencyResource::make($currency);
     }
 
     public function show(Currency $currency): JsonResource
     {
         $this->authorizeIfConfigured('view', $currency);
 
-        return GenericModelResource::make($currency);
+        return CurrencyResource::make($currency);
     }
 
     public function update(UpdateCurrencyRequest $request, Currency $currency): JsonResource
@@ -60,7 +60,7 @@ class CurrencyController extends Controller
             $currency->countries()->sync($countryIds);
         }
 
-        return GenericModelResource::make($currency->refresh());
+        return CurrencyResource::make($currency->refresh());
     }
 
     public function destroy(Currency $currency)

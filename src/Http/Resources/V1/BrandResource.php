@@ -26,7 +26,10 @@ class BrandResource extends JsonResource
 
     protected function getRelationshipsToInclude(): array
     {
-        return [];
+        return [
+            'products' => ProductResource::collection($this->whenLoaded('products')),
+            'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+        ];
     }
 
     protected function transformAttributes(): array

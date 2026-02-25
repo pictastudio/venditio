@@ -6,7 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\DiscountApplication\{StoreDiscountApplicationRequest, UpdateDiscountApplicationRequest};
-use PictaStudio\Venditio\Http\Resources\V1\GenericModelResource;
+use PictaStudio\Venditio\Http\Resources\V1\DiscountApplicationResource;
 use PictaStudio\Venditio\Models\DiscountApplication;
 
 use function PictaStudio\Venditio\Helpers\Functions\query;
@@ -17,7 +17,7 @@ class DiscountApplicationController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', DiscountApplication::class);
 
-        return GenericModelResource::collection(
+        return DiscountApplicationResource::collection(
             $this->applyBaseFilters(query('discount_application'), request()->all(), 'discount_application')
         );
     }
@@ -28,14 +28,14 @@ class DiscountApplicationController extends Controller
 
         $discountApplication = query('discount_application')->create($request->validated());
 
-        return GenericModelResource::make($discountApplication);
+        return DiscountApplicationResource::make($discountApplication);
     }
 
     public function show(DiscountApplication $discountApplication): JsonResource
     {
         $this->authorizeIfConfigured('view', $discountApplication);
 
-        return GenericModelResource::make($discountApplication);
+        return DiscountApplicationResource::make($discountApplication);
     }
 
     public function update(UpdateDiscountApplicationRequest $request, DiscountApplication $discountApplication): JsonResource
@@ -45,7 +45,7 @@ class DiscountApplicationController extends Controller
         $discountApplication->fill($request->validated());
         $discountApplication->save();
 
-        return GenericModelResource::make($discountApplication->refresh());
+        return DiscountApplicationResource::make($discountApplication->refresh());
     }
 
     public function destroy(DiscountApplication $discountApplication)

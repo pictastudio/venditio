@@ -5,7 +5,7 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
-use PictaStudio\Venditio\Http\Resources\V1\GenericModelResource;
+use PictaStudio\Venditio\Http\Resources\V1\CountryResource;
 use PictaStudio\Venditio\Models\Country;
 
 use function PictaStudio\Venditio\Helpers\Functions\query;
@@ -16,7 +16,7 @@ class CountryController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', Country::class);
 
-        return GenericModelResource::collection(
+        return CountryResource::collection(
             $this->applyBaseFilters(query('country'), request()->all(), 'country')
         );
     }
@@ -25,6 +25,6 @@ class CountryController extends Controller
     {
         $this->authorizeIfConfigured('view', $country);
 
-        return GenericModelResource::make($country);
+        return CountryResource::make($country);
     }
 }

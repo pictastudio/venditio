@@ -5,11 +5,13 @@ namespace PictaStudio\Venditio\Http\Resources\V1;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PictaStudio\Venditio\Http\Resources\Traits\{CanTransformAttributes, HasAttributesToExclude};
+use PictaStudio\Venditio\Http\Resources\Traits\ResolvesModelResource;
 
-class PriceListResource extends JsonResource
+class DiscountResource extends JsonResource
 {
     use CanTransformAttributes;
     use HasAttributesToExclude;
+    use ResolvesModelResource;
 
     public function toArray(Request $request)
     {
@@ -27,8 +29,13 @@ class PriceListResource extends JsonResource
     protected function getRelationshipsToInclude(): array
     {
         return [
-            'price_list_prices' => PriceListPriceResource::collection($this->whenLoaded('priceListPrices')),
-            'products' => ProductResource::collection($this->whenLoaded('products')),
+            'discountable' => $this->whenLoaded(
+                'discountable',
+                fn () => filled($this->resource->discountable)
+                    ? $this->resolveResourceForModel($this->resource->discountable)
+                    : null
+            ),
+            'applications' => DiscountApplicationResource::collection($this->whenLoaded('applications')),
         ];
     }
 

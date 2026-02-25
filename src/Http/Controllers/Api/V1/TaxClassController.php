@@ -7,7 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\TaxClass\{StoreTaxClassRequest, UpdateTaxClassRequest};
-use PictaStudio\Venditio\Http\Resources\V1\GenericModelResource;
+use PictaStudio\Venditio\Http\Resources\V1\TaxClassResource;
 use PictaStudio\Venditio\Models\TaxClass;
 
 use function PictaStudio\Venditio\Helpers\Functions\query;
@@ -30,7 +30,7 @@ class TaxClassController extends Controller
             ],
         ]);
 
-        return GenericModelResource::collection(
+        return TaxClassResource::collection(
             $this->applyBaseFilters(query('tax_class')->with($includes), request()->all(), 'tax_class')
         );
     }
@@ -41,14 +41,14 @@ class TaxClassController extends Controller
 
         $taxClass = query('tax_class')->create($request->validated());
 
-        return GenericModelResource::make($taxClass);
+        return TaxClassResource::make($taxClass);
     }
 
     public function show(TaxClass $taxClass): JsonResource
     {
         $this->authorizeIfConfigured('view', $taxClass);
 
-        return GenericModelResource::make($taxClass);
+        return TaxClassResource::make($taxClass);
     }
 
     public function update(UpdateTaxClassRequest $request, TaxClass $taxClass): JsonResource
@@ -58,7 +58,7 @@ class TaxClassController extends Controller
         $taxClass->fill($request->validated());
         $taxClass->save();
 
-        return GenericModelResource::make($taxClass->refresh());
+        return TaxClassResource::make($taxClass->refresh());
     }
 
     public function destroy(TaxClass $taxClass)

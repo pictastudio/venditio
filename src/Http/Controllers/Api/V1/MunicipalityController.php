@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
-use PictaStudio\Venditio\Http\Resources\V1\GenericModelResource;
+use PictaStudio\Venditio\Http\Resources\V1\MunicipalityResource;
 use PictaStudio\Venditio\Models\Municipality;
 
 use function PictaStudio\Venditio\Helpers\Functions\query;
@@ -28,7 +28,7 @@ class MunicipalityController extends Controller
             ],
         ]);
 
-        return GenericModelResource::collection(
+        return MunicipalityResource::collection(
             $this->applyBaseFilters(
                 query('municipality')
                     ->when(
@@ -45,6 +45,6 @@ class MunicipalityController extends Controller
     {
         $this->authorizeIfConfigured('view', $municipality);
 
-        return GenericModelResource::make($municipality);
+        return MunicipalityResource::make($municipality);
     }
 }

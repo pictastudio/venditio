@@ -35,8 +35,16 @@ class ProductResource extends JsonResource
 
         return [
             'price_calculated' => $this->resolveCalculatedPrice(),
+            'brand' => BrandResource::make($this->whenLoaded('brand')),
+            'product_type' => ProductTypeResource::make($this->whenLoaded('productType')),
+            'tax_class' => TaxClassResource::make($this->whenLoaded('taxClass')),
+            'parent' => self::make($this->whenLoaded('parent')),
+            'categories' => ProductCategoryResource::collection($this->whenLoaded('categories')),
+            'price_lists_relation' => PriceListResource::collection($this->whenLoaded('priceLists')),
+            'price_list_prices' => PriceListPriceResource::collection($this->whenLoaded('priceListPrices')),
             'variant_options' => ProductVariantOptionResource::collection($this->whenLoaded('variantOptions')),
             'inventory' => InventoryResource::make($this->whenLoaded('inventory')),
+            'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
             'price_lists' => $this->when(
                 $shouldIncludePriceLists && $this->resource->relationLoaded('priceListPrices'),
                 fn () => collect($this->resource->getRelation('priceListPrices'))
@@ -67,6 +75,7 @@ class ProductResource extends JsonResource
                 $shouldIncludeVariants,
                 fn () => self::collection($this->whenLoaded('variants'))
             ),
+            'variants_relation' => self::collection($this->whenLoaded('variants')),
             'variants_options_table' => $this->when(
                 $shouldIncludeVariantsOptionsTable,
                 fn () => $this->buildVariantsOptionsTable()

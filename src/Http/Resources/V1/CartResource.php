@@ -29,7 +29,10 @@ class CartResource extends JsonResource
     protected function getRelationshipsToInclude(): array
     {
         return [
+            'user' => UserResource::make($this->whenLoaded('user')),
+            'order' => OrderResource::make($this->whenLoaded('order')),
             'lines' => CartLineResource::collection($this->whenLoaded('lines')),
+            'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
         ];
     }
 

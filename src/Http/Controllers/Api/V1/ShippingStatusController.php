@@ -6,7 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\ShippingStatus\{StoreShippingStatusRequest, UpdateShippingStatusRequest};
-use PictaStudio\Venditio\Http\Resources\V1\GenericModelResource;
+use PictaStudio\Venditio\Http\Resources\V1\ShippingStatusResource;
 use PictaStudio\Venditio\Models\ShippingStatus;
 
 use function PictaStudio\Venditio\Helpers\Functions\query;
@@ -17,7 +17,7 @@ class ShippingStatusController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', ShippingStatus::class);
 
-        return GenericModelResource::collection(
+        return ShippingStatusResource::collection(
             $this->applyBaseFilters(query('shipping_status'), request()->all(), 'shipping_status')
         );
     }
@@ -28,14 +28,14 @@ class ShippingStatusController extends Controller
 
         $shippingStatus = query('shipping_status')->create($request->validated());
 
-        return GenericModelResource::make($shippingStatus);
+        return ShippingStatusResource::make($shippingStatus);
     }
 
     public function show(ShippingStatus $shippingStatus): JsonResource
     {
         $this->authorizeIfConfigured('view', $shippingStatus);
 
-        return GenericModelResource::make($shippingStatus);
+        return ShippingStatusResource::make($shippingStatus);
     }
 
     public function update(UpdateShippingStatusRequest $request, ShippingStatus $shippingStatus): JsonResource
@@ -45,7 +45,7 @@ class ShippingStatusController extends Controller
         $shippingStatus->fill($request->validated());
         $shippingStatus->save();
 
-        return GenericModelResource::make($shippingStatus->refresh());
+        return ShippingStatusResource::make($shippingStatus->refresh());
     }
 
     public function destroy(ShippingStatus $shippingStatus)

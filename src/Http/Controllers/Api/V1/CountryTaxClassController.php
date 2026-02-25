@@ -6,7 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\CountryTaxClass\{StoreCountryTaxClassRequest, UpdateCountryTaxClassRequest};
-use PictaStudio\Venditio\Http\Resources\V1\GenericModelResource;
+use PictaStudio\Venditio\Http\Resources\V1\CountryTaxClassResource;
 use PictaStudio\Venditio\Models\CountryTaxClass;
 
 use function PictaStudio\Venditio\Helpers\Functions\query;
@@ -17,7 +17,7 @@ class CountryTaxClassController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', CountryTaxClass::class);
 
-        return GenericModelResource::collection(
+        return CountryTaxClassResource::collection(
             $this->applyBaseFilters(query('country_tax_class'), request()->all(), 'country_tax_class')
         );
     }
@@ -28,14 +28,14 @@ class CountryTaxClassController extends Controller
 
         $countryTaxClass = query('country_tax_class')->create($request->validated());
 
-        return GenericModelResource::make($countryTaxClass);
+        return CountryTaxClassResource::make($countryTaxClass);
     }
 
     public function show(CountryTaxClass $countryTaxClass): JsonResource
     {
         $this->authorizeIfConfigured('view', $countryTaxClass);
 
-        return GenericModelResource::make($countryTaxClass);
+        return CountryTaxClassResource::make($countryTaxClass);
     }
 
     public function update(UpdateCountryTaxClassRequest $request, CountryTaxClass $countryTaxClass): JsonResource
@@ -45,7 +45,7 @@ class CountryTaxClassController extends Controller
         $countryTaxClass->fill($request->validated());
         $countryTaxClass->save();
 
-        return GenericModelResource::make($countryTaxClass->refresh());
+        return CountryTaxClassResource::make($countryTaxClass->refresh());
     }
 
     public function destroy(CountryTaxClass $countryTaxClass)

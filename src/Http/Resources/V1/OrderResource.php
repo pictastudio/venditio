@@ -27,7 +27,10 @@ class OrderResource extends JsonResource
     protected function getRelationshipsToInclude(): array
     {
         return [
+            'user' => UserResource::make($this->whenLoaded('user')),
+            'shipping_status' => ShippingStatusResource::make($this->whenLoaded('shippingStatus')),
             'lines' => OrderLineResource::collection($this->whenLoaded('lines')),
+            'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
         ];
     }
 

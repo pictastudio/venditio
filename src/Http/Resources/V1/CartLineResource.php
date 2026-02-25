@@ -26,13 +26,19 @@ class CartLineResource extends JsonResource
 
     protected function getRelationshipsToInclude(): array
     {
-        return [];
+        return [
+            'cart' => CartResource::make($this->whenLoaded('cart')),
+            'product' => ProductResource::make($this->whenLoaded('product')),
+            'currency' => CurrencyResource::make($this->whenLoaded('currency')),
+            'discount' => DiscountResource::make($this->whenLoaded('discount')),
+            'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+        ];
     }
 
     protected function transformAttributes(): array
     {
         return [
-            'product.images' => fn (?array $images) => (
+            'product_data.images' => fn (?array $images) => (
                 collect($images)
                     ->map(fn (array $image) => [
                         'alt' => $image['alt'],
@@ -40,7 +46,7 @@ class CartLineResource extends JsonResource
                     ])
                     ->toArray()
             ),
-            'product.files' => fn (?array $files) => (
+            'product_data.files' => fn (?array $files) => (
                 collect($files)
                     ->map(fn (array $file) => [
                         'name' => $file['name'],

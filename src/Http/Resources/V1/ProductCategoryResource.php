@@ -27,7 +27,12 @@ class ProductCategoryResource extends JsonResource
     protected function getRelationshipsToInclude(): array
     {
         return [
-            // 'categories' => CategoryResource::collection($this->whenLoaded('categories')),
+            'products' => ProductResource::collection($this->whenLoaded('products')),
+            'parent' => self::make($this->whenLoaded('parent')),
+            'ancestors' => self::make($this->whenLoaded('ancestors')),
+            'children' => self::collection($this->whenLoaded('children')),
+            'descendants' => self::collection($this->whenLoaded('descendants')),
+            'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
         ];
     }
 

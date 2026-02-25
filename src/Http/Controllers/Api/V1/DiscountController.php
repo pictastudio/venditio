@@ -6,7 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Discount\{StoreDiscountRequest, UpdateDiscountRequest};
-use PictaStudio\Venditio\Http\Resources\V1\GenericModelResource;
+use PictaStudio\Venditio\Http\Resources\V1\DiscountResource;
 use PictaStudio\Venditio\Models\Discount;
 
 use function PictaStudio\Venditio\Helpers\Functions\query;
@@ -17,7 +17,7 @@ class DiscountController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', Discount::class);
 
-        return GenericModelResource::collection(
+        return DiscountResource::collection(
             $this->applyBaseFilters(query('discount'), request()->all(), 'discount')
         );
     }
@@ -28,14 +28,14 @@ class DiscountController extends Controller
 
         $discount = query('discount')->create($request->validated());
 
-        return GenericModelResource::make($discount);
+        return DiscountResource::make($discount);
     }
 
     public function show(Discount $discount): JsonResource
     {
         $this->authorizeIfConfigured('view', $discount);
 
-        return GenericModelResource::make($discount->load('discountable'));
+        return DiscountResource::make($discount->load('discountable'));
     }
 
     public function update(UpdateDiscountRequest $request, Discount $discount): JsonResource
@@ -45,7 +45,7 @@ class DiscountController extends Controller
         $discount->fill($request->validated());
         $discount->save();
 
-        return GenericModelResource::make($discount->refresh());
+        return DiscountResource::make($discount->refresh());
     }
 
     public function destroy(Discount $discount)

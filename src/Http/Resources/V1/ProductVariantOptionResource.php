@@ -27,7 +27,8 @@ class ProductVariantOptionResource extends JsonResource
     protected function getRelationshipsToInclude(): array
     {
         return [
-            //
+            'product_variant' => ProductVariantResource::make($this->whenLoaded('productVariant')),
+            'products' => ProductResource::collection($this->whenLoaded('products')),
         ];
     }
 

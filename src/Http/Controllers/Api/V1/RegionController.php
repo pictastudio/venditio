@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
-use PictaStudio\Venditio\Http\Resources\V1\GenericModelResource;
+use PictaStudio\Venditio\Http\Resources\V1\RegionResource;
 use PictaStudio\Venditio\Models\Region;
 
 use function PictaStudio\Venditio\Helpers\Functions\query;
@@ -28,7 +28,7 @@ class RegionController extends Controller
             ],
         ]);
 
-        return GenericModelResource::collection(
+        return RegionResource::collection(
             $this->applyBaseFilters(
                 query('region')
                     ->when(
@@ -45,6 +45,6 @@ class RegionController extends Controller
     {
         $this->authorizeIfConfigured('view', $region);
 
-        return GenericModelResource::make($region);
+        return RegionResource::make($region);
     }
 }
