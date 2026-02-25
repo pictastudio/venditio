@@ -3,6 +3,7 @@
 namespace PictaStudio\Venditio\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 
 use function Laravel\Prompts\confirm;
 
@@ -18,6 +19,11 @@ class InstallCommand extends Command
 
         $this->components->info('Publishing venditio configuration...');
         $this->call('vendor:publish', ['--tag' => 'venditio-config']);
+
+        if (!$this->hasTranslationsTableMigrationPublished()) {
+            $this->components->info('Publishing translatable migrations required for venditio');
+            $this->call('vendor:publish', ['--tag' => 'translatable-migrations']);
+        }
 
         $this->components->info('Publishing venditio migrations...');
         $this->call('vendor:publish', ['--tag' => 'venditio-migrations']);
@@ -37,5 +43,27 @@ class InstallCommand extends Command
         $this->components->info('Venditio package installed successfully.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Check if the create_translations_table migration has already been published to the application.
+     */
+    protected function hasTranslationsTableMigrationPublished(): bool
+    {
+        $migrationsPath = database_path('migrations');
+
+        if (!File::isDirectory($migrationsPath)) {
+            return false;
+        }
+
+        $files = File::files($migrationsPath);
+
+        foreach ($files as $file) {
+            if (str_contains($file->getFilename(), 'create_translations_table')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
