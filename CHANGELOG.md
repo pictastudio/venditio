@@ -2,6 +2,55 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.1.0 - 2026-02-25
+
+### What's Changed
+
+#### Features
+
+- **Currency support** - Add currency to inventories, cart lines, and order lines; seed currencies and simplify country-currency relationship (belongs-to).
+- **Slugs** - Add slug to brands, product categories, and product types.
+- **Geography** - Add regions, provinces, and municipalities.
+- **Defaults & seeding** - Default product type and default tax class with automatic assignment when not provided; seed base data in a migration.
+- **Translatable** - Integrate translatable library for translatable content.
+- **VAT** - Resolve correct VAT rate for the address country.
+
+#### API & HTTP
+
+- **Dedicated HTTP resources** - Create dedicated HTTP resources for every model (no raw model exposure).
+- **Auth & policies** - Remove opinionated auth checks and delegate authorization to policies (host app controls auth).
+
+#### Validation & configuration
+
+- **Validation rules** - Refactor all validation rules to array format instead of pipe-separated strings.
+- **Validation classes** - Bind validation classes from config for overridability.
+- **Soft deletes** - Add missing soft deletes where applicable.
+
+#### Data & logic
+
+- **SKU** - Updated SKU generation logic.
+- **Countries & currencies** - Update countries and currencies data.
+
+#### Tooling & DX
+
+- **Install** - Custom install command for package setup.
+- **Migrations** - Publish required translatable migrations before Venditio migrations.
+- **Bruno** - Update Bruno API requests.
+
+#### Documentation & maintenance
+
+- Updated docs and database schema.
+- CHANGELOG updates.
+- Naming updates and code format/linting.
+- General fixes.
+
+#### Dependencies
+
+- Bump `actions/checkout` from 4 to 6 (GitHub Actions).
+- Bump `stefanzweifel/git-auto-commit-action` from 5 to 7 (GitHub Actions).
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.0.0...v1.1.0
+
 ## v1.0.0 - 2026-02-12
 
 ### What's Changed
