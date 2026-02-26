@@ -3,8 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use PictaStudio\Venditio\Models\Currency;
-use PictaStudio\Venditio\Models\Product;
+use PictaStudio\Venditio\Models\{Currency, Product};
 
 return new class extends Migration
 {

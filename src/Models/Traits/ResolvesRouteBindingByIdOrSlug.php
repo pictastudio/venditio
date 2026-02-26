@@ -2,8 +2,7 @@
 
 namespace PictaStudio\Venditio\Models\Traits;
 
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\{Builder, Model};
 
 trait ResolvesRouteBindingByIdOrSlug
 {

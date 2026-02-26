@@ -92,7 +92,7 @@ class ProductSkuGenerator implements ProductSkuGeneratorInterface
 
     private function formatCounter(int $counter, int $padding): string
     {
-        return str_pad((string) $counter, $padding, '0', STR_PAD_LEFT);
+        return mb_str_pad((string) $counter, $padding, '0', STR_PAD_LEFT);
     }
 
     private function extractCounter(string $sku, string $prefix): ?int
@@ -112,6 +112,6 @@ class ProductSkuGenerator implements ProductSkuGeneratorInterface
 
     private function escapeLikePattern(string $value): string
     {
-        return addcslashes($value, "\\%_");
+        return addcslashes($value, '\\%_');
     }
 }
