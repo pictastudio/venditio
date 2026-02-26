@@ -86,7 +86,6 @@ class VenditioServiceProvider extends PackageServiceProvider
         $this->registerApiRoutes();
         $this->registerScheduledCommands();
         $this->bindValidationClasses();
-        // $this->bindDtos();
         $this->registerFactoriesGuessing();
         $this->registerMorphMap();
         $this->bindDiscountClasses();
@@ -144,13 +143,6 @@ class VenditioServiceProvider extends PackageServiceProvider
         );
     }
 
-    // private function bindDtos(): void
-    // {
-    //     $this->app->singleton(OrderDtoContract::class, fn (Application $app) => OrderDto::bindIntoContainer());
-    //     $this->app->singleton(CartDtoContract::class, fn (Application $app) => CartDto::bindIntoContainer());
-    //     $this->app->singleton(CartLineDtoContract::class, fn (Application $app) => CartLineDto::bindIntoContainer());
-    // }
-
     private function registerApiRoutes(): void
     {
         if (!config('venditio.routes.api.enable')) {
@@ -162,9 +154,6 @@ class VenditioServiceProvider extends PackageServiceProvider
         }
 
         $prefix = config('venditio.routes.api.v1.prefix');
-
-        // Venditio::configureRateLimiting($prefix);
-        // config('venditio.routes.api.v1.rate_limit.configure')();
 
         VenditioFacade::configureRateLimiting($prefix);
 

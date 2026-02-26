@@ -88,7 +88,7 @@ if (!function_exists('resolve_enum')) {
      * Resolve the enum class for the given model/type, returns the fully qualified class name
      *
      * @param  string  $enum  Can be one of the following values:
-     *                        'order_status', 'cart_status', 'cart_line_status', 'address_type'
+     *                        'order_status', 'cart_status', 'address_type'
      * @return class-string
      */
     function resolve_enum(string $enum): string
@@ -96,7 +96,6 @@ if (!function_exists('resolve_enum')) {
         return match ($enum) {
             'order_status' => config('venditio.order.status_enum'),
             'cart_status' => config('venditio.cart.status_enum'),
-            'cart_line_status' => config('venditio.cart_line.status_enum'),
             'address_type' => config('venditio.addresses.type_enum'),
         };
     }

@@ -52,6 +52,7 @@ return new class extends Migration
 
         $countries = $countries
             ->map(function (array $country) use ($currencyIdsByCode): array {
+                $country = array_filter($country, fn (mixed $value): bool => filled($value));
                 $currencyCode = mb_strtoupper((string) ($country['currency_code'] ?? ''));
                 unset($country['currency_code']);
 

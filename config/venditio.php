@@ -1,7 +1,6 @@
 <?php
 
 use PictaStudio\Venditio\{Discounts, Dto, Enums, Generators, Models, Pricing};
-use PictaStudio\Venditio\Facades\Venditio;
 use PictaStudio\Venditio\Pipelines\{Cart, CartLine, Order};
 use PictaStudio\Venditio\Validations;
 
@@ -202,13 +201,6 @@ return [
                 ],
             ],
         ],
-        // 'statuses' => [
-        //     'pending' => 'pending',
-        //     'approved' => 'approved',
-        //     'shipped' => 'shipped',
-        //     'delivered' => 'delivered',
-        //     'cancelled' => 'cancelled',
-        // ],
     ],
 
     /*
@@ -311,8 +303,6 @@ return [
             'include_end_date' => true, // include the end date in the date range
         ],
         'routes_to_exclude' => [ // routes to exclude from applying the scopes
-            'filament.*',
-            'livewire.update',
             // '*', // exclude all routes
         ],
     ],
@@ -334,9 +324,6 @@ return [
                     'api',
                     // 'auth:sanctum',
                 ],
-                // 'rate_limit' => [
-                //     'configure' => fn () => Venditio::configureRateLimiting('venditio/api/v1'),
-                // ],
                 'pagination' => [
                     'per_page' => 15,
                 ],
