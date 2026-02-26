@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
 use PictaStudio\Venditio\Models\Scopes\Active;
-use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods};
+use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods, ResolvesRouteBindingByIdOrSlug};
 use Spatie\Sluggable\{HasSlug, SlugOptions};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -19,6 +19,7 @@ class ProductType extends Model implements TranslatableContract
     use HasFactory;
     use HasHelperMethods;
     use HasSlug;
+    use ResolvesRouteBindingByIdOrSlug;
     use SoftDeletes;
     use Translatable;
 

@@ -5,13 +5,13 @@ meta {
 }
 
 delete {
-  url: {{baseUrl}}/brands/:id
+  url: {{baseUrl}}/brands/:id-or-slug
   body: none
   auth: inherit
 }
 
 params:path {
-  id: 
+  id-or-slug: 
 }
 
 headers {

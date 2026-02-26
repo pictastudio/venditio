@@ -5,13 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/products/:id/variants
+  url: {{baseUrl}}/products/:id-or-slug/variants
   body: none
   auth: inherit
 }
 
 params:path {
-  id: 
+  id-or-slug: 
 }
 
 headers {
