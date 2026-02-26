@@ -2,6 +2,14 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.1.1 - 2026-02-26
+
+### What's Changed
+
+- resolve route model binding by id or slug (multilingual)
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.1.0...v1.1.1
+
 ## v1.1.0 - 2026-02-25
 
 ### What's Changed
