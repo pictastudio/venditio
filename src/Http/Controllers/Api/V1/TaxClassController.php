@@ -30,8 +30,10 @@ class TaxClassController extends Controller
             ],
         ]);
 
+        $filters = request()->except('include');
+
         return TaxClassResource::collection(
-            $this->applyBaseFilters(query('tax_class')->with($includes), request()->all(), 'tax_class')
+            $this->applyBaseFilters(query('tax_class')->with($includes), $filters, 'tax_class')
         );
     }
 

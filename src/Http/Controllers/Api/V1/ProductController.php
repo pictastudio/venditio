@@ -20,7 +20,7 @@ class ProductController extends Controller
         $this->authorizeIfConfigured('viewAny', Product::class);
 
         $includes = $this->resolveProductIncludes();
-        $filters = request()->all();
+        $filters = request()->except('include');
 
         return ProductResource::collection(
             $this->applyBaseFilters(
@@ -57,7 +57,7 @@ class ProductController extends Controller
         $this->authorizeIfConfigured('view', $product);
 
         $includes = $this->resolveProductIncludes();
-        $filters = request()->all();
+        $filters = request()->except('include');
 
         $variants = $this->applyBaseFilters(
             query('product')
