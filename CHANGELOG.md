@@ -2,6 +2,10 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.1.2 - 2026-02-26
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.1.1...v1.1.2
+
 ## v1.1.1 - 2026-02-26
 
 ### What's Changed
