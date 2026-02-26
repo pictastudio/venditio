@@ -14,9 +14,6 @@ class ProductCategoryValidation implements ProductCategoryValidationRules
 
     public function getStoreValidationRules(): array
     {
-        $productCategoryTable = $this->tableFor('product_category');
-        $productCategoryMorphClass = $this->morphClassFor('product_category');
-
         return [
             'parent_id' => [
                 'nullable',
@@ -24,45 +21,18 @@ class ProductCategoryValidation implements ProductCategoryValidationRules
                 Rule::exists($this->tableFor('product_category'), 'id'),
             ],
             'name' => ['sometimes', 'filled', 'string', 'max:255'],
-            'slug' => [
-                'sometimes',
-                'filled',
-                'string',
-                'max:255',
-                Rule::unique($productCategoryTable, 'slug'),
-                $this->uniqueTranslatedAttributeValueRule(
-                    $productCategoryMorphClass,
-                    app()->getLocale(),
-                    'slug'
-                ),
-            ],
+            'slug' => ['sometimes', 'filled', 'string', 'max:255'],
             'active' => ['sometimes', 'boolean'],
             'sort_order' => ['required', 'integer', 'min:0'],
             ...$this->translatableLocaleRules([
                 'name' => ['sometimes', 'filled', 'string', 'max:255'],
-            ]),
-            ...$this->translatableLocaleRulesForAttribute('slug', fn (string $locale): array => [
-                'sometimes',
-                'filled',
-                'string',
-                'max:255',
-                $this->uniqueTranslatedAttributeValueRule($productCategoryMorphClass, $locale, 'slug'),
+                'slug' => ['sometimes', 'filled', 'string', 'max:255'],
             ]),
         ];
     }
 
     public function getUpdateValidationRules(): array
     {
-        $productCategoryTable = $this->tableFor('product_category');
-        $productCategoryMorphClass = $this->morphClassFor('product_category');
-        $productCategoryId = $this->routeModelKey('product_category');
-
-        $slugUniqueRule = Rule::unique($productCategoryTable, 'slug');
-
-        if ($productCategoryId !== null) {
-            $slugUniqueRule = $slugUniqueRule->ignore($productCategoryId);
-        }
-
         return [
             'parent_id' => [
                 'sometimes',
@@ -71,35 +41,12 @@ class ProductCategoryValidation implements ProductCategoryValidationRules
                 Rule::exists($this->tableFor('product_category'), 'id'),
             ],
             'name' => ['sometimes', 'filled', 'string', 'max:255'],
-            'slug' => [
-                'sometimes',
-                'filled',
-                'string',
-                'max:255',
-                $slugUniqueRule,
-                $this->uniqueTranslatedAttributeValueRule(
-                    $productCategoryMorphClass,
-                    app()->getLocale(),
-                    'slug',
-                    $productCategoryId
-                ),
-            ],
+            'slug' => ['sometimes', 'filled', 'string', 'max:255'],
             'active' => ['sometimes', 'boolean'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
             ...$this->translatableLocaleRules([
                 'name' => ['sometimes', 'filled', 'string', 'max:255'],
-            ]),
-            ...$this->translatableLocaleRulesForAttribute('slug', fn (string $locale): array => [
-                'sometimes',
-                'filled',
-                'string',
-                'max:255',
-                $this->uniqueTranslatedAttributeValueRule(
-                    $productCategoryMorphClass,
-                    $locale,
-                    'slug',
-                    $productCategoryId
-                ),
+                'slug' => ['sometimes', 'filled', 'string', 'max:255'],
             ]),
         ];
     }
@@ -109,8 +56,4 @@ class ProductCategoryValidation implements ProductCategoryValidationRules
         return (new (resolve_model($model)))->getTable();
     }
 
-    private function morphClassFor(string $model): string
-    {
-        return (new (resolve_model($model)))->getMorphClass();
-    }
 }

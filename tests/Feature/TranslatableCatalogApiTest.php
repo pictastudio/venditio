@@ -431,7 +431,7 @@ it('keeps translated slugs in sync on update', function () {
     ]);
 });
 
-it('rejects duplicate translated slugs for product types on create', function () {
+it('allows duplicate translated names for product types while keeping base slug unique', function () {
     postJson(config('venditio.routes.api.v1.prefix') . '/product_types', [
         'en' => [
             'name' => 'Food',
@@ -439,20 +439,33 @@ it('rejects duplicate translated slugs for product types on create', function ()
         'it' => [
             'name' => 'Cibo',
         ],
-    ])->assertCreated();
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'slug' => 'food',
+        ]);
 
-    postJson(config('venditio.routes.api.v1.prefix') . '/product_types', [
+    $secondResponse = postJson(config('venditio.routes.api.v1.prefix') . '/product_types', [
         'en' => [
-            'name' => 'Drinks',
+            'name' => 'Food',
         ],
         'it' => [
             'name' => 'Cibo',
         ],
-    ])->assertUnprocessable()
-        ->assertJsonValidationErrors(['it.slug']);
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'slug' => 'food-1',
+        ]);
+
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new ProductType)->getMorphClass(),
+        'translatable_id' => $secondResponse->json('id'),
+        'locale' => 'it',
+        'attribute' => 'slug',
+        'value' => 'cibo',
+    ]);
 });
 
-it('rejects duplicate translated slugs for product types on update', function () {
+it('allows duplicate translated names for product types on update while keeping base slug unique', function () {
     postJson(config('venditio.routes.api.v1.prefix') . '/product_types', [
         'en' => [
             'name' => 'Food',
@@ -472,14 +485,27 @@ it('rejects duplicate translated slugs for product types on update', function ()
     ])->assertCreated();
 
     patchJson(config('venditio.routes.api.v1.prefix') . '/product_types/' . $productTypeResponse->json('id'), [
+        'en' => [
+            'name' => 'Food',
+        ],
         'it' => [
             'name' => 'Cibo',
         ],
-    ])->assertUnprocessable()
-        ->assertJsonValidationErrors(['it.slug']);
+    ])->assertOk()
+        ->assertJsonFragment([
+            'slug' => 'food-1',
+        ]);
+
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new ProductType)->getMorphClass(),
+        'translatable_id' => $productTypeResponse->json('id'),
+        'locale' => 'it',
+        'attribute' => 'slug',
+        'value' => 'cibo',
+    ]);
 });
 
-it('rejects duplicate translated slugs for brands on create', function () {
+it('allows duplicate translated names for brands while keeping base slug unique', function () {
     postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
         'en' => [
             'name' => 'Shoes Factory',
@@ -487,20 +513,33 @@ it('rejects duplicate translated slugs for brands on create', function () {
         'it' => [
             'name' => 'Fabbrica Scarpe',
         ],
-    ])->assertCreated();
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'slug' => 'shoes-factory',
+        ]);
 
-    postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+    $secondResponse = postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
         'en' => [
-            'name' => 'Leather House',
+            'name' => 'Shoes Factory',
         ],
         'it' => [
             'name' => 'Fabbrica Scarpe',
         ],
-    ])->assertUnprocessable()
-        ->assertJsonValidationErrors(['it.slug']);
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'slug' => 'shoes-factory-1',
+        ]);
+
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new Brand)->getMorphClass(),
+        'translatable_id' => $secondResponse->json('id'),
+        'locale' => 'it',
+        'attribute' => 'slug',
+        'value' => 'fabbrica-scarpe',
+    ]);
 });
 
-it('rejects duplicate translated slugs for brands on update', function () {
+it('allows duplicate translated names for brands on update while keeping base slug unique', function () {
     postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
         'en' => [
             'name' => 'Shoes Factory',
@@ -520,14 +559,27 @@ it('rejects duplicate translated slugs for brands on update', function () {
     ])->assertCreated();
 
     patchJson(config('venditio.routes.api.v1.prefix') . '/brands/' . $brandResponse->json('id'), [
+        'en' => [
+            'name' => 'Shoes Factory',
+        ],
         'it' => [
             'name' => 'Fabbrica Scarpe',
         ],
-    ])->assertUnprocessable()
-        ->assertJsonValidationErrors(['it.slug']);
+    ])->assertOk()
+        ->assertJsonFragment([
+            'slug' => 'shoes-factory-1',
+        ]);
+
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new Brand)->getMorphClass(),
+        'translatable_id' => $brandResponse->json('id'),
+        'locale' => 'it',
+        'attribute' => 'slug',
+        'value' => 'fabbrica-scarpe',
+    ]);
 });
 
-it('rejects duplicate translated slugs for product categories on create', function () {
+it('allows duplicate translated names for product categories while keeping base slug unique', function () {
     postJson(config('venditio.routes.api.v1.prefix') . '/product_categories', [
         'sort_order' => 1,
         'en' => [
@@ -536,21 +588,34 @@ it('rejects duplicate translated slugs for product categories on create', functi
         'it' => [
             'name' => 'Abbigliamento',
         ],
-    ])->assertCreated();
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'slug' => 'clothing',
+        ]);
 
-    postJson(config('venditio.routes.api.v1.prefix') . '/product_categories', [
+    $secondResponse = postJson(config('venditio.routes.api.v1.prefix') . '/product_categories', [
         'sort_order' => 2,
         'en' => [
-            'name' => 'Accessories',
+            'name' => 'Clothing',
         ],
         'it' => [
             'name' => 'Abbigliamento',
         ],
-    ])->assertUnprocessable()
-        ->assertJsonValidationErrors(['it.slug']);
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'slug' => 'clothing-1',
+        ]);
+
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new ProductCategory)->getMorphClass(),
+        'translatable_id' => $secondResponse->json('id'),
+        'locale' => 'it',
+        'attribute' => 'slug',
+        'value' => 'abbigliamento',
+    ]);
 });
 
-it('rejects duplicate translated slugs for product categories on update', function () {
+it('allows duplicate translated names for product categories on update while keeping base slug unique', function () {
     postJson(config('venditio.routes.api.v1.prefix') . '/product_categories', [
         'sort_order' => 1,
         'en' => [
@@ -572,9 +637,22 @@ it('rejects duplicate translated slugs for product categories on update', functi
     ])->assertCreated();
 
     patchJson(config('venditio.routes.api.v1.prefix') . '/product_categories/' . $categoryResponse->json('id'), [
+        'en' => [
+            'name' => 'Clothing',
+        ],
         'it' => [
             'name' => 'Abbigliamento',
         ],
-    ])->assertUnprocessable()
-        ->assertJsonValidationErrors(['it.slug']);
+    ])->assertOk()
+        ->assertJsonFragment([
+            'slug' => 'clothing-1',
+        ]);
+
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new ProductCategory)->getMorphClass(),
+        'translatable_id' => $categoryResponse->json('id'),
+        'locale' => 'it',
+        'attribute' => 'slug',
+        'value' => 'abbigliamento',
+    ]);
 });
