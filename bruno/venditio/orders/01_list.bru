@@ -11,11 +11,112 @@ get {
 }
 
 params:query {
-  ~all: 1
+  ~all: false
+  ~page: 1
   ~per_page: 30
+  ~sort_by: user_id
+  ~sort_dir: asc
+  ~id[]: 1
+  ~user_id: 1
+  ~shipping_status_id: 1
+  ~identifier: sample
+  ~status: sample
+  ~tracking_code: sample
+  ~tracking_link: sample
+  ~last_tracked_at: 2026-01-01
+  ~last_tracked_at_start: 2026-01-01
+  ~last_tracked_at_end: 2026-12-31
+  ~courier_code: sample
+  ~sub_total_taxable: 10
+  ~sub_total_tax: 10
+  ~sub_total: 10
+  ~shipping_fee: 10
+  ~payment_fee: 10
+  ~discount_code: sample
+  ~discount_amount: 10
+  ~total_final: 10
+  ~user_first_name: sample
+  ~user_last_name: sample
+  ~user_email: sample
+  ~customer_notes: sample
+  ~admin_notes: sample
+  ~approved_at: 2026-01-01
+  ~approved_at_start: 2026-01-01
+  ~approved_at_end: 2026-12-31
+  ~created_at: 2026-01-01
+  ~created_at_start: 2026-01-01
+  ~created_at_end: 2026-12-31
+  ~updated_at: 2026-01-01
+  ~updated_at_start: 2026-01-01
+  ~updated_at_end: 2026-12-31
+  ~deleted_at: 2026-01-01
+  ~deleted_at_start: 2026-01-01
+  ~deleted_at_end: 2026-12-31
+  ~with_trashed: false
+  ~only_trashed: false
 }
 
 headers {
   Accept: application/json
   Content-Type: application/json
+}
+
+docs {
+  summary:
+  - List orders
+
+  endpoint:
+  - method: GET
+  - path: /orders
+
+  query params:
+  - all (boolean): Return all records without pagination.
+  - page (integer): Page number used when all is false.
+  - per_page (integer): Items per page (bounded by API config).
+  - sort_by (string): Sort field. Allowed: id and filterable columns.
+  - sort_dir (string): Sort direction: asc or desc.
+  - id[] (integer[]): Filter by one or more resource IDs.
+  - user_id (integer): Exact-match filter for user_id.
+  - shipping_status_id (integer): Exact-match filter for shipping_status_id.
+  - identifier (string): Exact-match filter for identifier.
+  - status (string): Exact-match filter for status.
+  - tracking_code (string): Exact-match filter for tracking_code.
+  - tracking_link (string): Exact-match filter for tracking_link.
+  - last_tracked_at (date): Exact-match filter for last_tracked_at.
+  - last_tracked_at_start (date): Filter last_tracked_at greater than or equal to this date.
+  - last_tracked_at_end (date): Filter last_tracked_at less than or equal to this date.
+  - courier_code (string): Exact-match filter for courier_code.
+  - sub_total_taxable (number): Exact-match filter for sub_total_taxable.
+  - sub_total_tax (number): Exact-match filter for sub_total_tax.
+  - sub_total (number): Exact-match filter for sub_total.
+  - shipping_fee (number): Exact-match filter for shipping_fee.
+  - payment_fee (number): Exact-match filter for payment_fee.
+  - discount_code (string): Exact-match filter for discount_code.
+  - discount_amount (number): Exact-match filter for discount_amount.
+  - total_final (number): Exact-match filter for total_final.
+  - user_first_name (string): Exact-match filter for user_first_name.
+  - user_last_name (string): Exact-match filter for user_last_name.
+  - user_email (string): Exact-match filter for user_email.
+  - customer_notes (string): Exact-match filter for customer_notes.
+  - admin_notes (string): Exact-match filter for admin_notes.
+  - approved_at (date): Exact-match filter for approved_at.
+  - approved_at_start (date): Filter approved_at greater than or equal to this date.
+  - approved_at_end (date): Filter approved_at less than or equal to this date.
+  - created_at (date): Exact-match filter for created_at.
+  - created_at_start (date): Filter created_at greater than or equal to this date.
+  - created_at_end (date): Filter created_at less than or equal to this date.
+  - updated_at (date): Exact-match filter for updated_at.
+  - updated_at_start (date): Filter updated_at greater than or equal to this date.
+  - updated_at_end (date): Filter updated_at less than or equal to this date.
+  - deleted_at (date): Exact-match filter for deleted_at.
+  - deleted_at_start (date): Filter deleted_at greater than or equal to this date.
+  - deleted_at_end (date): Filter deleted_at less than or equal to this date.
+  - with_trashed (boolean): Include soft deleted records in results.
+  - only_trashed (boolean): Return only soft deleted records.
+
+  path params:
+  - none
+
+  body:
+  - none
 }

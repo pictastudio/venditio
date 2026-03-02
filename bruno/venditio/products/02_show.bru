@@ -10,6 +10,10 @@ get {
   auth: inherit
 }
 
+params:query {
+  ~include: variants,variants_options_table
+}
+
 params:path {
   id-or-slug: 
 }
@@ -17,4 +21,22 @@ params:path {
 headers {
   Accept: application/json
   Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Show products
+
+  endpoint:
+  - method: GET
+  - path: /products/:id-or-slug
+
+  query params:
+  - include (string|array): Optional includes: variants, variants_options_table, and price_lists (if enabled).
+
+  path params:
+  - id-or-slug: Replace with target resource identifier.
+
+  body:
+  - none
 }

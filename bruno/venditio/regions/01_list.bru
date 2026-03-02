@@ -11,12 +11,66 @@ get {
 }
 
 params:query {
-  ~all: 1
+  ~all: false
+  ~page: 1
   ~per_page: 30
-  ~country_id:
+  ~sort_by: country_id
+  ~sort_dir: asc
+  ~id[]: 1
+  ~country_id: 1
+  ~name: sample
+  ~code: sample
+  ~created_at: 2026-01-01
+  ~created_at_start: 2026-01-01
+  ~created_at_end: 2026-12-31
+  ~updated_at: 2026-01-01
+  ~updated_at_start: 2026-01-01
+  ~updated_at_end: 2026-12-31
+  ~deleted_at: 2026-01-01
+  ~deleted_at_start: 2026-01-01
+  ~deleted_at_end: 2026-12-31
+  ~with_trashed: false
+  ~only_trashed: false
 }
 
 headers {
   Accept: application/json
   Content-Type: application/json
+}
+
+docs {
+  summary:
+  - List regions
+
+  endpoint:
+  - method: GET
+  - path: /regions
+
+  query params:
+  - all (boolean): Return all records without pagination.
+  - page (integer): Page number used when all is false.
+  - per_page (integer): Items per page (bounded by API config).
+  - sort_by (string): Sort field. Allowed: id and filterable columns.
+  - sort_dir (string): Sort direction: asc or desc.
+  - id[] (integer[]): Filter by one or more resource IDs.
+  - country_id (integer): Exact-match filter for country_id.
+  - name (string): Exact-match filter for name.
+  - code (string): Exact-match filter for code.
+  - created_at (date): Exact-match filter for created_at.
+  - created_at_start (date): Filter created_at greater than or equal to this date.
+  - created_at_end (date): Filter created_at less than or equal to this date.
+  - updated_at (date): Exact-match filter for updated_at.
+  - updated_at_start (date): Filter updated_at greater than or equal to this date.
+  - updated_at_end (date): Filter updated_at less than or equal to this date.
+  - deleted_at (date): Exact-match filter for deleted_at.
+  - deleted_at_start (date): Filter deleted_at greater than or equal to this date.
+  - deleted_at_end (date): Filter deleted_at less than or equal to this date.
+  - with_trashed (boolean): Include soft deleted records in results.
+  - only_trashed (boolean): Return only soft deleted records.
+
+  path params:
+  - none
+
+  body:
+  - none
 }

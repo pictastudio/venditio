@@ -26,18 +26,19 @@ body:json {
 }
 
 docs {
-  allowed values for discountable_type:
-  - product
-  - product_category
-  - product_type
-  - brand
-  - user
-  
-  available rule fields:
-  - apply_to_cart_total
-  - apply_once_per_cart
-  - max_uses_per_user
-  - one_per_user
-  - free_shipping
-  - minimum_order_total
+  summary:
+  - Store discounts
+
+  endpoint:
+  - method: POST
+  - path: /discounts
+
+  query params:
+  - none
+
+  path params:
+  - none
+
+  body:
+  - JSON payload. See body:json in this request for an example.
 }

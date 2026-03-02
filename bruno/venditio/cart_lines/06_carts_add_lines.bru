@@ -29,3 +29,21 @@ body:json {
     ]
   }
 }
+
+docs {
+  summary:
+  - Cart add lines
+
+  endpoint:
+  - method: POST
+  - path: /carts/:id/add_lines
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target resource identifier.
+
+  body:
+  - JSON payload. See body:json in this request for an example.
+}

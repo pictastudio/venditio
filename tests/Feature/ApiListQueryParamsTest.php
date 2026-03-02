@@ -101,3 +101,44 @@ it('validates query params and rejects unknown or invalid query values', functio
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['sort_by', 'sort_dir', 'page', 'per_page']);
 });
+
+it('includes soft deleted records when with_trashed is true on soft deletable models', function () {
+    $active = Brand::factory()->create();
+    $deleted = Brand::factory()->create();
+    $deleted->delete();
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . '/brands?all=1&with_trashed=1')
+        ->assertOk();
+
+    $ids = collect(apiListData($response->json()))
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toContain($active->getKey(), $deleted->getKey());
+});
+
+it('returns only soft deleted records when only_trashed is true on soft deletable models', function () {
+    $active = Brand::factory()->create();
+    $deleted = Brand::factory()->create();
+    $deleted->delete();
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . '/brands?all=1&only_trashed=1')
+        ->assertOk();
+
+    $ids = collect(apiListData($response->json()))
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toContain($deleted->getKey())
+        ->not->toContain($active->getKey());
+});
+
+it('rejects soft delete query params on models that do not support soft deletes', function () {
+    getJson(config('venditio.routes.api.v1.prefix') . '/country_tax_classes?with_trashed=1')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['with_trashed']);
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/country_tax_classes?only_trashed=1')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['only_trashed']);
+});

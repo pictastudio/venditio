@@ -24,3 +24,21 @@ body:json {
     "name": "Updated example"
   }
 }
+
+docs {
+  summary:
+  - Update product_variants
+
+  endpoint:
+  - method: PATCH
+  - path: /product_variants/:id
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target resource identifier.
+
+  body:
+  - JSON payload. See body:json in this request for an example.
+}

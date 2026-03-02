@@ -29,3 +29,21 @@ body:json {
     ]
   }
 }
+
+docs {
+  summary:
+  - Cart update lines
+
+  endpoint:
+  - method: PATCH
+  - path: /carts/:id/update_lines
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target resource identifier.
+
+  body:
+  - JSON payload. See body:json in this request for an example.
+}

@@ -11,11 +11,94 @@ get {
 }
 
 params:query {
-  ~all: 1
+  ~all: false
+  ~page: 1
   ~per_page: 30
+  ~sort_by: order_id
+  ~sort_dir: asc
+  ~id[]: 1
+  ~order_id: 1
+  ~product_id: 1
+  ~currency_id: 1
+  ~discount_id: 1
+  ~product_name: sample
+  ~product_sku: sample
+  ~discount_code: sample
+  ~discount_amount: 10
+  ~unit_price: 10
+  ~purchase_price: 10
+  ~unit_discount: 10
+  ~unit_final_price: 10
+  ~unit_final_price_tax: 10
+  ~unit_final_price_taxable: 10
+  ~qty: 1
+  ~total_final_price: 10
+  ~tax_rate: 10
+  ~created_at: 2026-01-01
+  ~created_at_start: 2026-01-01
+  ~created_at_end: 2026-12-31
+  ~updated_at: 2026-01-01
+  ~updated_at_start: 2026-01-01
+  ~updated_at_end: 2026-12-31
+  ~deleted_at: 2026-01-01
+  ~deleted_at_start: 2026-01-01
+  ~deleted_at_end: 2026-12-31
+  ~with_trashed: false
+  ~only_trashed: false
 }
 
 headers {
   Accept: application/json
   Content-Type: application/json
+}
+
+docs {
+  summary:
+  - List order_lines
+
+  endpoint:
+  - method: GET
+  - path: /order_lines
+
+  query params:
+  - all (boolean): Return all records without pagination.
+  - page (integer): Page number used when all is false.
+  - per_page (integer): Items per page (bounded by API config).
+  - sort_by (string): Sort field. Allowed: id and filterable columns.
+  - sort_dir (string): Sort direction: asc or desc.
+  - id[] (integer[]): Filter by one or more resource IDs.
+  - order_id (integer): Exact-match filter for order_id.
+  - product_id (integer): Exact-match filter for product_id.
+  - currency_id (integer): Exact-match filter for currency_id.
+  - discount_id (integer): Exact-match filter for discount_id.
+  - product_name (string): Exact-match filter for product_name.
+  - product_sku (string): Exact-match filter for product_sku.
+  - discount_code (string): Exact-match filter for discount_code.
+  - discount_amount (number): Exact-match filter for discount_amount.
+  - unit_price (number): Exact-match filter for unit_price.
+  - purchase_price (number): Exact-match filter for purchase_price.
+  - unit_discount (number): Exact-match filter for unit_discount.
+  - unit_final_price (number): Exact-match filter for unit_final_price.
+  - unit_final_price_tax (number): Exact-match filter for unit_final_price_tax.
+  - unit_final_price_taxable (number): Exact-match filter for unit_final_price_taxable.
+  - qty (integer): Exact-match filter for qty.
+  - total_final_price (number): Exact-match filter for total_final_price.
+  - tax_rate (number): Exact-match filter for tax_rate.
+  - created_at (date): Exact-match filter for created_at.
+  - created_at_start (date): Filter created_at greater than or equal to this date.
+  - created_at_end (date): Filter created_at less than or equal to this date.
+  - updated_at (date): Exact-match filter for updated_at.
+  - updated_at_start (date): Filter updated_at greater than or equal to this date.
+  - updated_at_end (date): Filter updated_at less than or equal to this date.
+  - deleted_at (date): Exact-match filter for deleted_at.
+  - deleted_at_start (date): Filter deleted_at greater than or equal to this date.
+  - deleted_at_end (date): Filter deleted_at less than or equal to this date.
+  - with_trashed (boolean): Include soft deleted records in results.
+  - only_trashed (boolean): Return only soft deleted records.
+
+  path params:
+  - none
+
+  body:
+  - none
 }

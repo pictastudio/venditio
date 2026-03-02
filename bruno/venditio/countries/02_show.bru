@@ -18,3 +18,21 @@ headers {
   Accept: application/json
   Content-Type: application/json
 }
+
+docs {
+  summary:
+  - Show countries
+
+  endpoint:
+  - method: GET
+  - path: /countries/:id
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target resource identifier.
+
+  body:
+  - none
+}

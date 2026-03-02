@@ -10,6 +10,10 @@ post {
   auth: inherit
 }
 
+params:query {
+  ~include: variants,variants_options_table
+}
+
 headers {
   Accept: application/json
   Content-Type: application/json
@@ -27,4 +31,22 @@ body:json {
       "price": 29.99
     }
   }
+}
+
+docs {
+  summary:
+  - Store products
+
+  endpoint:
+  - method: POST
+  - path: /products
+
+  query params:
+  - include (string|array): Optional includes: variants, variants_options_table, and price_lists (if enabled).
+
+  path params:
+  - none
+
+  body:
+  - JSON payload. See body:json in this request for an example.
 }

@@ -10,6 +10,10 @@ post {
   auth: inherit
 }
 
+params:query {
+  ~include: variants,variants_options_table
+}
+
 params:path {
   id-or-slug: 
 }
@@ -28,4 +32,22 @@ body:json {
       }
     ]
   }
+}
+
+docs {
+  summary:
+  - Generate product variants
+
+  endpoint:
+  - method: POST
+  - path: /products/:id-or-slug/variants
+
+  query params:
+  - include (string|array): Optional includes: variants, variants_options_table, and price_lists (if enabled).
+
+  path params:
+  - id-or-slug: Replace with target resource identifier.
+
+  body:
+  - JSON payload. See body:json in this request for an example.
 }

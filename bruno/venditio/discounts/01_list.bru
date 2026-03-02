@@ -11,11 +11,108 @@ get {
 }
 
 params:query {
-  ~all: 1
+  ~all: false
+  ~page: 1
   ~per_page: 30
+  ~sort_by: discountable_type
+  ~sort_dir: asc
+  ~id[]: 1
+  ~discountable_type: sample
+  ~discountable_id: 1
+  ~type: sample
+  ~value: 10
+  ~name: sample
+  ~code: sample
+  ~active: false
+  ~starts_at: 2026-01-01
+  ~starts_at_start: 2026-01-01
+  ~starts_at_end: 2026-12-31
+  ~ends_at: 2026-01-01
+  ~ends_at_start: 2026-01-01
+  ~ends_at_end: 2026-12-31
+  ~uses: 1
+  ~max_uses: 1
+  ~apply_to_cart_total: false
+  ~apply_once_per_cart: false
+  ~max_uses_per_user: 1
+  ~one_per_user: false
+  ~free_shipping: false
+  ~minimum_order_total: 10
+  ~priority: 1
+  ~stop_after_propagation: false
+  ~created_at: 2026-01-01
+  ~created_at_start: 2026-01-01
+  ~created_at_end: 2026-12-31
+  ~updated_at: 2026-01-01
+  ~updated_at_start: 2026-01-01
+  ~updated_at_end: 2026-12-31
+  ~deleted_at: 2026-01-01
+  ~deleted_at_start: 2026-01-01
+  ~deleted_at_end: 2026-12-31
+  ~with_trashed: false
+  ~only_trashed: false
+  ~is_active: true
 }
 
 headers {
   Accept: application/json
   Content-Type: application/json
+}
+
+docs {
+  summary:
+  - List discounts
+
+  endpoint:
+  - method: GET
+  - path: /discounts
+
+  query params:
+  - all (boolean): Return all records without pagination.
+  - page (integer): Page number used when all is false.
+  - per_page (integer): Items per page (bounded by API config).
+  - sort_by (string): Sort field. Allowed: id and filterable columns.
+  - sort_dir (string): Sort direction: asc or desc.
+  - id[] (integer[]): Filter by one or more resource IDs.
+  - discountable_type (string): Exact-match filter for discountable_type.
+  - discountable_id (integer): Exact-match filter for discountable_id.
+  - type (string): Exact-match filter for type.
+  - value (number): Exact-match filter for value.
+  - name (string): Exact-match filter for name.
+  - code (string): Exact-match filter for code.
+  - active (boolean): Exact-match filter for active.
+  - starts_at (date): Exact-match filter for starts_at.
+  - starts_at_start (date): Filter starts_at greater than or equal to this date.
+  - starts_at_end (date): Filter starts_at less than or equal to this date.
+  - ends_at (date): Exact-match filter for ends_at.
+  - ends_at_start (date): Filter ends_at greater than or equal to this date.
+  - ends_at_end (date): Filter ends_at less than or equal to this date.
+  - uses (integer): Exact-match filter for uses.
+  - max_uses (integer): Exact-match filter for max_uses.
+  - apply_to_cart_total (boolean): Exact-match filter for apply_to_cart_total.
+  - apply_once_per_cart (boolean): Exact-match filter for apply_once_per_cart.
+  - max_uses_per_user (integer): Exact-match filter for max_uses_per_user.
+  - one_per_user (boolean): Exact-match filter for one_per_user.
+  - free_shipping (boolean): Exact-match filter for free_shipping.
+  - minimum_order_total (number): Exact-match filter for minimum_order_total.
+  - priority (integer): Exact-match filter for priority.
+  - stop_after_propagation (boolean): Exact-match filter for stop_after_propagation.
+  - created_at (date): Exact-match filter for created_at.
+  - created_at_start (date): Filter created_at greater than or equal to this date.
+  - created_at_end (date): Filter created_at less than or equal to this date.
+  - updated_at (date): Exact-match filter for updated_at.
+  - updated_at_start (date): Filter updated_at greater than or equal to this date.
+  - updated_at_end (date): Filter updated_at less than or equal to this date.
+  - deleted_at (date): Exact-match filter for deleted_at.
+  - deleted_at_start (date): Filter deleted_at greater than or equal to this date.
+  - deleted_at_end (date): Filter deleted_at less than or equal to this date.
+  - with_trashed (boolean): Include soft deleted records in results.
+  - only_trashed (boolean): Return only soft deleted records.
+  - is_active (boolean): Alias filter for active state.
+
+  path params:
+  - none
+
+  body:
+  - none
 }

@@ -18,3 +18,21 @@ headers {
   Accept: application/json
   Content-Type: application/json
 }
+
+docs {
+  summary:
+  - Delete product_categories
+
+  endpoint:
+  - method: DELETE
+  - path: /product_categories/:id-or-slug
+
+  query params:
+  - none
+
+  path params:
+  - id-or-slug: Replace with target resource identifier.
+
+  body:
+  - none
+}

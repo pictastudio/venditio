@@ -10,6 +10,54 @@ get {
   auth: inherit
 }
 
+params:query {
+  ~all: false
+  ~page: 1
+  ~per_page: 30
+  ~sort_by: parent_id
+  ~sort_dir: asc
+  ~id[]: 1
+  ~parent_id: 1
+  ~brand_id: 1
+  ~product_type_id: 1
+  ~tax_class_id: 1
+  ~name: sample
+  ~slug: sample
+  ~status: sample
+  ~active: false
+  ~new: false
+  ~in_evidence: false
+  ~sku: sample
+  ~ean: sample
+  ~visible_from: 2026-01-01
+  ~visible_from_start: 2026-01-01
+  ~visible_from_end: 2026-12-31
+  ~visible_until: 2026-01-01
+  ~visible_until_start: 2026-01-01
+  ~visible_until_end: 2026-12-31
+  ~description: sample
+  ~description_short: sample
+  ~measuring_unit: sample
+  ~qty_for_unit: 1
+  ~length: 10
+  ~width: 10
+  ~height: 10
+  ~weight: 10
+  ~created_at: 2026-01-01
+  ~created_at_start: 2026-01-01
+  ~created_at_end: 2026-12-31
+  ~updated_at: 2026-01-01
+  ~updated_at_start: 2026-01-01
+  ~updated_at_end: 2026-12-31
+  ~deleted_at: 2026-01-01
+  ~deleted_at_start: 2026-01-01
+  ~deleted_at_end: 2026-12-31
+  ~with_trashed: false
+  ~only_trashed: false
+  ~is_active: true
+  ~include: variants,variants_options_table
+}
+
 params:path {
   id-or-slug: 
 }
@@ -17,4 +65,66 @@ params:path {
 headers {
   Accept: application/json
   Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Product variants list for product
+
+  endpoint:
+  - method: GET
+  - path: /products/:id-or-slug/variants
+
+  query params:
+  - all (boolean): Return all records without pagination.
+  - page (integer): Page number used when all is false.
+  - per_page (integer): Items per page (bounded by API config).
+  - sort_by (string): Sort field. Allowed: id and filterable columns.
+  - sort_dir (string): Sort direction: asc or desc.
+  - id[] (integer[]): Filter by one or more resource IDs.
+  - parent_id (integer): Exact-match filter for parent_id.
+  - brand_id (integer): Exact-match filter for brand_id.
+  - product_type_id (integer): Exact-match filter for product_type_id.
+  - tax_class_id (integer): Exact-match filter for tax_class_id.
+  - name (string): Exact-match filter for name.
+  - slug (string): Exact-match filter for slug.
+  - status (string): Exact-match filter for status.
+  - active (boolean): Exact-match filter for active.
+  - new (boolean): Exact-match filter for new.
+  - in_evidence (boolean): Exact-match filter for in_evidence.
+  - sku (string): Exact-match filter for sku.
+  - ean (string): Exact-match filter for ean.
+  - visible_from (date): Exact-match filter for visible_from.
+  - visible_from_start (date): Filter visible_from greater than or equal to this date.
+  - visible_from_end (date): Filter visible_from less than or equal to this date.
+  - visible_until (date): Exact-match filter for visible_until.
+  - visible_until_start (date): Filter visible_until greater than or equal to this date.
+  - visible_until_end (date): Filter visible_until less than or equal to this date.
+  - description (string): Exact-match filter for description.
+  - description_short (string): Exact-match filter for description_short.
+  - measuring_unit (string): Exact-match filter for measuring_unit.
+  - qty_for_unit (integer): Exact-match filter for qty_for_unit.
+  - length (number): Exact-match filter for length.
+  - width (number): Exact-match filter for width.
+  - height (number): Exact-match filter for height.
+  - weight (number): Exact-match filter for weight.
+  - created_at (date): Exact-match filter for created_at.
+  - created_at_start (date): Filter created_at greater than or equal to this date.
+  - created_at_end (date): Filter created_at less than or equal to this date.
+  - updated_at (date): Exact-match filter for updated_at.
+  - updated_at_start (date): Filter updated_at greater than or equal to this date.
+  - updated_at_end (date): Filter updated_at less than or equal to this date.
+  - deleted_at (date): Exact-match filter for deleted_at.
+  - deleted_at_start (date): Filter deleted_at greater than or equal to this date.
+  - deleted_at_end (date): Filter deleted_at less than or equal to this date.
+  - with_trashed (boolean): Include soft deleted records in results.
+  - only_trashed (boolean): Return only soft deleted records.
+  - is_active (boolean): Alias filter for active state.
+  - include (string|array): Optional includes: variants, variants_options_table, and price_lists (if enabled).
+
+  path params:
+  - id-or-slug: Replace with target resource identifier.
+
+  body:
+  - none
 }

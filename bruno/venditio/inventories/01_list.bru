@@ -11,11 +11,78 @@ get {
 }
 
 params:query {
-  ~all: 1
+  ~all: false
+  ~page: 1
   ~per_page: 30
+  ~sort_by: product_id
+  ~sort_dir: asc
+  ~id[]: 1
+  ~product_id: 1
+  ~currency_id: 1
+  ~stock: 1
+  ~stock_reserved: 1
+  ~stock_available: 1
+  ~stock_min: 1
+  ~price: 10
+  ~price_includes_tax: false
+  ~purchase_price: 10
+  ~created_at: 2026-01-01
+  ~created_at_start: 2026-01-01
+  ~created_at_end: 2026-12-31
+  ~updated_at: 2026-01-01
+  ~updated_at_start: 2026-01-01
+  ~updated_at_end: 2026-12-31
+  ~deleted_at: 2026-01-01
+  ~deleted_at_start: 2026-01-01
+  ~deleted_at_end: 2026-12-31
+  ~with_trashed: false
+  ~only_trashed: false
 }
 
 headers {
   Accept: application/json
   Content-Type: application/json
+}
+
+docs {
+  summary:
+  - List inventories
+
+  endpoint:
+  - method: GET
+  - path: /inventories
+
+  query params:
+  - all (boolean): Return all records without pagination.
+  - page (integer): Page number used when all is false.
+  - per_page (integer): Items per page (bounded by API config).
+  - sort_by (string): Sort field. Allowed: id and filterable columns.
+  - sort_dir (string): Sort direction: asc or desc.
+  - id[] (integer[]): Filter by one or more resource IDs.
+  - product_id (integer): Exact-match filter for product_id.
+  - currency_id (integer): Exact-match filter for currency_id.
+  - stock (integer): Exact-match filter for stock.
+  - stock_reserved (integer): Exact-match filter for stock_reserved.
+  - stock_available (integer): Exact-match filter for stock_available.
+  - stock_min (integer): Exact-match filter for stock_min.
+  - price (number): Exact-match filter for price.
+  - price_includes_tax (boolean): Exact-match filter for price_includes_tax.
+  - purchase_price (number): Exact-match filter for purchase_price.
+  - created_at (date): Exact-match filter for created_at.
+  - created_at_start (date): Filter created_at greater than or equal to this date.
+  - created_at_end (date): Filter created_at less than or equal to this date.
+  - updated_at (date): Exact-match filter for updated_at.
+  - updated_at_start (date): Filter updated_at greater than or equal to this date.
+  - updated_at_end (date): Filter updated_at less than or equal to this date.
+  - deleted_at (date): Exact-match filter for deleted_at.
+  - deleted_at_start (date): Filter deleted_at greater than or equal to this date.
+  - deleted_at_end (date): Filter deleted_at less than or equal to this date.
+  - with_trashed (boolean): Include soft deleted records in results.
+  - only_trashed (boolean): Return only soft deleted records.
+
+  path params:
+  - none
+
+  body:
+  - none
 }

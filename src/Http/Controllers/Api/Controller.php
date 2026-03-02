@@ -4,6 +4,7 @@ namespace PictaStudio\Venditio\Http\Controllers\Api;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\{Builder, Collection};
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -25,6 +26,7 @@ class Controller extends BaseController
     public function applyBaseFilters(Builder $query, array $filters, string $model, array $extraValidationRules = []): Collection|LengthAwarePaginator
     {
         $modelInstance = app(resolve_model($model));
+        $supportsSoftDeletes = $this->modelSupportsSoftDeletes($modelInstance);
         $table = method_exists($modelInstance, 'getTableName')
             ? $modelInstance->getTableName()
             : $modelInstance->getTable();
@@ -84,6 +86,16 @@ class Controller extends BaseController
                     $keyName
                 ),
             ],
+            ...($supportsSoftDeletes ? [
+                'with_trashed' => [
+                    'sometimes',
+                    'boolean',
+                ],
+                'only_trashed' => [
+                    'sometimes',
+                    'boolean',
+                ],
+            ] : []),
         ], $automaticRules, $extraValidationRules);
 
         $this->ensureNoUnknownFilterParameters($filters, $rules);
@@ -98,6 +110,21 @@ class Controller extends BaseController
 
         if (isset($validatedFilters['id'])) {
             $query->whereKey($validatedFilters['id']);
+        }
+
+        if ($supportsSoftDeletes) {
+            $withTrashed = array_key_exists('with_trashed', $validatedFilters)
+                ? filter_var($validatedFilters['with_trashed'], FILTER_VALIDATE_BOOL)
+                : false;
+            $onlyTrashed = array_key_exists('only_trashed', $validatedFilters)
+                ? filter_var($validatedFilters['only_trashed'], FILTER_VALIDATE_BOOL)
+                : false;
+
+            if ($onlyTrashed) {
+                $query->onlyTrashed();
+            } elseif ($withTrashed) {
+                $query->withTrashed();
+            }
         }
 
         if (in_array('active', $filterableColumns, true) && array_key_exists('is_active', $validatedFilters)) {
@@ -694,5 +721,11 @@ class Controller extends BaseController
         }
 
         return false;
+    }
+
+    protected function modelSupportsSoftDeletes(mixed $modelInstance): bool
+    {
+        return is_object($modelInstance)
+            && in_array(SoftDeletes::class, class_uses_recursive($modelInstance), true);
     }
 }

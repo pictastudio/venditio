@@ -24,3 +24,21 @@ body:json {
     "discount_code": "TEST10"
   }
 }
+
+docs {
+  summary:
+  - Cart add discount
+
+  endpoint:
+  - method: POST
+  - path: /carts/:id/add_discount
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target resource identifier.
+
+  body:
+  - JSON payload. See body:json in this request for an example.
+}
