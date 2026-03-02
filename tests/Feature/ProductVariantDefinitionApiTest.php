@@ -3,7 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Models\{ProductType, ProductVariant, ProductVariantOption};
 
-use function Pest\Laravel\{getJson, postJson};
+use function Pest\Laravel\{assertDatabaseHas, getJson, patchJson, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -32,6 +32,31 @@ it('creates product types, variants, and options', function () {
             'product_variant_id' => $variantId,
             'name' => 'red',
         ]);
+});
+
+it('assigns default product type when product_type_id is omitted while creating variants', function () {
+    $defaultProductType = ProductType::factory()->create([
+        'active' => false,
+        'is_default' => true,
+    ]);
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/product_variants', [
+        'name' => 'Color',
+        'sort_order' => 1,
+    ])->assertCreated();
+
+    assertDatabaseHas('product_variants', [
+        'id' => $response->json('id'),
+        'product_type_id' => $defaultProductType->getKey(),
+    ]);
+});
+
+it('returns validation error when creating variants without product_type_id and no default exists', function () {
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_variants', [
+        'name' => 'Color',
+        'sort_order' => 1,
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['product_type_id']);
 });
 
 it('filters variants by product type', function () {
@@ -68,4 +93,75 @@ it('filters variant options by variant', function () {
         ->assertOk();
 
     expect($response->json('data'))->toHaveCount(1);
+});
+
+it('rejects duplicate product variant option names for the same variant', function () {
+    $variant = ProductVariant::factory()->create();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_variant_options', [
+        'product_variant_id' => $variant->getKey(),
+        'name' => 'red',
+        'sort_order' => 1,
+    ])->assertCreated();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_variant_options', [
+        'product_variant_id' => $variant->getKey(),
+        'name' => 'red',
+        'sort_order' => 2,
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['name']);
+});
+
+it('allows same product variant option name on different variants', function () {
+    $firstVariant = ProductVariant::factory()->create();
+    $secondVariant = ProductVariant::factory()->create();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_variant_options', [
+        'product_variant_id' => $firstVariant->getKey(),
+        'name' => 'red',
+        'sort_order' => 1,
+    ])->assertCreated();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_variant_options', [
+        'product_variant_id' => $secondVariant->getKey(),
+        'name' => 'red',
+        'sort_order' => 1,
+    ])->assertCreated();
+});
+
+it('rejects update when product variant option name duplicates within the same variant', function () {
+    $variant = ProductVariant::factory()->create();
+    $firstOption = ProductVariantOption::factory()->create([
+        'product_variant_id' => $variant->getKey(),
+        'name' => 'red',
+    ]);
+    $secondOption = ProductVariantOption::factory()->create([
+        'product_variant_id' => $variant->getKey(),
+        'name' => 'blue',
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/product_variant_options/{$secondOption->getKey()}", [
+        'name' => $firstOption->name,
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['name']);
+});
+
+it('rejects update when moving an option to a variant that already has the same name', function () {
+    $firstVariant = ProductVariant::factory()->create();
+    $secondVariant = ProductVariant::factory()->create();
+
+    ProductVariantOption::factory()->create([
+        'product_variant_id' => $secondVariant->getKey(),
+        'name' => 'red',
+    ]);
+
+    $optionToMove = ProductVariantOption::factory()->create([
+        'product_variant_id' => $firstVariant->getKey(),
+        'name' => 'red',
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/product_variant_options/{$optionToMove->getKey()}", [
+        'product_variant_id' => $secondVariant->getKey(),
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['product_variant_id']);
 });

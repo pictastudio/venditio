@@ -18,6 +18,8 @@ return new class extends Migration
             $table->smallInteger('sort_order');
             $table->datetimes();
             $table->softDeletesDatetime();
+
+            $table->unique(['product_variant_id', 'name']);
         });
     }
 

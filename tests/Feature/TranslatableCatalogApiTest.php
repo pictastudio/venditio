@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\ProductStatus;
-use PictaStudio\Venditio\Models\{Brand, Product, ProductCategory, ProductType, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Product, ProductCategory, ProductType, ProductVariant, ProductVariantOption, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, getJson, patchJson, postJson};
 
@@ -51,6 +51,85 @@ it('supports locale keyed payloads for product types', function () {
         ->assertJsonFragment([
             'name' => 'Cibo',
             'slug' => 'cibo',
+        ]);
+});
+
+it('supports translated names for product variants', function () {
+    $productType = ProductType::factory()->create();
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/product_variants', [
+        'product_type_id' => $productType->getKey(),
+        'sort_order' => 1,
+        'en' => [
+            'name' => 'Color',
+        ],
+        'it' => [
+            'name' => 'Colore',
+        ],
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'name' => 'Color',
+        ]);
+
+    $variantId = $response->json('id');
+
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new ProductVariant)->getMorphClass(),
+        'translatable_id' => $variantId,
+        'locale' => 'it',
+        'attribute' => 'name',
+        'value' => 'Colore',
+    ]);
+
+    getJson(
+        config('venditio.routes.api.v1.prefix') . "/product_variants/{$variantId}",
+        ['Locale' => 'it']
+    )->assertOk()
+        ->assertJsonFragment([
+            'name' => 'Colore',
+        ]);
+});
+
+it('supports translated names for product variant options', function () {
+    $productType = ProductType::factory()->create();
+    $variantResponse = postJson(config('venditio.routes.api.v1.prefix') . '/product_variants', [
+        'product_type_id' => $productType->getKey(),
+        'name' => 'Color',
+        'sort_order' => 1,
+    ])->assertCreated();
+
+    $variantId = $variantResponse->json('id');
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/product_variant_options', [
+        'product_variant_id' => $variantId,
+        'sort_order' => 1,
+        'en' => [
+            'name' => 'Red',
+        ],
+        'it' => [
+            'name' => 'Rosso',
+        ],
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'name' => 'Red',
+        ]);
+
+    $optionId = $response->json('id');
+
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new ProductVariantOption)->getMorphClass(),
+        'translatable_id' => $optionId,
+        'locale' => 'it',
+        'attribute' => 'name',
+        'value' => 'Rosso',
+    ]);
+
+    getJson(
+        config('venditio.routes.api.v1.prefix') . "/product_variant_options/{$optionId}",
+        ['Locale' => 'it']
+    )->assertOk()
+        ->assertJsonFragment([
+            'name' => 'Rosso',
         ]);
 });
 
