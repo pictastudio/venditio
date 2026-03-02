@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ShippingStatusController, TaxClassController};
+use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ShippingStatusController, TaxClassController};
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +28,10 @@ Route::post('carts/{cart}/remove_lines', [CartController::class, 'removeLines'])
 Route::post('carts/{cart}/add_discount', [CartController::class, 'addDiscount'])->name('carts.addDiscount');
 Route::patch('carts/{cart}/update_lines', [CartController::class, 'updateLines'])->name('carts.updateLines');
 Route::apiResource('orders', OrderController::class);
+if (config('venditio.exports.enabled', true)) {
+    Route::get('exports/products', [ExportController::class, 'products'])->name('exports.products');
+    Route::get('exports/orders', [ExportController::class, 'orders'])->name('exports.orders');
+}
 Route::apiResource('addresses', AddressController::class);
 Route::apiResource('brands', BrandController::class);
 Route::apiResource('inventories', InventoryController::class);

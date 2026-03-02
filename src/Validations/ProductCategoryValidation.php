@@ -55,5 +55,4 @@ class ProductCategoryValidation implements ProductCategoryValidationRules
     {
         return (new (resolve_model($model)))->getTable();
     }
-
 }

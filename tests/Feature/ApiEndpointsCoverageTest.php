@@ -18,6 +18,8 @@ it('registers index endpoints for all exposed models', function () {
         '/product_variant_options',
         '/carts',
         '/orders',
+        '/exports/products',
+        '/exports/orders',
         '/addresses',
         '/brands',
         '/inventories',

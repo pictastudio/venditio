@@ -8,11 +8,10 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Route;
+use Maatwebsite\Excel\ExcelServiceProvider;
 use PictaStudio\Venditio\Console\Commands\{InstallCommand, ReleaseStockForAbandonedCarts};
 use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface};
 use PictaStudio\Venditio\Discounts\{CartTotalDiscountCalculator, DiscountCalculator, DiscountUsageRecorder, DiscountablesResolver};
-use PictaStudio\Venditio\Dto\{CartDto, CartLineDto, OrderDto};
-use PictaStudio\Venditio\Dto\Contracts\{CartDtoContract, CartLineDtoContract, OrderDtoContract};
 use PictaStudio\Venditio\Facades\Venditio as VenditioFacade;
 use PictaStudio\Venditio\Generators\{CartIdentifierGenerator, OrderIdentifierGenerator, ProductSkuGenerator};
 use PictaStudio\Venditio\Models\User;
@@ -82,6 +81,7 @@ class VenditioServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
+        $this->registerExcelProvider();
         $this->registerPublishableAssets();
         $this->registerApiRoutes();
         $this->registerScheduledCommands();
@@ -91,6 +91,19 @@ class VenditioServiceProvider extends PackageServiceProvider
         $this->bindDiscountClasses();
         $this->bindPricingClasses();
         $this->bindIdentifierGenerators();
+    }
+
+    private function registerExcelProvider(): void
+    {
+        if (!class_exists(ExcelServiceProvider::class)) {
+            return;
+        }
+
+        if ($this->app->getProviders(ExcelServiceProvider::class)) {
+            return;
+        }
+
+        $this->app->register(ExcelServiceProvider::class);
     }
 
     private function bindIdentifierGenerators(): void

@@ -55,6 +55,12 @@ Include parameters:
 - `/products`: `include=variants,variants_options_table` (and `price_lists` only when `venditio.price_lists.enabled=true`)
 - `/tax_classes`: `include[]=countries`
 
+Export-specific query parameters:
+
+- `/exports/products`: `columns[]` (or `columns=id,name,sku`) and optional `filename`
+- `/exports/orders`: `columns[]` (or `columns=order_id,line_id,...`) and optional `filename`
+- both export endpoints support the same list filters used by `/products` and `/orders`
+
 ## Endpoints
 
 ### Products
@@ -150,6 +156,19 @@ Include parameters:
 - `POST /orders`
 - `PATCH /orders/{order}`
 - `DELETE /orders/{order}`
+
+### Exports
+
+- `GET /exports/products`
+- `GET /exports/orders`
+
+Notes:
+
+- exports are enabled by `venditio.exports.enabled` (default: `true`)
+- product export columns are validated against `venditio.exports.products.allowed_columns`
+- order export columns are validated against `venditio.exports.orders.allowed_columns`
+- relation columns return readable values (for example `name`, `code`, `sku`) instead of numeric foreign keys when available
+- order export flattens data with one row for each order line
 
 ### Order Lines
 

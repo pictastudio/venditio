@@ -291,6 +291,117 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Exports
+    |--------------------------------------------------------------------------
+    |
+    | Configure API-based Excel exports.
+    |
+    */
+    'exports' => [
+        'enabled' => env('VENDITIO_EXPORTS_ENABLED', true),
+        'products' => [
+            'allowed_columns' => [
+                'id',
+                'parent_id',
+                'brand_id',
+                'product_type_id',
+                'tax_class_id',
+                'name',
+                'slug',
+                'status',
+                'active',
+                'new',
+                'in_evidence',
+                'sku',
+                'ean',
+                'visible_from',
+                'visible_until',
+                'description',
+                'description_short',
+                'measuring_unit',
+                'qty_for_unit',
+                'length',
+                'width',
+                'height',
+                'weight',
+                'price',
+                'purchase_price',
+                'price_includes_tax',
+                'currency_id',
+                'stock',
+                'stock_reserved',
+                'stock_available',
+                'stock_min',
+                'category_ids',
+                'variant_option_ids',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+            ],
+            'default_columns' => [
+                'id',
+                'name',
+                'sku',
+                'status',
+                'active',
+                'price',
+                'stock_available',
+            ],
+        ],
+        'orders' => [
+            'allowed_columns' => [
+                'order_identifier',
+                'order_status',
+                'order_user_id',
+                'order_shipping_status_id',
+                'order_tracking_code',
+                'order_tracking_link',
+                'order_last_tracked_at',
+                'order_courier_code',
+                'order_sub_total_taxable',
+                'order_sub_total_tax',
+                'order_sub_total',
+                'order_shipping_fee',
+                'order_payment_fee',
+                'order_discount_code',
+                'order_discount_amount',
+                'order_total_final',
+                'order_user_first_name',
+                'order_user_last_name',
+                'order_user_email',
+                'order_customer_notes',
+                'order_admin_notes',
+                'order_approved_at',
+                'line_product_id',
+                'line_currency_id',
+                'line_product_name',
+                'line_product_sku',
+                'line_discount_code',
+                'line_discount_amount',
+                'line_unit_price',
+                'line_purchase_price',
+                'line_unit_discount',
+                'line_unit_final_price',
+                'line_unit_final_price_tax',
+                'line_unit_final_price_taxable',
+                'line_qty',
+                'line_total_final_price',
+                'line_tax_rate',
+            ],
+            'default_columns' => [
+                'order_identifier',
+                'order_status',
+                'order_total_final',
+                'line_product_id',
+                'line_product_name',
+                'line_qty',
+                'line_total_final_price',
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Scopes
     |--------------------------------------------------------------------------
     |

@@ -1,0 +1,181 @@
+<?php
+
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Maatwebsite\Excel\Facades\Excel;
+use PictaStudio\Venditio\Enums\DiscountType;
+use PictaStudio\Venditio\Enums\{OrderStatus, ProductStatus};
+use PictaStudio\Venditio\Exports\V1\{OrdersByLineExport, ProductsExport};
+use PictaStudio\Venditio\Models\{Currency, Order, Product, ShippingStatus, TaxClass};
+
+use function Pest\Laravel\{get, getJson};
+
+uses(RefreshDatabase::class);
+
+it('exports products in excel with selected columns', function () {
+    Excel::fake();
+
+    $taxClass = TaxClass::factory()->create();
+    $currency = Currency::factory()->create([
+        'code' => 'USD',
+        'name' => 'US Dollar',
+    ]);
+
+    $product = Product::factory()->create([
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Export Product',
+        'sku' => 'EXPORT-PRD-001',
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => now()->subDay(),
+        'visible_until' => now()->addDay(),
+    ]);
+
+    $product->inventory()->updateOrCreate([], [
+        'stock' => 12,
+        'stock_reserved' => 2,
+        'stock_available' => 10,
+        'stock_min' => 1,
+        'price' => 99.99,
+        'price_includes_tax' => false,
+        'currency_id' => $currency->getKey(),
+    ]);
+
+    get(config('venditio.routes.api.v1.prefix') . '/exports/products?columns=id,name,brand_id,currency_id,stock_available&filename=products-selection')
+        ->assertOk();
+
+    Excel::assertDownloaded('products-selection.xlsx', function (ProductsExport $export) use ($product): bool {
+        expect($export->headings())->toBe(['id', 'name', 'brand_id', 'currency_id', 'stock_available']);
+
+        $rows = $export->collection()->map(fn ($row): array => $export->map($row));
+
+        expect($rows)->toHaveCount(1)
+            ->and((int) $rows->first()[0])->toBe($product->getKey())
+            ->and($rows->first()[1])->toBe('Export Product')
+            ->and($rows->first()[2])->toBe((string) $product->brand?->name)
+            ->and($rows->first()[3])->toBe('USD')
+            ->and((int) $rows->first()[4])->toBe(10);
+
+        return true;
+    });
+});
+
+it('validates requested columns on product excel export', function () {
+    getJson(config('venditio.routes.api.v1.prefix') . '/exports/products?columns=id,not_allowed_column')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['columns.1']);
+});
+
+it('exports orders with one row per order line', function () {
+    Excel::fake();
+
+    $taxClass = TaxClass::factory()->create();
+    $currency = Currency::factory()->create();
+    $shippingStatus = ShippingStatus::factory()->create([
+        'external_code' => 'SHP-EXP-01',
+        'name' => 'In Transit',
+    ]);
+    $discountModel = config('venditio.models.discount');
+    $discount = $discountModel::query()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'name' => 'Export Discount',
+        'code' => 'EXPORT10',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+    ]);
+
+    $productA = Product::factory()->create([
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Line Product A',
+        'sku' => 'LINE-A-001',
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => now()->subDay(),
+        'visible_until' => now()->addDay(),
+    ]);
+
+    $productB = Product::factory()->create([
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Line Product B',
+        'sku' => 'LINE-B-001',
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => now()->subDay(),
+        'visible_until' => now()->addDay(),
+    ]);
+
+    $order = Order::factory()->create([
+        'identifier' => 'ORDER-EXPORT-001',
+        'status' => OrderStatus::Processing->value,
+        'shipping_status_id' => $shippingStatus->getKey(),
+    ]);
+
+    $orderLineModel = config('venditio.models.order_line');
+
+    $lineA = $orderLineModel::query()->create([
+        'order_id' => $order->getKey(),
+        'product_id' => $productA->getKey(),
+        'currency_id' => $currency->getKey(),
+        'product_name' => 'Line Product A',
+        'product_sku' => 'LINE-A-001',
+        'discount_id' => $discount->getKey(),
+        'discount_code' => 'EXPORT10',
+        'discount_amount' => 0,
+        'unit_price' => 10,
+        'purchase_price' => 5,
+        'unit_discount' => 0,
+        'unit_final_price' => 10,
+        'unit_final_price_tax' => 2.2,
+        'unit_final_price_taxable' => 7.8,
+        'qty' => 2,
+        'total_final_price' => 20,
+        'tax_rate' => 22,
+        'product_data' => ['sku' => 'STATIC-LINE-A', 'name' => 'Static Product A'],
+    ]);
+
+    $lineB = $orderLineModel::query()->create([
+        'order_id' => $order->getKey(),
+        'product_id' => $productB->getKey(),
+        'currency_id' => $currency->getKey(),
+        'product_name' => 'Line Product B',
+        'product_sku' => 'LINE-B-001',
+        'discount_id' => $discount->getKey(),
+        'discount_code' => 'EXPORT10',
+        'discount_amount' => 0,
+        'unit_price' => 15,
+        'purchase_price' => 8,
+        'unit_discount' => 0,
+        'unit_final_price' => 15,
+        'unit_final_price_tax' => 3.3,
+        'unit_final_price_taxable' => 11.7,
+        'qty' => 3,
+        'total_final_price' => 45,
+        'tax_rate' => 22,
+        'product_data' => ['sku' => 'STATIC-LINE-B', 'name' => 'Static Product B'],
+    ]);
+
+    $productA->update(['sku' => 'LIVE-CHANGED-A']);
+    $productB->update(['sku' => 'LIVE-CHANGED-B']);
+
+    get(config('venditio.routes.api.v1.prefix') . '/exports/orders?columns=order_identifier,order_status,order_user_id,order_shipping_status_id,order_tracking_code,order_tracking_link,order_last_tracked_at,order_courier_code,order_sub_total_taxable,order_sub_total_tax,order_sub_total,order_shipping_fee,order_payment_fee,order_discount_code,order_discount_amount,order_total_final,order_user_first_name,order_user_last_name,order_user_email,order_customer_notes,order_admin_notes,order_approved_at,line_product_id,line_currency_id,line_product_name,line_product_sku,line_discount_code,line_discount_amount,line_unit_price,line_purchase_price,line_unit_discount,line_unit_final_price,line_unit_final_price_tax,line_unit_final_price_taxable,line_qty,line_total_final_price,line_tax_rate&filename=orders-lines')
+        ->assertOk();
+
+    Excel::assertDownloaded('orders-lines.xlsx', function (OrdersByLineExport $export) use ($currency): bool {
+        expect($export->headings())->toBe(['order_identifier', 'order_status', 'order_user_id', 'order_shipping_status_id', 'order_tracking_code', 'order_tracking_link', 'order_last_tracked_at', 'order_courier_code', 'order_sub_total_taxable', 'order_sub_total_tax', 'order_sub_total', 'order_shipping_fee', 'order_payment_fee', 'order_discount_code', 'order_discount_amount', 'order_total_final', 'order_user_first_name', 'order_user_last_name', 'order_user_email', 'order_customer_notes', 'order_admin_notes', 'order_approved_at', 'line_product_id', 'line_currency_id', 'line_product_name', 'line_product_sku', 'line_discount_code', 'line_discount_amount', 'line_unit_price', 'line_purchase_price', 'line_unit_discount', 'line_unit_final_price', 'line_unit_final_price_tax', 'line_unit_final_price_taxable', 'line_qty', 'line_total_final_price', 'line_tax_rate']);
+
+        $rows = $export->collection()->map(fn ($row): array => $export->map($row));
+
+        expect($rows)->toHaveCount(2)
+            ->and($rows->every(fn (array $row): bool => $row[0] === 'ORDER-EXPORT-001'))->toBeTrue()
+            ->and($rows->every(fn (array $row): bool => $row[1] === 'processing'))->toBeTrue()
+            ->and($rows->every(fn (array $row): bool => $row[3] === 'SHP-EXP-01'))->toBeTrue()
+            ->and($rows->every(fn (array $row): bool => in_array($row[22], ['STATIC-LINE-A', 'STATIC-LINE-B'], true)))->toBeTrue()
+            ->and($rows->every(fn (array $row): bool => $row[23] === $currency->code))->toBeTrue()
+            ->and($rows->every(fn (array $row): bool => in_array($row[24], ['Static Product A', 'Static Product B'], true)))->toBeTrue();
+
+        return true;
+    });
+});
