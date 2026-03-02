@@ -21,12 +21,18 @@ class ProductController extends Controller
 
         $includes = $this->resolveProductIncludes();
         $filters = request()->except('include');
+        $query = query('product')->with($this->productRelationsForIncludes($includes));
+
+        if ($this->shouldExcludeVariantsFromIndex()) {
+            $query->whereNull('parent_id');
+        }
 
         return ProductResource::collection(
             $this->applyBaseFilters(
-                query('product')->with($this->productRelationsForIncludes($includes)),
+                $query,
                 $filters,
-                'product'
+                'product',
+                $this->productIndexValidationRules()
             )
         );
     }
@@ -160,5 +166,34 @@ class ProductController extends Controller
         }
 
         return $relations;
+    }
+
+    protected function productIndexValidationRules(): array
+    {
+        return [
+            'include_variants' => [
+                'sometimes',
+                'boolean',
+            ],
+            'exclude_variants' => [
+                'sometimes',
+                'boolean',
+            ],
+        ];
+    }
+
+    protected function shouldExcludeVariantsFromIndex(): bool
+    {
+        $excludeVariants = (bool) config('venditio.product.exclude_variants_from_index', true);
+
+        if (request()->has('include_variants')) {
+            $excludeVariants = !request()->boolean('include_variants');
+        }
+
+        if (request()->has('exclude_variants')) {
+            $excludeVariants = request()->boolean('exclude_variants');
+        }
+
+        return $excludeVariants;
     }
 }

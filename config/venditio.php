@@ -215,6 +215,7 @@ return [
         'sku_generator' => Generators\ProductSkuGenerator::class,
         'sku_prefix' => env('VENDITIO_PRODUCT_SKU_PREFIX', 'SW-'),
         'sku_counter_padding' => (int) env('VENDITIO_PRODUCT_SKU_COUNTER_PADDING', 0),
+        'exclude_variants_from_index' => env('VENDITIO_PRODUCT_EXCLUDE_VARIANTS_FROM_INDEX', true),
     ],
 
     /*

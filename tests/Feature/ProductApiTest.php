@@ -319,6 +319,137 @@ it('updates nested inventory fields via product api', function () {
     ]);
 });
 
+it('excludes variants from products index by default', function () {
+    $baseProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $otherBaseProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $variantProduct = Product::factory()->create([
+        'parent_id' => $baseProduct->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . '/products?per_page=100')
+        ->assertOk();
+
+    $ids = collect($response->json('data'))
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toContain($baseProduct->getKey(), $otherBaseProduct->getKey())
+        ->not->toContain($variantProduct->getKey());
+});
+
+it('includes variants in products index when configured', function () {
+    config()->set('venditio.product.exclude_variants_from_index', false);
+
+    $baseProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $variantProduct = Product::factory()->create([
+        'parent_id' => $baseProduct->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . '/products?per_page=100')
+        ->assertOk();
+
+    $ids = collect($response->json('data'))
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toContain($baseProduct->getKey(), $variantProduct->getKey());
+});
+
+it('includes variants in products index when include_variants is true', function () {
+    config()->set('venditio.product.exclude_variants_from_index', true);
+
+    $baseProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $variantProduct = Product::factory()->create([
+        'parent_id' => $baseProduct->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . '/products?per_page=100&include_variants=1')
+        ->assertOk();
+
+    $ids = collect($response->json('data'))
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toContain($baseProduct->getKey(), $variantProduct->getKey());
+});
+
+it('excludes variants in products index when exclude_variants is true', function () {
+    config()->set('venditio.product.exclude_variants_from_index', false);
+
+    $baseProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $variantProduct = Product::factory()->create([
+        'parent_id' => $baseProduct->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . '/products?per_page=100&exclude_variants=1')
+        ->assertOk();
+
+    $ids = collect($response->json('data'))
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toContain($baseProduct->getKey())
+        ->not->toContain($variantProduct->getKey());
+});
+
+it('prioritizes exclude_variants over include_variants on products index', function () {
+    config()->set('venditio.product.exclude_variants_from_index', false);
+
+    $baseProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $variantProduct = Product::factory()->create([
+        'parent_id' => $baseProduct->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . '/products?per_page=100&include_variants=1&exclude_variants=1')
+        ->assertOk();
+
+    $ids = collect($response->json('data'))
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toContain($baseProduct->getKey())
+        ->not->toContain($variantProduct->getKey());
+});
+
 it('includes variants and variants options table when requested', function () {
     $brand = Brand::factory()->create();
     $taxClass = TaxClass::factory()->create();

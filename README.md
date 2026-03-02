@@ -50,6 +50,7 @@ All behavior is configured through `config/venditio.php`.
 - `authorize_using_policies`: optional policy/gate authorization
 - `price_lists`: optional multi-price feature
 - `discounts`: discount calculator/bindings/rules configuration
+- `product`: product enums, sku generator and product list variant visibility defaults
 - `product_variants`: variant naming/copy behavior
 
 ### User model and auth integration
