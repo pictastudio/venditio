@@ -48,5 +48,49 @@ docs {
   - none
 
   body:
-  - JSON payload. See body:json in this request for an example.
+  - JSON payload.
+  - Available fields:
+  - parent_id
+  - brand_id
+  - product_type_id
+  - tax_class_id
+  - name
+  - slug
+  - status
+  - active
+  - new
+  - in_evidence
+  - sku
+  - ean
+  - visible_from
+  - visible_until
+  - description
+  - description_short
+  - images (array)
+  - images.*.alt
+  - images.*.src
+  - files (array)
+  - files.*.name
+  - files.*.src
+  - measuring_unit
+  - qty_for_unit
+  - length
+  - width
+  - height
+  - weight
+  - metadata (array)
+  - category_ids (array)
+  - category_ids.*
+  - inventory (object)
+  - inventory.currency_id
+  - inventory.stock
+  - inventory.stock_reserved
+  - inventory.stock_min
+  - inventory.price
+  - inventory.price_includes_tax
+  - inventory.purchase_price
+  - {locale}.name / name:{locale}
+  - {locale}.slug / slug:{locale}
+  - {locale}.description / description:{locale}
+  - {locale}.description_short / description_short:{locale}
 }

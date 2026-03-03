@@ -34,12 +34,29 @@ class DiscountCalculator implements DiscountCalculatorInterface
             'unit_discount' => $unitDiscount,
             'unit_final_price' => $unitFinalPrice,
         ]);
+        $this->syncCalculatedPriceSnapshot($line, $unitFinalPrice);
 
         if ($selectedDiscount instanceof Discount) {
             $context->markDiscountAsAppliedInCart($selectedDiscount);
         }
 
         return $line;
+    }
+
+    private function syncCalculatedPriceSnapshot(Model $line, float $unitFinalPrice): void
+    {
+        $productData = $line->getAttribute('product_data');
+
+        if (!is_array($productData)) {
+            return;
+        }
+
+        if (blank(data_get($productData, 'price_calculated.price'))) {
+            data_set($productData, 'price_calculated.price', (float) $line->getAttribute('unit_price'));
+        }
+
+        data_set($productData, 'price_calculated.price_final', $unitFinalPrice);
+        $line->setAttribute('product_data', $productData);
     }
 
     private function resolveApplicableDiscount(Model $line, DiscountContext $context, float $unitPrice): ?Discount

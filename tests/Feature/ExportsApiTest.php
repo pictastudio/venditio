@@ -5,7 +5,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use PictaStudio\Venditio\Enums\DiscountType;
 use PictaStudio\Venditio\Enums\{OrderStatus, ProductStatus};
 use PictaStudio\Venditio\Exports\V1\{OrdersByLineExport, ProductsExport};
-use PictaStudio\Venditio\Models\{Currency, Order, Product, ShippingStatus, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Currency, Order, Product, ProductCategory, ShippingStatus, TaxClass};
 
 use function Pest\Laravel\{get, getJson};
 
@@ -63,6 +63,72 @@ it('validates requested columns on product excel export', function () {
     getJson(config('venditio.routes.api.v1.prefix') . '/exports/products?columns=id,not_allowed_column')
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['columns.1']);
+});
+
+it('filters product excel export by multiple brands and categories', function () {
+    Excel::fake();
+
+    $brandA = Brand::factory()->create();
+    $brandB = Brand::factory()->create();
+    $brandC = Brand::factory()->create();
+
+    $categoryA = ProductCategory::factory()->create();
+    $categoryB = ProductCategory::factory()->create();
+    $categoryC = ProductCategory::factory()->create();
+
+    $matchingA = Product::factory()->create([
+        'brand_id' => $brandA->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $matchingA->categories()->sync([$categoryA->getKey()]);
+
+    $matchingB = Product::factory()->create([
+        'brand_id' => $brandB->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $matchingB->categories()->sync([$categoryB->getKey()]);
+
+    $notMatchingBrand = Product::factory()->create([
+        'brand_id' => $brandC->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $notMatchingBrand->categories()->sync([$categoryA->getKey()]);
+
+    $notMatchingCategory = Product::factory()->create([
+        'brand_id' => $brandA->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $notMatchingCategory->categories()->sync([$categoryC->getKey()]);
+
+    get(
+        config('venditio.routes.api.v1.prefix')
+        . '/exports/products?columns=id,sku'
+        . '&brand_ids[]=' . $brandA->getKey()
+        . '&brand_ids[]=' . $brandB->getKey()
+        . '&category_ids[]=' . $categoryA->getKey()
+        . '&category_ids[]=' . $categoryB->getKey()
+        . '&filename=products-filtered'
+    )->assertOk();
+
+    Excel::assertDownloaded('products-filtered.xlsx', function (ProductsExport $export) use ($matchingA, $matchingB, $notMatchingBrand, $notMatchingCategory): bool {
+        $ids = $export->collection()
+            ->pluck('id')
+            ->all();
+
+        expect($ids)
+            ->toContain($matchingA->getKey(), $matchingB->getKey())
+            ->not->toContain($notMatchingBrand->getKey(), $notMatchingCategory->getKey());
+
+        return true;
+    });
 });
 
 it('exports orders with one row per order line', function () {

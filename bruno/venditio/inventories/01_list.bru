@@ -11,7 +11,7 @@ get {
 }
 
 params:query {
-  ~all: false
+  ~all: 0
   ~page: 1
   ~per_page: 30
   ~sort_by: product_id
@@ -24,7 +24,7 @@ params:query {
   ~stock_available: 1
   ~stock_min: 1
   ~price: 10
-  ~price_includes_tax: false
+  ~price_includes_tax: 0
   ~purchase_price: 10
   ~created_at: 2026-01-01
   ~created_at_start: 2026-01-01
@@ -35,8 +35,8 @@ params:query {
   ~deleted_at: 2026-01-01
   ~deleted_at_start: 2026-01-01
   ~deleted_at_end: 2026-12-31
-  ~with_trashed: false
-  ~only_trashed: false
+  ~with_trashed: 0
+  ~only_trashed: 0
 }
 
 headers {

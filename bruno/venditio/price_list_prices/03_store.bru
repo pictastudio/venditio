@@ -1,0 +1,56 @@
+meta {
+  name: Store price list prices
+  type: http
+  seq: 108
+}
+
+post {
+  url: {{baseUrl}}/price_list_prices
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "product_id": 1,
+    "price_list_id": 1,
+    "price": 19.99,
+    "purchase_price": 10.99,
+    "price_includes_tax": false,
+    "is_default": true,
+    "metadata": {
+      "source": "manual"
+    }
+  }
+}
+
+docs {
+  summary:
+  - Store price list prices
+
+  endpoint:
+  - method: POST
+  - path: /price_list_prices
+
+  query params:
+  - none
+
+  path params:
+  - none
+
+  body:
+  - JSON payload.
+  - Available fields:
+  - product_id
+  - price_list_id
+  - price
+  - purchase_price
+  - price_includes_tax
+  - is_default
+  - metadata
+}

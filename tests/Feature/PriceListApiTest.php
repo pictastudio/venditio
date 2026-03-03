@@ -191,12 +191,14 @@ it('uses the default price list price in cart line pricing when enabled', functi
     getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}")
         ->assertOk()
         ->assertJsonPath('price_calculated.price', 95)
+        ->assertJsonPath('price_calculated.price_final', 95)
         ->assertJsonPath('price_calculated.price_list.name', 'Wholesale')
         ->assertJsonMissingPath('price_lists');
 
     getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=price_lists")
         ->assertOk()
         ->assertJsonPath('price_calculated.price', 95)
+        ->assertJsonPath('price_calculated.price_final', 95)
         ->assertJsonPath('price_lists.0.price_list.name', 'Retail')
         ->assertJsonPath('price_lists.1.price_list.name', 'Wholesale');
 

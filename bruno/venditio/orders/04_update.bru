@@ -40,5 +40,32 @@ docs {
   - id: Replace with target resource identifier.
 
   body:
-  - JSON payload. See body:json in this request for an example.
+  - JSON payload.
+  - Available fields:
+  - user_id
+  - shipping_status_id
+  - status
+  - tracking_code
+  - tracking_link
+  - last_tracked_at
+  - courier_code
+  - sub_total_taxable
+  - sub_total_tax
+  - sub_total
+  - shipping_fee
+  - payment_fee
+  - discount_code
+  - discount_amount
+  - total_final
+  - user_first_name
+  - user_last_name
+  - user_email
+  - addresses (array)
+  - addresses.billing (array)
+  - addresses.shipping (array)
+  - addresses.{billing|shipping}.country_id
+  - addresses.{billing|shipping}.province_id
+  - customer_notes
+  - admin_notes
+  - approved_at
 }

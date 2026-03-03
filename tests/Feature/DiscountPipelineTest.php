@@ -406,6 +406,8 @@ it('recalculates tax correctly for VAT-inclusive prices after discounts', functi
     $line = $cart->lines->first();
 
     expect((float) $line->unit_final_price)->toBe(112.0)
+        ->and((float) data_get($line->product_data, 'price_calculated.price'))->toBe(122.0)
+        ->and((float) data_get($line->product_data, 'price_calculated.price_final'))->toBe(112.0)
         ->and((float) $line->unit_final_price_taxable)->toBe(91.8)
         ->and((float) $line->unit_final_price_tax)->toBe(20.2)
         ->and((float) $line->total_final_price)->toBe(112.0);
@@ -423,6 +425,14 @@ it('preserves VAT-inclusive totals when converting cart to order', function () {
     ]);
 
     $product = createProduct(122, $taxClass, true);
+    $product->discounts()->create([
+        'type' => DiscountType::Fixed,
+        'value' => 10,
+        'code' => 'ORDERLINE10',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+    ]);
 
     $cart = CartCreationPipeline::make()->run(
         CartDto::fromArray([
@@ -442,10 +452,14 @@ it('preserves VAT-inclusive totals when converting cart to order', function () {
     $order = OrderCreationPipeline::make()->run(OrderDto::fromCart($cart))->load('lines');
     $orderLine = $order->lines->first();
 
-    expect((float) $cart->total_final)->toBe(122.0)
-        ->and((float) $order->total_final)->toBe(122.0)
-        ->and((float) $orderLine->unit_final_price)->toBe(122.0)
-        ->and((float) $orderLine->unit_final_price_taxable)->toBe(100.0)
-        ->and((float) $orderLine->unit_final_price_tax)->toBe(22.0)
-        ->and((float) $orderLine->total_final_price)->toBe(122.0);
+    expect((float) $cart->total_final)->toBe(112.0)
+        ->and((float) data_get($cart->lines->first()->product_data, 'price_calculated.price'))->toBe(122.0)
+        ->and((float) data_get($cart->lines->first()->product_data, 'price_calculated.price_final'))->toBe(112.0)
+        ->and((float) $order->total_final)->toBe(112.0)
+        ->and((float) $orderLine->unit_final_price)->toBe(112.0)
+        ->and((float) data_get($orderLine->product_data, 'price_calculated.price'))->toBe(122.0)
+        ->and((float) data_get($orderLine->product_data, 'price_calculated.price_final'))->toBe(112.0)
+        ->and((float) $orderLine->unit_final_price_taxable)->toBe(91.8)
+        ->and((float) $orderLine->unit_final_price_tax)->toBe(20.2)
+        ->and((float) $orderLine->total_final_price)->toBe(112.0);
 });

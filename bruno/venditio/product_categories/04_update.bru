@@ -40,5 +40,15 @@ docs {
   - id-or-slug: Replace with target resource identifier.
 
   body:
-  - JSON payload. See body:json in this request for an example.
+  - JSON payload.
+  - Available fields:
+  - parent_id
+  - name
+  - slug
+  - active
+  - sort_order
+  - {locale}.name (locale object notation)
+  - {locale}.slug (locale object notation)
+  - name:{locale} (locale suffix notation)
+  - slug:{locale} (locale suffix notation)
 }

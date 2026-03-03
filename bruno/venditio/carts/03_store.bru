@@ -17,8 +17,6 @@ headers {
 
 body:json {
   {
-    "user_id": 1,
-    "currency_id": 1,
     "lines": [
       {
         "product_id": 1,
@@ -43,5 +41,35 @@ docs {
   - none
 
   body:
-  - JSON payload. See body:json in this request for an example.
+  - JSON payload.
+  - Available fields:
+  - user_id
+  - user_first_name
+  - user_last_name
+  - user_email
+  - discount_code
+  - addresses (array)
+  - addresses.billing (array)
+  - addresses.shipping (array)
+  - addresses.{billing|shipping}.country_id
+  - addresses.{billing|shipping}.province_id
+  - addresses.{billing|shipping}.first_name
+  - addresses.{billing|shipping}.last_name
+  - addresses.{billing|shipping}.email
+  - addresses.{billing|shipping}.sex
+  - addresses.{billing|shipping}.phone
+  - addresses.{billing|shipping}.vat_number
+  - addresses.{billing|shipping}.fiscal_code
+  - addresses.{billing|shipping}.company_name
+  - addresses.{billing|shipping}.address_line_1
+  - addresses.{billing|shipping}.address_line_2
+  - addresses.{billing|shipping}.city
+  - addresses.{billing|shipping}.state
+  - addresses.{billing|shipping}.zip
+  - addresses.{billing|shipping}.birth_date
+  - addresses.{billing|shipping}.birth_place
+  - addresses.{billing|shipping}.notes
+  - lines (array)
+  - lines.*.product_id
+  - lines.*.qty
 }

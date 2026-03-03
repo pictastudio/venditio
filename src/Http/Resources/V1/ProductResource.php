@@ -2,11 +2,15 @@
 
 namespace PictaStudio\Venditio\Http\Resources\V1;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
-use PictaStudio\Venditio\Contracts\ProductPriceResolverInterface;
+use PictaStudio\Venditio\Contracts\{DiscountCalculatorInterface, ProductPriceResolverInterface};
+use PictaStudio\Venditio\Discounts\DiscountContext;
 use PictaStudio\Venditio\Http\Resources\Traits\{CanTransformAttributes, HasAttributesToExclude};
+
+use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
 class ProductResource extends JsonResource
 {
@@ -34,7 +38,7 @@ class ProductResource extends JsonResource
         $shouldIncludeVariantsOptionsTable = in_array('variants_options_table', $includes, true) && blank($this->parent_id);
 
         return [
-            'price_calculated' => $this->resolveCalculatedPrice(),
+            'price_calculated' => $this->resolveCalculatedPrice($request),
             'brand' => BrandResource::make($this->whenLoaded('brand')),
             'product_type' => ProductTypeResource::make($this->whenLoaded('productType')),
             'tax_class' => TaxClassResource::make($this->whenLoaded('taxClass')),
@@ -83,16 +87,38 @@ class ProductResource extends JsonResource
         ];
     }
 
-    protected function resolveCalculatedPrice(): array
+    protected function resolveCalculatedPrice(Request $request): array
     {
         $resolved = app(ProductPriceResolverInterface::class)->resolve($this->resource);
+        $baseUnitPrice = (float) ($resolved['unit_price'] ?? 0);
+        $calculatedPriceFinal = $this->resolveAutomaticDiscountedPrice($baseUnitPrice, $request);
 
         return [
-            'price' => (float) ($resolved['unit_price'] ?? 0),
+            'price' => $baseUnitPrice,
+            'price_final' => $calculatedPriceFinal,
             'purchase_price' => isset($resolved['purchase_price']) ? (float) $resolved['purchase_price'] : null,
             'price_includes_tax' => (bool) ($resolved['price_includes_tax'] ?? false),
             'price_list' => $resolved['price_list'] ?? null,
         ];
+    }
+
+    protected function resolveAutomaticDiscountedPrice(float $unitPrice, Request $request): float
+    {
+        $cartLineModelClass = resolve_model('cart_line');
+        /** @var Model $previewLine */
+        $previewLine = new $cartLineModelClass;
+
+        $previewLine->fill([
+            'product_id' => $this->resource->getKey(),
+            'qty' => 1,
+            'unit_price' => $unitPrice,
+        ]);
+
+        $user = $request->user();
+        $context = DiscountContext::make(user: $user instanceof Model ? $user : null);
+        $calculatedLine = app(DiscountCalculatorInterface::class)->apply($previewLine, $context);
+
+        return (float) ($calculatedLine->getAttribute('unit_final_price') ?? $unitPrice);
     }
 
     protected function transformAttributes(): array

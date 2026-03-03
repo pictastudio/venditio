@@ -1,0 +1,38 @@
+meta {
+  name: Show price lists
+  type: http
+  seq: 102
+}
+
+get {
+  url: {{baseUrl}}/price_lists/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Show price lists
+
+  endpoint:
+  - method: GET
+  - path: /price_lists/:id
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target resource identifier.
+
+  body:
+  - none
+}

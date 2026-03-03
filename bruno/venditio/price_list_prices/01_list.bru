@@ -1,11 +1,11 @@
 meta {
-  name: List carts
+  name: List price list prices
   type: http
-  seq: 26
+  seq: 106
 }
 
 get {
-  url: {{baseUrl}}/carts
+  url: {{baseUrl}}/price_list_prices
   body: none
   auth: inherit
 }
@@ -14,25 +14,15 @@ params:query {
   ~all: 0
   ~page: 1
   ~per_page: 30
-  ~sort_by: user_id
+  ~sort_by: product_id
   ~sort_dir: asc
   ~id[]: 1
-  ~user_id: 1
-  ~order_id: 1
-  ~identifier: sample
-  ~status: sample
-  ~sub_total_taxable: 10
-  ~sub_total_tax: 10
-  ~sub_total: 10
-  ~shipping_fee: 10
-  ~payment_fee: 10
-  ~discount_code: sample
-  ~discount_amount: 10
-  ~total_final: 10
-  ~user_first_name: sample
-  ~user_last_name: sample
-  ~user_email: sample
-  ~notes: sample
+  ~product_id: 1
+  ~price_list_id: 1
+  ~price: 19.99
+  ~purchase_price: 10.99
+  ~price_includes_tax: 0
+  ~is_default: 0
   ~created_at: 2026-01-01
   ~created_at_start: 2026-01-01
   ~created_at_end: 2026-12-31
@@ -53,11 +43,11 @@ headers {
 
 docs {
   summary:
-  - List carts
+  - List price list prices
 
   endpoint:
   - method: GET
-  - path: /carts
+  - path: /price_list_prices
 
   query params:
   - all (boolean): Return all records without pagination.
@@ -66,22 +56,12 @@ docs {
   - sort_by (string): Sort field. Allowed: id and filterable columns.
   - sort_dir (string): Sort direction: asc or desc.
   - id[] (integer[]): Filter by one or more resource IDs.
-  - user_id (integer): Exact-match filter for user_id.
-  - order_id (integer): Exact-match filter for order_id.
-  - identifier (string): Exact-match filter for identifier.
-  - status (string): Exact-match filter for status.
-  - sub_total_taxable (number): Exact-match filter for sub_total_taxable.
-  - sub_total_tax (number): Exact-match filter for sub_total_tax.
-  - sub_total (number): Exact-match filter for sub_total.
-  - shipping_fee (number): Exact-match filter for shipping_fee.
-  - payment_fee (number): Exact-match filter for payment_fee.
-  - discount_code (string): Exact-match filter for discount_code.
-  - discount_amount (number): Exact-match filter for discount_amount.
-  - total_final (number): Exact-match filter for total_final.
-  - user_first_name (string): Exact-match filter for user_first_name.
-  - user_last_name (string): Exact-match filter for user_last_name.
-  - user_email (string): Exact-match filter for user_email.
-  - notes (string): Exact-match filter for notes.
+  - product_id (integer): Exact-match filter for product_id.
+  - price_list_id (integer): Exact-match filter for price_list_id.
+  - price (number): Exact-match filter for price.
+  - purchase_price (number): Exact-match filter for purchase_price.
+  - price_includes_tax (boolean): Exact-match filter for price_includes_tax.
+  - is_default (boolean): Exact-match filter for is_default.
   - created_at (date): Exact-match filter for created_at.
   - created_at_start (date): Filter created_at greater than or equal to this date.
   - created_at_end (date): Filter created_at less than or equal to this date.

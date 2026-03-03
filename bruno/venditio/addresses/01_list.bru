@@ -11,7 +11,7 @@ get {
 }
 
 params:query {
-  ~all: false
+  ~all: 0
   ~page: 1
   ~per_page: 30
   ~sort_by: addressable_type
@@ -22,7 +22,7 @@ params:query {
   ~country_id: 1
   ~province_id: 1
   ~type: sample
-  ~is_default: false
+  ~is_default: 0
   ~first_name: sample
   ~last_name: sample
   ~email: sample
@@ -50,8 +50,8 @@ params:query {
   ~deleted_at: 2026-01-01
   ~deleted_at_start: 2026-01-01
   ~deleted_at_end: 2026-12-31
-  ~with_trashed: false
-  ~only_trashed: false
+  ~with_trashed: 0
+  ~only_trashed: 0
 }
 
 headers {

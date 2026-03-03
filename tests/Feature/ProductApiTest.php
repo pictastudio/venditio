@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PictaStudio\Venditio\Enums\ProductStatus;
+use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
 use PictaStudio\Venditio\Models\{Brand, Inventory, Product, ProductCategory, ProductType, ProductVariant, ProductVariantOption, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patchJson, postJson};
@@ -450,6 +450,78 @@ it('prioritizes exclude_variants over include_variants on products index', funct
         ->not->toContain($variantProduct->getKey());
 });
 
+it('filters products index by multiple brands and categories', function () {
+    $brandA = Brand::factory()->create();
+    $brandB = Brand::factory()->create();
+    $brandC = Brand::factory()->create();
+
+    $categoryA = ProductCategory::factory()->create();
+    $categoryB = ProductCategory::factory()->create();
+    $categoryC = ProductCategory::factory()->create();
+
+    $matchingA = Product::factory()->create([
+        'brand_id' => $brandA->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $matchingA->categories()->sync([$categoryA->getKey()]);
+
+    $matchingB = Product::factory()->create([
+        'brand_id' => $brandB->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $matchingB->categories()->sync([$categoryB->getKey()]);
+
+    $notMatchingBrand = Product::factory()->create([
+        'brand_id' => $brandC->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $notMatchingBrand->categories()->sync([$categoryA->getKey()]);
+
+    $notMatchingCategory = Product::factory()->create([
+        'brand_id' => $brandA->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $notMatchingCategory->categories()->sync([$categoryC->getKey()]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix')
+        . '/products?all=1'
+        . '&brand_ids[]=' . $brandA->getKey()
+        . '&brand_ids[]=' . $brandB->getKey()
+        . '&category_ids[]=' . $categoryA->getKey()
+        . '&category_ids[]=' . $categoryB->getKey()
+    )->assertOk();
+
+    $json = $response->json();
+    $items = is_array(data_get($json, 'data'))
+        ? data_get($json, 'data')
+        : $json;
+
+    $ids = collect($items)
+        ->pluck('id')
+        ->all();
+
+    expect($ids)
+        ->toContain($matchingA->getKey(), $matchingB->getKey())
+        ->not->toContain($notMatchingBrand->getKey(), $notMatchingCategory->getKey());
+});
+
+it('validates products index brand_ids and category_ids filters', function () {
+    getJson(
+        config('venditio.routes.api.v1.prefix')
+        . '/products?brand_ids[]=999999&category_ids[]=999999'
+    )->assertUnprocessable()
+        ->assertJsonValidationErrors(['brand_ids.0', 'category_ids.0']);
+});
+
 it('includes variants and variants options table when requested', function () {
     $brand = Brand::factory()->create();
     $taxClass = TaxClass::factory()->create();
@@ -559,6 +631,44 @@ it('always exposes price_calculated on product payloads', function () {
     getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}")
         ->assertOk()
         ->assertJsonPath('price_calculated.price', 42.5)
+        ->assertJsonPath('price_calculated.price_final', 42.5)
         ->assertJsonPath('price_calculated.purchase_price', 20)
+        ->assertJsonPath('price_calculated.price_includes_tax', false);
+});
+
+it('calculates product price_calculated by applying automatic discounts', function () {
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->inventory()->updateOrCreate([], [
+        'price' => 100,
+        'purchase_price' => 55,
+        'price_includes_tax' => false,
+    ]);
+
+    $product->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'name' => 'Automatic 10%',
+        'code' => 'AUTO10-PRODUCT-PRICE',
+        'active' => true,
+        'starts_at' => now()->subMinute(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => false,
+        'apply_once_per_cart' => false,
+        'max_uses_per_user' => null,
+        'one_per_user' => false,
+        'free_shipping' => false,
+        'minimum_order_total' => null,
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}")
+        ->assertOk()
+        ->assertJsonPath('price_calculated.price', 100)
+        ->assertJsonPath('price_calculated.price_final', 90)
+        ->assertJsonPath('price_calculated.purchase_price', 55)
         ->assertJsonPath('price_calculated.price_includes_tax', false);
 });

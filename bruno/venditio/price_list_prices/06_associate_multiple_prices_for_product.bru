@@ -1,0 +1,54 @@
+meta {
+  name: Associate multiple prices to product
+  type: http
+  seq: 111
+}
+
+post {
+  url: {{baseUrl}}/price_list_prices
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "product_id": 1,
+    "price_list_id": 2,
+    "price": 15.99,
+    "purchase_price": 8.50,
+    "price_includes_tax": false,
+    "is_default": true,
+    "metadata": {
+      "label": "Wholesale"
+    }
+  }
+}
+
+docs {
+  summary:
+  - Associate multiple prices to one product by price list
+
+  endpoint:
+  - method: POST
+  - path: /price_list_prices
+
+  query params:
+  - none
+
+  path params:
+  - none
+
+  body:
+  - Run this request once per price list using the same product_id.
+  - Example for product_id=1: first create with price_list_id=1 and price=19.99.
+  - Example for product_id=1: then create with price_list_id=2 and price=15.99.
+  - Keep only one default by setting is_default=true on the preferred record.
+  - Constraint: product_id + price_list_id must be unique.
+  - Verify with GET /price_list_prices?product_id=1&all=1.
+  - Verify with GET /products/:id-or-slug?include=price_lists.
+}

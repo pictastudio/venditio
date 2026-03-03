@@ -11,7 +11,7 @@ get {
 }
 
 params:query {
-  ~all: false
+  ~all: 0
   ~page: 1
   ~per_page: 30
   ~sort_by: discountable_type
@@ -23,7 +23,7 @@ params:query {
   ~value: 10
   ~name: sample
   ~code: sample
-  ~active: false
+  ~active: 0
   ~starts_at: 2026-01-01
   ~starts_at_start: 2026-01-01
   ~starts_at_end: 2026-12-31
@@ -32,14 +32,14 @@ params:query {
   ~ends_at_end: 2026-12-31
   ~uses: 1
   ~max_uses: 1
-  ~apply_to_cart_total: false
-  ~apply_once_per_cart: false
+  ~apply_to_cart_total: 0
+  ~apply_once_per_cart: 0
   ~max_uses_per_user: 1
-  ~one_per_user: false
-  ~free_shipping: false
+  ~one_per_user: 0
+  ~free_shipping: 0
   ~minimum_order_total: 10
   ~priority: 1
-  ~stop_after_propagation: false
+  ~stop_after_propagation: 0
   ~created_at: 2026-01-01
   ~created_at_start: 2026-01-01
   ~created_at_end: 2026-12-31
@@ -49,9 +49,9 @@ params:query {
   ~deleted_at: 2026-01-01
   ~deleted_at_start: 2026-01-01
   ~deleted_at_end: 2026-12-31
-  ~with_trashed: false
-  ~only_trashed: false
-  ~is_active: true
+  ~with_trashed: 0
+  ~only_trashed: 0
+  ~is_active: 1
 }
 
 headers {

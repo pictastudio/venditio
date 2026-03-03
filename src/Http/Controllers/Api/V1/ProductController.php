@@ -2,6 +2,7 @@
 
 namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\Rule;
@@ -11,7 +12,7 @@ use PictaStudio\Venditio\Http\Requests\V1\Product\{GenerateProductVariantsReques
 use PictaStudio\Venditio\Http\Resources\V1\ProductResource;
 use PictaStudio\Venditio\Models\Product;
 
-use function PictaStudio\Venditio\Helpers\Functions\query;
+use function PictaStudio\Venditio\Helpers\Functions\{query, resolve_model};
 
 class ProductController extends Controller
 {
@@ -22,6 +23,7 @@ class ProductController extends Controller
         $includes = $this->resolveProductIncludes();
         $filters = request()->except('include');
         $query = query('product')->with($this->productRelationsForIncludes($includes));
+        $this->applyProductIndexRelationFilters($query, $filters);
 
         if ($this->shouldExcludeVariantsFromIndex()) {
             $query->whereNull('parent_id');
@@ -170,6 +172,18 @@ class ProductController extends Controller
 
     protected function productIndexValidationRules(): array
     {
+        $brandModel = app(resolve_model('brand'));
+        $brandTable = method_exists($brandModel, 'getTableName')
+            ? $brandModel->getTableName()
+            : $brandModel->getTable();
+        $brandKeyName = $brandModel->getKeyName();
+
+        $categoryModel = app(resolve_model('product_category'));
+        $categoryTable = method_exists($categoryModel, 'getTableName')
+            ? $categoryModel->getTableName()
+            : $categoryModel->getTable();
+        $categoryKeyName = $categoryModel->getKeyName();
+
         return [
             'include_variants' => [
                 'sometimes',
@@ -179,7 +193,53 @@ class ProductController extends Controller
                 'sometimes',
                 'boolean',
             ],
+            'brand_ids' => [
+                'sometimes',
+                'array',
+                'min:1',
+            ],
+            'brand_ids.*' => [
+                'integer',
+                Rule::exists($brandTable, $brandKeyName),
+            ],
+            'category_ids' => [
+                'sometimes',
+                'array',
+                'min:1',
+            ],
+            'category_ids.*' => [
+                'integer',
+                Rule::exists($categoryTable, $categoryKeyName),
+            ],
         ];
+    }
+
+    protected function applyProductIndexRelationFilters(Builder $query, array $filters): void
+    {
+        if (isset($filters['brand_ids']) && is_array($filters['brand_ids'])) {
+            $query->whereIn('brand_id', $filters['brand_ids']);
+        }
+
+        if (isset($filters['category_ids']) && is_array($filters['category_ids'])) {
+            $productModel = app(resolve_model('product'));
+            $productTable = method_exists($productModel, 'getTableName')
+                ? $productModel->getTableName()
+                : $productModel->getTable();
+            $productKey = $productModel->getKeyName();
+
+            $categoriesRelation = $productModel->categories();
+            $pivotTable = $categoriesRelation->getTable();
+            $foreignPivotKey = $categoriesRelation->getForeignPivotKeyName();
+            $relatedPivotKey = $categoriesRelation->getRelatedPivotKeyName();
+
+            $query->whereIn(
+                $productTable . '.' . $productKey,
+                fn ($subQuery) => $subQuery
+                    ->select($foreignPivotKey)
+                    ->from($pivotTable)
+                    ->whereIn($relatedPivotKey, $filters['category_ids'])
+            );
+        }
     }
 
     protected function shouldExcludeVariantsFromIndex(): bool

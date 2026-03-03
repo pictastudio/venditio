@@ -4,10 +4,11 @@ namespace PictaStudio\Venditio\Http\Requests\V1\Discount;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Enums\DiscountType;
 
-use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
+use function PictaStudio\Venditio\Helpers\Functions\{query, resolve_model};
 
 class StoreDiscountRequest extends FormRequest
 {
@@ -23,6 +24,7 @@ class StoreDiscountRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
+                'required_with:discountable_id',
                 Rule::in(['product', 'product_category', 'product_type', 'brand', 'user']),
             ],
             'discountable_id' => [
@@ -34,7 +36,13 @@ class StoreDiscountRequest extends FormRequest
             'type' => ['required', Rule::enum(DiscountType::class)],
             'value' => ['required', 'numeric', 'min:0'],
             'name' => ['nullable', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50', 'unique:discounts,code'],
+            'code' => [
+                'nullable',
+                Rule::requiredIf(fn () => !$this->hasDiscountableTarget()),
+                'string',
+                'max:50',
+                Rule::unique($this->discountsTable(), 'code'),
+            ],
             'active' => ['sometimes', 'boolean'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
@@ -53,9 +61,15 @@ class StoreDiscountRequest extends FormRequest
 
     public function prepareForValidation()
     {
-        $this->merge([
+        $payload = [
             'starts_at' => Date::parse($this->starts_at),
-        ]);
+        ];
+
+        if ($this->shouldGenerateAutomaticCode()) {
+            $payload['code'] = $this->generateAutomaticCode();
+        }
+
+        $this->merge($payload);
     }
 
     private function tableFor(?string $model): string
@@ -63,5 +77,30 @@ class StoreDiscountRequest extends FormRequest
         $resolvedModel = filled($model) ? $model : 'product';
 
         return (new (resolve_model($resolvedModel)))->getTable();
+    }
+
+    private function discountsTable(): string
+    {
+        return (new (resolve_model('discount')))->getTable();
+    }
+
+    private function hasDiscountableTarget(): bool
+    {
+        return filled($this->input('discountable_type'))
+            && filled($this->input('discountable_id'));
+    }
+
+    private function shouldGenerateAutomaticCode(): bool
+    {
+        return $this->hasDiscountableTarget() && blank($this->input('code'));
+    }
+
+    private function generateAutomaticCode(): string
+    {
+        do {
+            $code = 'AUTO-' . mb_strtoupper(Str::random(12));
+        } while (query('discount')->where('code', $code)->exists());
+
+        return $code;
     }
 }

@@ -11,7 +11,7 @@ get {
 }
 
 params:query {
-  ~all: false
+  ~all: 0
   ~page: 1
   ~per_page: 30
   ~sort_by: cart_id
@@ -43,8 +43,8 @@ params:query {
   ~deleted_at: 2026-01-01
   ~deleted_at_start: 2026-01-01
   ~deleted_at_end: 2026-12-31
-  ~with_trashed: false
-  ~only_trashed: false
+  ~with_trashed: 0
+  ~only_trashed: 0
 }
 
 headers {

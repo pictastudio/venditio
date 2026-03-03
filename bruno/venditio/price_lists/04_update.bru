@@ -1,11 +1,11 @@
 meta {
-  name: Update product_custom_fields
+  name: Update price lists
   type: http
-  seq: 89
+  seq: 104
 }
 
 patch {
-  url: {{baseUrl}}/product_custom_fields/:id
+  url: {{baseUrl}}/price_lists/:id
   body: json
   auth: inherit
 }
@@ -21,17 +21,19 @@ headers {
 
 body:json {
   {
-    "name": "Updated example"
+    "name": "Wholesale",
+    "active": true,
+    "description": "Updated list for B2B"
   }
 }
 
 docs {
   summary:
-  - Update product_custom_fields
+  - Update price lists
 
   endpoint:
   - method: PATCH
-  - path: /product_custom_fields/:id
+  - path: /price_lists/:id
 
   query params:
   - none
@@ -42,10 +44,9 @@ docs {
   body:
   - JSON payload.
   - Available fields:
-  - product_type_id
   - name
-  - required
-  - sort_order
-  - type
-  - options (array)
+  - code
+  - active
+  - description
+  - metadata
 }

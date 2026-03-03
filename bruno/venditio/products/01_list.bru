@@ -11,22 +11,23 @@ get {
 }
 
 params:query {
-  ~all: false
+  ~all: 0
   ~page: 1
   ~per_page: 30
   ~sort_by: parent_id
   ~sort_dir: asc
   ~id[]: 1
   ~parent_id: 1
-  ~brand_id: 1
+  ~brand_ids[]: 1
   ~product_type_id: 1
   ~tax_class_id: 1
+  ~category_ids[]: 1
   ~name: sample
   ~slug: sample
   ~status: sample
-  ~active: false
-  ~new: false
-  ~in_evidence: false
+  ~active: 0
+  ~new: 0
+  ~in_evidence: 0
   ~sku: sample
   ~ean: sample
   ~visible_from: 2026-01-01
@@ -52,11 +53,11 @@ params:query {
   ~deleted_at: 2026-01-01
   ~deleted_at_start: 2026-01-01
   ~deleted_at_end: 2026-12-31
-  ~with_trashed: false
-  ~only_trashed: false
-  ~is_active: true
-  ~include_variants: false
-  ~exclude_variants: true
+  ~with_trashed: 0
+  ~only_trashed: 0
+  ~is_active: 1
+  ~include_variants: 0
+  ~exclude_variants: 1
   ~include: variants,variants_options_table
 }
 
@@ -82,8 +83,10 @@ docs {
   - id[] (integer[]): Filter by one or more resource IDs.
   - parent_id (integer): Exact-match filter for parent_id.
   - brand_id (integer): Exact-match filter for brand_id.
+  - brand_ids[] (integer[]): Match products whose brand_id is in this list.
   - product_type_id (integer): Exact-match filter for product_type_id.
   - tax_class_id (integer): Exact-match filter for tax_class_id.
+  - category_ids[] (integer[]): Match products assigned to at least one category in this list.
   - name (string): Exact-match filter for name.
   - slug (string): Exact-match filter for slug.
   - status (string): Exact-match filter for status.

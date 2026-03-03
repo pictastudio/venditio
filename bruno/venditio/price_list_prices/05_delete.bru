@@ -1,0 +1,38 @@
+meta {
+  name: Delete price list prices
+  type: http
+  seq: 110
+}
+
+delete {
+  url: {{baseUrl}}/price_list_prices/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Delete price list prices
+
+  endpoint:
+  - method: DELETE
+  - path: /price_list_prices/:id
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target resource identifier.
+
+  body:
+  - none
+}

@@ -1,11 +1,11 @@
 meta {
-  name: Store countries
+  name: Store price lists
   type: http
-  seq: 53
+  seq: 103
 }
 
 post {
-  url: {{baseUrl}}/countries
+  url: {{baseUrl}}/price_lists
   body: json
   auth: inherit
 }
@@ -17,17 +17,23 @@ headers {
 
 body:json {
   {
-    "name": "Example"
+    "name": "Retail",
+    "code": "RETAIL",
+    "active": true,
+    "description": "Default public prices",
+    "metadata": {
+      "channel": "b2c"
+    }
   }
 }
 
 docs {
   summary:
-  - Store countries
+  - Store price lists
 
   endpoint:
   - method: POST
-  - path: /countries
+  - path: /price_lists
 
   query params:
   - none
@@ -39,11 +45,8 @@ docs {
   - JSON payload.
   - Available fields:
   - name
-  - iso_2
-  - iso_3
-  - phone_code
-  - currency_id
-  - flag_emoji
-  - capital
-  - native
+  - code
+  - active
+  - description
+  - metadata
 }
