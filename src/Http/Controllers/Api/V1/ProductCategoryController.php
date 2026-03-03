@@ -4,9 +4,10 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
-use PictaStudio\Venditio\Actions\ProductCategories\{CreateProductCategory, UpdateProductCategory};
+use Illuminate\Validation\ValidationException;
+use PictaStudio\Venditio\Actions\ProductCategories\{CreateProductCategory, UpdateMultipleProductCategories, UpdateProductCategory};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
-use PictaStudio\Venditio\Http\Requests\V1\ProductCategory\{StoreProductCategoryRequest, UpdateProductCategoryRequest};
+use PictaStudio\Venditio\Http\Requests\V1\ProductCategory\{StoreProductCategoryRequest, UpdateMultipleProductCategoryRequest, UpdateProductCategoryRequest};
 use PictaStudio\Venditio\Http\Resources\V1\ProductCategoryResource;
 use PictaStudio\Venditio\Models\ProductCategory;
 
@@ -71,6 +72,42 @@ class ProductCategoryController extends Controller
             ->handle($productCategory, $request->validated());
 
         return ProductCategoryResource::make($category);
+    }
+
+    public function updateMultiple(UpdateMultipleProductCategoryRequest $request): JsonResource
+    {
+        $validated = $request->validated();
+        $categoryIds = collect($validated['categories'])
+            ->pluck('id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->all();
+
+        $categories = query('product_category')
+            ->whereKey($categoryIds)
+            ->get()
+            ->keyBy(fn (ProductCategory $category): int => (int) $category->getKey());
+
+        if ($categories->count() !== count($categoryIds)) {
+            $missingIds = collect($categoryIds)
+                ->diff($categories->keys())
+                ->values()
+                ->all();
+
+            throw ValidationException::withMessages([
+                'categories' => [
+                    'Some categories are not available for update: ' . implode(', ', $missingIds),
+                ],
+            ]);
+        }
+
+        foreach ($categoryIds as $categoryId) {
+            $this->authorizeIfConfigured('update', $categories->get($categoryId));
+        }
+
+        $updatedCategories = app(UpdateMultipleProductCategories::class)
+            ->handle($validated['categories']);
+
+        return ProductCategoryResource::collection($updatedCategories);
     }
 
     public function destroy(ProductCategory $productCategory)

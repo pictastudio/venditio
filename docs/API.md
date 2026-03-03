@@ -79,6 +79,7 @@ Export-specific query parameters:
 - `GET /product_categories/{product_category}`
 - `POST /product_categories`
 - `PATCH /product_categories/{product_category}`
+- `PATCH /product_categories/bulk/update`
 - `DELETE /product_categories/{product_category}`
 
 ### Product Types

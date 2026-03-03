@@ -35,6 +35,16 @@ it('creates a product category', function () {
     ]);
 });
 
+it('serializes casted custom objects like path as strings', function () {
+    $category = ProductCategory::factory()->create([
+        'sort_order' => 1,
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/product_categories/{$category->getKey()}")
+        ->assertOk()
+        ->assertJsonPath('path', (string) $category->getKey());
+});
+
 it('updates a product category', function () {
     $category = ProductCategory::factory()->create([
         'name' => 'Old Name',
@@ -88,4 +98,99 @@ it('returns product categories as a tree when as_tree is true', function () {
         ->assertJsonPath('1.name', 'Other Root');
 
     expect($child->fresh()->path)->not->toBeNull();
+});
+
+it('updates multiple product categories in one request', function () {
+    $root = ProductCategory::factory()->create([
+        'sort_order' => 1,
+    ]);
+
+    $firstCategory = ProductCategory::factory()->create([
+        'sort_order' => 2,
+    ]);
+
+    $secondCategory = ProductCategory::factory()->create([
+        'sort_order' => 3,
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/product_categories/bulk/update', [
+        'categories' => [
+            [
+                'id' => $firstCategory->getKey(),
+                'parent_id' => $root->getKey(),
+                'sort_order' => 10,
+            ],
+            [
+                'id' => $secondCategory->getKey(),
+                'parent_id' => null,
+                'sort_order' => 20,
+            ],
+        ],
+    ])->assertOk()
+        ->assertJsonFragment([
+            'id' => $firstCategory->getKey(),
+            'parent_id' => $root->getKey(),
+            'sort_order' => 10,
+        ])
+        ->assertJsonFragment([
+            'id' => $secondCategory->getKey(),
+            'parent_id' => null,
+            'sort_order' => 20,
+        ]);
+
+    assertDatabaseHas('product_categories', [
+        'id' => $firstCategory->getKey(),
+        'parent_id' => $root->getKey(),
+        'sort_order' => 10,
+    ]);
+
+    assertDatabaseHas('product_categories', [
+        'id' => $secondCategory->getKey(),
+        'parent_id' => null,
+        'sort_order' => 20,
+    ]);
+});
+
+it('validates parent_id in bulk product category updates', function () {
+    $category = ProductCategory::factory()->create([
+        'sort_order' => 1,
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/product_categories/bulk/update', [
+        'categories' => [
+            [
+                'id' => $category->getKey(),
+                'parent_id' => 999999,
+                'sort_order' => 2,
+            ],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['categories.0.parent_id']);
+});
+
+it('prevents circular references in bulk product category updates', function () {
+    $firstCategory = ProductCategory::factory()->create([
+        'sort_order' => 1,
+    ]);
+
+    $secondCategory = ProductCategory::factory()->create([
+        'parent_id' => $firstCategory->getKey(),
+        'sort_order' => 2,
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/product_categories/bulk/update', [
+        'categories' => [
+            [
+                'id' => $firstCategory->getKey(),
+                'parent_id' => $secondCategory->getKey(),
+                'sort_order' => 10,
+            ],
+            [
+                'id' => $secondCategory->getKey(),
+                'parent_id' => $firstCategory->getKey(),
+                'sort_order' => 20,
+            ],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['categories.0.parent_id', 'categories.1.parent_id']);
 });

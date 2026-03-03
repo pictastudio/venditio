@@ -1,0 +1,54 @@
+meta {
+  name: Bulk update product_categories
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{baseUrl}}/product_categories/bulk/update
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "categories": [
+      {
+        "id": 1,
+        "parent_id": null,
+        "sort_order": 10
+      },
+      {
+        "id": 2,
+        "parent_id": 1,
+        "sort_order": 20
+      }
+    ]
+  }
+}
+
+docs {
+  summary:
+  - Bulk update product_categories parent_id and sort_order
+
+  endpoint:
+  - method: PATCH
+  - path: /product_categories/bulk/update
+
+  query params:
+  - none
+
+  path params:
+  - none
+
+  body:
+  - categories (array, required, min: 1)
+  - categories.*.id (integer, required, distinct)
+  - categories.*.parent_id (integer|null, required key)
+  - categories.*.sort_order (integer, required, min: 0)
+}

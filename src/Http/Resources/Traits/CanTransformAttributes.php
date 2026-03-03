@@ -2,8 +2,12 @@
 
 namespace PictaStudio\Venditio\Http\Resources\Traits;
 
+use BackedEnum;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\URL;
+use JsonSerializable;
+use Stringable;
+use UnitEnum;
 
 trait CanTransformAttributes
 {
@@ -29,11 +33,10 @@ trait CanTransformAttributes
 
     private function mutateAttributeBasedOnCast(string $key, mixed $value): mixed
     {
-        /** @var Model $model */
         $model = $this->resource;
 
         if (!$model->hasCast($key)) {
-            return $value;
+            return $this->normalizeCustomObjectAttribute($value);
         }
 
         $cast = $model->getCasts()[$key];
@@ -50,7 +53,7 @@ trait CanTransformAttributes
             return (bool) $value;
         }
 
-        return $value;
+        return $this->normalizeCustomObjectAttribute($value);
     }
 
     private function getImageAssetUrl(?string $image): ?string
@@ -60,5 +63,34 @@ trait CanTransformAttributes
         }
 
         return URL::isValidUrl($image) ? $image : asset('storage/' . $image);
+    }
+
+    private function normalizeCustomObjectAttribute(mixed $value): mixed
+    {
+        if (!is_object($value)) {
+            return $value;
+        }
+
+        if ($value instanceof BackedEnum) {
+            return $value->value;
+        }
+
+        if ($value instanceof UnitEnum) {
+            return $value->name;
+        }
+
+        if ($value instanceof JsonSerializable) {
+            return $value->jsonSerialize();
+        }
+
+        if (method_exists($value, 'toArray')) {
+            return $value->toArray();
+        }
+
+        if ($value instanceof Stringable || method_exists($value, '__toString')) {
+            return (string) $value;
+        }
+
+        return $value;
     }
 }

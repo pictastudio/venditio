@@ -18,6 +18,7 @@ Route::apiResource('products', ProductController::class)->only(['index', 'show',
 Route::get('products/{product}/variants', [ProductController::class, 'variants'])->name('products.variants');
 Route::post('products/{product}/variants', [ProductController::class, 'createVariants'])->name('products.createVariants');
 
+Route::patch('product_categories/bulk/update', [ProductCategoryController::class, 'updateMultiple'])->name('product_categories.updateMultiple');
 Route::apiResource('product_categories', ProductCategoryController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 Route::apiResource('product_types', ProductTypeController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 Route::apiResource('product_variants', ProductVariantController::class)->only(['index', 'show', 'store', 'update', 'destroy']);

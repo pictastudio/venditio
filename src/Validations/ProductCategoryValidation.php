@@ -51,6 +51,26 @@ class ProductCategoryValidation implements ProductCategoryValidationRules
         ];
     }
 
+    public function getBulkUpdateValidationRules(): array
+    {
+        return [
+            'categories' => ['required', 'array', 'min:1'],
+            'categories.*.id' => [
+                'required',
+                'integer',
+                'distinct',
+                Rule::exists($this->tableFor('product_category'), 'id'),
+            ],
+            'categories.*.parent_id' => [
+                'present',
+                'nullable',
+                'integer',
+                Rule::exists($this->tableFor('product_category'), 'id'),
+            ],
+            'categories.*.sort_order' => ['required', 'integer', 'min:0'],
+        ];
+    }
+
     private function tableFor(string $model): string
     {
         return (new (resolve_model($model)))->getTable();
