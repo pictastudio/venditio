@@ -672,3 +672,99 @@ it('calculates product price_calculated by applying automatic discounts', functi
         ->assertJsonPath('price_calculated.purchase_price', 55)
         ->assertJsonPath('price_calculated.price_includes_tax', false);
 });
+
+it('applies multiple propagated discounts to product price_final', function () {
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->inventory()->updateOrCreate([], [
+        'price' => 100,
+        'purchase_price' => 55,
+        'price_includes_tax' => false,
+    ]);
+
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+    ]);
+    $product->categories()->sync([$category->getKey()]);
+
+    $product->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'name' => 'Product 10%',
+        'code' => 'PRD10-PROP',
+        'active' => true,
+        'starts_at' => now()->subMinute(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => false,
+        'apply_once_per_cart' => false,
+        'stop_after_propagation' => false,
+    ]);
+    $category->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 50,
+        'name' => 'Category 50%',
+        'code' => 'CAT50-PROP',
+        'active' => true,
+        'starts_at' => now()->subMinute(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => false,
+        'apply_once_per_cart' => false,
+        'stop_after_propagation' => false,
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}")
+        ->assertOk()
+        ->assertJsonPath('price_calculated.price', 100)
+        ->assertJsonPath('price_calculated.price_final', 45);
+});
+
+it('stops discount propagation when stop_after_propagation is enabled', function () {
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->inventory()->updateOrCreate([], [
+        'price' => 100,
+        'purchase_price' => 55,
+        'price_includes_tax' => false,
+    ]);
+
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+    ]);
+    $product->categories()->sync([$category->getKey()]);
+
+    $category->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 50,
+        'name' => 'Category 50% Stop',
+        'code' => 'CAT50-STOP',
+        'active' => true,
+        'starts_at' => now()->subMinute(),
+        'ends_at' => now()->addDay(),
+        'priority' => 10,
+        'stop_after_propagation' => true,
+    ]);
+    $product->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'name' => 'Product 10%',
+        'code' => 'PRD10-STOP',
+        'active' => true,
+        'starts_at' => now()->subMinute(),
+        'ends_at' => now()->addDay(),
+        'priority' => 0,
+        'stop_after_propagation' => false,
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}")
+        ->assertOk()
+        ->assertJsonPath('price_calculated.price', 100)
+        ->assertJsonPath('price_calculated.price_final', 50);
+});

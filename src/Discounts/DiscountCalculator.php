@@ -20,31 +20,29 @@ class DiscountCalculator implements DiscountCalculatorInterface
     {
         $unitPrice = (float) $line->getAttribute('unit_price');
         $qty = max(1, (int) ($line->getAttribute('qty') ?? 1));
-
-        $selectedDiscount = $this->resolveApplicableDiscount($line, $context, $unitPrice);
-        $unitDiscount = $selectedDiscount instanceof Discount
-            ? $this->calculateUnitDiscount($selectedDiscount, $unitPrice)
-            : 0.0;
-        $unitFinalPrice = max(0, $unitPrice - $unitDiscount);
+        $appliedDiscounts = $this->resolveApplicableDiscounts($line, $context, $unitPrice);
+        $primaryDiscount = $appliedDiscounts->first()['discount'] ?? null;
+        $totalUnitDiscount = round((float) $appliedDiscounts->sum('amount'), 2);
+        $unitFinalPrice = round(max(0, $unitPrice - $totalUnitDiscount), 2);
 
         $line->fill([
-            'discount_id' => $selectedDiscount?->getKey(),
-            'discount_code' => $selectedDiscount?->code,
-            'discount_amount' => round($unitDiscount * $qty, 2),
-            'unit_discount' => $unitDiscount,
+            'discount_id' => $primaryDiscount?->getKey(),
+            'discount_code' => $primaryDiscount?->code,
+            'discount_amount' => round($totalUnitDiscount * $qty, 2),
+            'unit_discount' => $totalUnitDiscount,
             'unit_final_price' => $unitFinalPrice,
         ]);
-        $this->syncCalculatedPriceSnapshot($line, $unitFinalPrice);
-
-        if ($selectedDiscount instanceof Discount) {
-            $context->markDiscountAsAppliedInCart($selectedDiscount);
-        }
+        $this->syncCalculatedPriceSnapshot($line, $unitFinalPrice, $appliedDiscounts, $qty);
 
         return $line;
     }
 
-    private function syncCalculatedPriceSnapshot(Model $line, float $unitFinalPrice): void
-    {
+    private function syncCalculatedPriceSnapshot(
+        Model $line,
+        float $unitFinalPrice,
+        Collection $appliedDiscounts,
+        int $qty,
+    ): void {
         $productData = $line->getAttribute('product_data');
 
         if (!is_array($productData)) {
@@ -55,21 +53,83 @@ class DiscountCalculator implements DiscountCalculatorInterface
             data_set($productData, 'price_calculated.price', (float) $line->getAttribute('unit_price'));
         }
 
+        data_set($productData, 'price_calculated.discounts_applied', $this->toDiscountSnapshot($appliedDiscounts, $qty));
         data_set($productData, 'price_calculated.price_final', $unitFinalPrice);
         $line->setAttribute('product_data', $productData);
     }
 
-    private function resolveApplicableDiscount(Model $line, DiscountContext $context, float $unitPrice): ?Discount
+    private function toDiscountSnapshot(Collection $appliedDiscounts, int $qty): array
+    {
+        return $appliedDiscounts
+            ->map(function (array $evaluation) use ($qty): array {
+                /** @var Discount $discount */
+                $discount = $evaluation['discount'];
+                $unitAmount = round((float) ($evaluation['amount'] ?? 0), 2);
+
+                return [
+                    'id' => $discount->getKey(),
+                    'code' => $discount->code,
+                    'amount' => round($unitAmount * $qty, 2),
+                    'unit_amount' => $unitAmount,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function resolveApplicableDiscounts(Model $line, DiscountContext $context, float $unitPrice): Collection
     {
         $discounts = $this->queryDiscountsForLine($line, $context);
 
         if ($discounts->isEmpty()) {
-            return null;
+            return collect();
         }
 
+        $currentUnitPrice = $unitPrice;
+        $excludedDiscountIds = [];
+        $appliedDiscounts = collect();
+
+        while ($currentUnitPrice > 0) {
+            $evaluation = $this->resolveNextDiscountEvaluation(
+                $discounts,
+                $line,
+                $context,
+                $currentUnitPrice,
+                $excludedDiscountIds,
+            );
+
+            if ($evaluation === null) {
+                break;
+            }
+
+            /** @var Discount $discount */
+            $discount = $evaluation['discount'];
+            $amount = (float) $evaluation['amount'];
+
+            $appliedDiscounts->push($evaluation);
+            $excludedDiscountIds[] = (string) $discount->getKey();
+            $context->markDiscountAsAppliedInCart($discount);
+            $currentUnitPrice = round(max(0, $currentUnitPrice - $amount), 2);
+
+            if ((bool) $discount->stop_after_propagation) {
+                break;
+            }
+        }
+
+        return $appliedDiscounts;
+    }
+
+    private function resolveNextDiscountEvaluation(
+        Collection $discounts,
+        Model $line,
+        DiscountContext $context,
+        float $unitPrice,
+        array $excludedDiscountIds,
+    ): ?array {
         $evaluatedDiscounts = $discounts
+            ->reject(fn (Discount $discount) => in_array((string) $discount->getKey(), $excludedDiscountIds, true))
             ->filter(fn (Discount $discount) => $this->passesRules($discount, $line, $context))
-            ->map(fn (Discount $discount) => [
+            ->map(fn (Discount $discount): array => [
                 'discount' => $discount,
                 'amount' => $this->calculateUnitDiscount($discount, $unitPrice),
             ])
@@ -82,7 +142,7 @@ class DiscountCalculator implements DiscountCalculatorInterface
 
         return $evaluatedDiscounts
             ->sort(fn (array $a, array $b) => $this->sortByPriorityAndAmount($a, $b))
-            ->first()['discount'];
+            ->first();
     }
 
     private function queryDiscountsForLine(Model $line, DiscountContext $context): Collection

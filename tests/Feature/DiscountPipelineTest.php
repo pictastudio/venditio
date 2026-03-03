@@ -132,6 +132,100 @@ it('applies a category discount through polymorphic relations during cart calcul
         ->and((float) $cart->discount_amount)->toBe(0.0);
 });
 
+it('propagates multiple applicable discounts on the same cart line', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupTaxEnvironment($taxClass);
+
+    $product = createProduct(100, $taxClass);
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+    ]);
+    $product->categories()->attach($category->getKey());
+
+    $product->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'PRD10',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'stop_after_propagation' => false,
+    ]);
+    $category->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 50,
+        'code' => 'CAT50',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'stop_after_propagation' => false,
+    ]);
+
+    $cart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'lines' => [
+                [
+                    'product_id' => $product->getKey(),
+                    'qty' => 1,
+                ],
+            ],
+        ])
+    )->load('lines');
+
+    $line = $cart->lines->first();
+
+    expect((float) $line->unit_discount)->toBe(55.0)
+        ->and((float) $line->unit_final_price)->toBe(45.0);
+});
+
+it('stops propagation on cart line discounts when stop_after_propagation is true', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupTaxEnvironment($taxClass);
+
+    $product = createProduct(100, $taxClass);
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+    ]);
+    $product->categories()->attach($category->getKey());
+
+    $category->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 50,
+        'code' => 'CAT50STOP',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'priority' => 10,
+        'stop_after_propagation' => true,
+    ]);
+    $product->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'PRD10STOP',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'priority' => 0,
+        'stop_after_propagation' => false,
+    ]);
+
+    $cart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'lines' => [
+                [
+                    'product_id' => $product->getKey(),
+                    'qty' => 1,
+                ],
+            ],
+        ])
+    )->load('lines');
+
+    $line = $cart->lines->first();
+
+    expect((float) $line->unit_discount)->toBe(50.0)
+        ->and((float) $line->unit_final_price)->toBe(50.0);
+});
+
 it('applies discounts only once per cart when the rule is enabled', function () {
     $taxClass = TaxClass::factory()->create();
     setupTaxEnvironment($taxClass);
@@ -201,6 +295,55 @@ it('enforces per-user usage limits after order registration', function () {
 
     expect(blank($secondLine->discount_code))->toBeTrue()
         ->and((float) $secondLine->unit_discount)->toBe(0.0);
+});
+
+it('increments uses for all propagated line discounts when converting cart to order', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupTaxEnvironment($taxClass);
+
+    $user = User::query()->create([
+        'first_name' => 'Uses',
+        'last_name' => 'Propagation',
+        'email' => 'uses-propagation@example.test',
+        'phone' => '123456789',
+    ]);
+
+    $product = createProduct(100, $taxClass);
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+    ]);
+    $product->categories()->attach($category->getKey());
+
+    $productDiscount = $product->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'USES-PRD10',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'stop_after_propagation' => false,
+    ]);
+    $categoryDiscount = $category->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 50,
+        'code' => 'USES-CAT50',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'stop_after_propagation' => false,
+    ]);
+
+    $cart = createCartForUser($user, $product->getKey())->load('lines');
+    $order = OrderCreationPipeline::make()->run(OrderDto::fromCart($cart))->load('lines');
+    $orderLine = $order->lines->first();
+
+    expect((int) $productDiscount->refresh()->uses)->toBe(1)
+        ->and((int) $categoryDiscount->refresh()->uses)->toBe(1)
+        ->and(
+            DiscountApplication::query()
+                ->where('order_line_id', $orderLine->getKey())
+                ->count()
+        )->toBe(2);
 });
 
 it('applies cart total discount code at checkout', function () {
