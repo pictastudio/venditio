@@ -2,6 +2,30 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.1.3 - 2026-03-03
+
+### What's Changed
+
+#### Features
+
+- **Exports API** - New Excel export endpoints for orders (by line) and products. Configurable via `config/venditio.php`; supports filtering and format options. See `docs/API.md` for usage.
+- **List query params** - List endpoints now support consistent query parameters for filtering, sorting, and pagination across addresses, brands, carts, cart lines, countries, currencies, discount applications, discounts, inventories, municipalities, order lines, orders, product categories, product custom fields, product types, product variant options, product variants, products, provinces, regions, shipping statuses, and tax classes.
+- **Products index** - Option to exclude product variants from the products list response; additional query param filters for products.
+- **Product variants** - Enforce unique product variant and product variant option combination; product variant options are now translatable.
+- **Slugs** - Validation and slug handling fixes for brands, product categories, and product types.
+
+#### API & tooling
+
+- **Bruno** - Bruno requests updated with query params and documentation for all list endpoints.
+- **Docs** - API documentation updated for exports and query parameters.
+
+#### Maintenance
+
+- Code cleanup and config simplification.
+- Expanded test coverage for exports API, product API (filters, exclude variants), list query params, product variant definitions, and translatable catalog.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.1.2...v1.1.3
+
 ## v1.1.2 - 2026-02-26
 
 **Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.1.1...v1.1.2
