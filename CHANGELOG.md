@@ -2,6 +2,29 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.1.4 - 2026-03-03
+
+### What's Changed
+
+#### Features
+
+- **Product categories batch update** - New bulk update endpoint for product categories. Supports updating multiple categories in a single request; validation and HTTP resource layer (transformations trait) fixes included.
+- **Discounts** - Fix discount usage recording; correct handling of discount applications and order line constraints. Migration added for `discount_applications` order line constraint. Price calculation fixes for discounted carts and order lines.
+- **Bruno** - Bruno requests updated across list, store, and update operations for addresses, brands, cart lines, carts, countries, country tax classes, currencies, discount applications, discounts, inventories, municipalities, order lines, orders, product categories, product custom fields, product types, product variant options, product variants, products, provinces, regions, shipping statuses, and tax classes. New Bruno collections for price lists and price list prices (CRUD + associate multiple prices for product).
+- **Products** - Product resource and controller updates; export controller improvements. Cart line pipeline now fills product information correctly.
+
+#### Fixes
+
+- Discount usage recording and order-line constraint for discount applications.
+- HTTP resource layer `CanTransformAttributes` trait transformations.
+- Price calculation when discounts are applied.
+
+#### Tests
+
+- Extended coverage for product category bulk update, discount pipeline, discount API resource, exports API, price list API, and product API.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.1.3...v1.1.4
+
 ## v1.1.3 - 2026-03-03
 
 ### What's Changed
