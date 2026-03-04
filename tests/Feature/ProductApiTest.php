@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Brand, Inventory, Product, ProductCategory, ProductType, ProductVariant, ProductVariantOption, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductType, ProductVariant, ProductVariantOption, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patchJson, postJson};
 
@@ -156,7 +156,7 @@ it('assigns default product type when product_type_id is omitted and a default e
 
 it('assigns default tax class when tax_class_id is omitted and a default exists', function () {
     $defaultTaxClass = TaxClass::factory()->create(['is_default' => true]);
-    $productType = ProductType::factory()->create();
+    $productType = ProductType::factory()->create(['active' => true]);
 
     $response = postJson(config('venditio.routes.api.v1.prefix') . '/products', [
         'product_type_id' => $productType->getKey(),
@@ -644,7 +644,7 @@ it('validates inventory price operator on products index', function () {
 it('includes variants and variants options table when requested', function () {
     $brand = Brand::factory()->create();
     $taxClass = TaxClass::factory()->create();
-    $productType = ProductType::factory()->create();
+    $productType = ProductType::factory()->create(['active' => true]);
 
     $size = ProductVariant::factory()->create([
         'product_type_id' => $productType->getKey(),
@@ -720,6 +720,89 @@ it('includes variants and variants options table when requested', function () {
         ->assertJsonPath('variants_options_table.1.name', 'Color')
         ->assertJsonPath('variants_options_table.1.values.0.value', 'red')
         ->assertJsonPath('variants_options_table.1.values.1.value', 'blue');
+});
+
+it('includes requested product relations on show endpoint', function () {
+    config()->set('venditio.price_lists.enabled', true);
+
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $productType = ProductType::factory()->create(['active' => true]);
+    $category = ProductCategory::factory()->create();
+    $priceList = PriceList::factory()->create(['name' => 'Retail']);
+
+    $product = Product::factory()->create([
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'product_type_id' => $productType->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $product->categories()->sync([$category->getKey()]);
+
+    PriceListPrice::factory()->create([
+        'product_id' => $product->getKey(),
+        'price_list_id' => $priceList->getKey(),
+        'price' => 49.90,
+        'is_default' => true,
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=brand,categories,product_type,tax_class,price_lists")
+        ->assertOk()
+        ->assertJsonPath('brand.id', $brand->getKey())
+        ->assertJsonPath('categories.0.id', $category->getKey())
+        ->assertJsonPath('product_type.id', $productType->getKey())
+        ->assertJsonPath('tax_class.id', $taxClass->getKey())
+        ->assertJsonPath('price_lists.0.price_list.id', $priceList->getKey());
+});
+
+it('includes requested product relations on index endpoint', function () {
+    config()->set('venditio.price_lists.enabled', true);
+
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $productType = ProductType::factory()->create(['active' => true]);
+    $category = ProductCategory::factory()->create();
+    $priceList = PriceList::factory()->create(['name' => 'Retail']);
+
+    $product = Product::factory()->create([
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'product_type_id' => $productType->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $product->categories()->sync([$category->getKey()]);
+
+    PriceListPrice::factory()->create([
+        'product_id' => $product->getKey(),
+        'price_list_id' => $priceList->getKey(),
+        'price' => 49.90,
+        'is_default' => true,
+    ]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix')
+        . '/products?all=1&id[]=' . $product->getKey()
+        . '&include=brand,categories,product_type,tax_class,price_lists'
+    )->assertOk();
+
+    $json = $response->json();
+    $items = is_array(data_get($json, 'data'))
+        ? data_get($json, 'data')
+        : $json;
+
+    $item = collect($items)
+        ->first(fn (array $productPayload): bool => (int) ($productPayload['id'] ?? 0) === (int) $product->getKey());
+
+    expect($item)->not->toBeNull()
+        ->and(data_get($item, 'brand.id'))->toBe($brand->getKey())
+        ->and(data_get($item, 'categories.0.id'))->toBe($category->getKey())
+        ->and(data_get($item, 'product_type.id'))->toBe($productType->getKey())
+        ->and(data_get($item, 'tax_class.id'))->toBe($taxClass->getKey())
+        ->and(data_get($item, 'price_lists.0.price_list.id'))->toBe($priceList->getKey());
 });
 
 it('rejects unknown includes on products api', function () {

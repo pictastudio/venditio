@@ -60,7 +60,7 @@ params:query {
   ~exclude_variants: 1
   ~price: 10
   ~price_operator: >=
-  ~include: variants,variants_options_table
+  ~include: variants,variants_options_table,brand,categories,product_type,tax_class,price_lists
 }
 
 headers {
@@ -128,7 +128,7 @@ docs {
   - price (number): Filter products by inventory price value.
   - price_operator (string): Operator used with price. Allowed: >, <, >=, <=, =.
   - sort_by=price (string): Sort products by related inventory price.
-  - include (string|array): Optional includes: variants, variants_options_table, and price_lists (if enabled).
+  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, product_type, tax_class, price_lists (if enabled).
 
   path params:
   - none

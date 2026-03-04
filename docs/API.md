@@ -53,7 +53,7 @@ Additional supported filters:
 
 Include parameters:
 
-- `/products`: `include=variants,variants_options_table` (and `price_lists` only when `venditio.price_lists.enabled=true`)
+- `/products`: `include=brand,categories,product_type,tax_class,variants,variants_options_table` (and `price_lists` only when `venditio.price_lists.enabled=true`)
 - `/tax_classes`: `include[]=countries`
 
 Export-specific query parameters:

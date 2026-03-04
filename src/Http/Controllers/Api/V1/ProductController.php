@@ -131,7 +131,14 @@ class ProductController extends Controller
             ->values()
             ->all();
 
-        $allowedIncludes = ['variants', 'variants_options_table'];
+        $allowedIncludes = [
+            'brand',
+            'categories',
+            'product_type',
+            'tax_class',
+            'variants',
+            'variants_options_table',
+        ];
 
         if (config('venditio.price_lists.enabled', false)) {
             $allowedIncludes[] = 'price_lists';
@@ -153,21 +160,57 @@ class ProductController extends Controller
     protected function productRelationsForIncludes(array $includes): array
     {
         $relations = ['variantOptions.productVariant', 'inventory'];
+        $includesCollection = collect($includes);
 
         if (config('venditio.price_lists.enabled', false)) {
             $relations[] = 'priceListPrices.priceList';
+        }
+
+        if ($includesCollection->contains('brand')) {
+            $relations[] = 'brand';
+        }
+
+        if ($includesCollection->contains('categories')) {
+            $relations[] = 'categories';
+        }
+
+        if ($includesCollection->contains('product_type')) {
+            $relations[] = 'productType';
+        }
+
+        if ($includesCollection->contains('tax_class')) {
+            $relations[] = 'taxClass';
         }
 
         if (in_array('variants', $includes, true) || in_array('variants_options_table', $includes, true)) {
             $relations[] = 'variants.variantOptions.productVariant';
             $relations[] = 'variants.inventory';
 
+            if ($includesCollection->contains('brand')) {
+                $relations[] = 'variants.brand';
+            }
+
+            if ($includesCollection->contains('categories')) {
+                $relations[] = 'variants.categories';
+            }
+
+            if ($includesCollection->contains('product_type')) {
+                $relations[] = 'variants.productType';
+            }
+
+            if ($includesCollection->contains('tax_class')) {
+                $relations[] = 'variants.taxClass';
+            }
+
             if (config('venditio.price_lists.enabled', false)) {
                 $relations[] = 'variants.priceListPrices.priceList';
             }
         }
 
-        return $relations;
+        return collect($relations)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     protected function productIndexValidationRules(): array
