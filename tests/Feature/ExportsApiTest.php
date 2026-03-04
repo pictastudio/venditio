@@ -131,6 +131,54 @@ it('filters product excel export by multiple brands and categories', function ()
     });
 });
 
+it('filters and sorts product excel export by inventory price', function () {
+    Excel::fake();
+
+    $productLow = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productMid = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productHigh = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $productLow->inventory()->update(['price' => 10]);
+    $productMid->inventory()->update(['price' => 20]);
+    $productHigh->inventory()->update(['price' => 30]);
+
+    get(
+        config('venditio.routes.api.v1.prefix')
+        . '/exports/products?columns=id,sku'
+        . '&price_operator=' . urlencode('>=')
+        . '&price=20'
+        . '&sort_by=price'
+        . '&sort_dir=desc'
+        . '&filename=products-by-price'
+    )->assertOk();
+
+    Excel::assertDownloaded('products-by-price.xlsx', function (ProductsExport $export) use ($productLow, $productMid, $productHigh): bool {
+        $ids = $export->collection()
+            ->pluck('id')
+            ->values()
+            ->all();
+
+        expect($ids)->toBe([
+            $productHigh->getKey(),
+            $productMid->getKey(),
+        ])->not->toContain($productLow->getKey());
+
+        return true;
+    });
+});
+
 it('exports orders with one row per order line', function () {
     Excel::fake();
 

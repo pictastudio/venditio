@@ -58,6 +58,8 @@ params:query {
   ~is_active: 1
   ~include_variants: 0
   ~exclude_variants: 1
+  ~price: 10
+  ~price_operator: >=
   ~include: variants,variants_options_table
 }
 
@@ -123,6 +125,9 @@ docs {
   - is_active (boolean): Alias filter for active state.
   - include_variants (boolean): When true, include variant products in results.
   - exclude_variants (boolean): When true, exclude variant products from results.
+  - price (number): Filter products by inventory price value.
+  - price_operator (string): Operator used with price. Allowed: >, <, >=, <=, =.
+  - sort_by=price (string): Sort products by related inventory price.
   - include (string|array): Optional includes: variants, variants_options_table, and price_lists (if enabled).
 
   path params:

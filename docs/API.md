@@ -46,7 +46,8 @@ Additional supported filters:
 - `product_variant_id` on `/product_variant_options`
 - `product_id` and `price_list_id` on `/price_list_prices`
 - `as_tree` boolean on `/product_categories`
-- `/products`: `include_variants` boolean, `exclude_variants` boolean, `brand_ids[]`, `category_ids[]`
+- `/products`: `include_variants` boolean, `exclude_variants` boolean, `brand_ids[]`, `category_ids[]`, `price`, `price_operator` (`>`, `<`, `>=`, `<=`, `=`)
+  - supports `sort_by=price` with `sort_dir=asc|desc`
   - default behavior is controlled by `venditio.product.exclude_variants_from_index` (`true` by default)
   - when both are provided, `exclude_variants` takes precedence
 

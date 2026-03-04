@@ -211,10 +211,19 @@ class ProductController extends Controller
                 'integer',
                 Rule::exists($categoryTable, $categoryKeyName),
             ],
+            'price' => [
+                'sometimes',
+                'numeric',
+            ],
+            'price_operator' => [
+                'sometimes',
+                'string',
+                Rule::in(['>', '<', '>=', '<=', '=']),
+            ],
         ];
     }
 
-    protected function applyProductIndexRelationFilters(Builder $query, array $filters): void
+    protected function applyProductIndexRelationFilters(Builder $query, array &$filters): void
     {
         if (isset($filters['brand_ids']) && is_array($filters['brand_ids'])) {
             $query->whereIn('brand_id', $filters['brand_ids']);
@@ -240,6 +249,73 @@ class ProductController extends Controller
                     ->whereIn($relatedPivotKey, $filters['category_ids'])
             );
         }
+
+        if (array_key_exists('price', $filters)) {
+            $priceOperator = $this->sanitizePriceOperator(
+                is_string($filters['price_operator'] ?? null)
+                    ? $filters['price_operator']
+                    : '='
+            );
+            $price = (float) $filters['price'];
+
+            $query->whereHas(
+                'inventory',
+                fn (Builder $inventoryQuery) => $inventoryQuery->where('price', $priceOperator, $price)
+            );
+        }
+
+        if (($filters['sort_by'] ?? null) === 'price') {
+            $this->applyPriceSort($query, $filters);
+
+            unset($filters['sort_by']);
+        }
+    }
+
+    protected function applyPriceSort(Builder $query, array $filters): void
+    {
+        $productModel = app(resolve_model('product'));
+        $productTable = method_exists($productModel, 'getTableName')
+            ? $productModel->getTableName()
+            : $productModel->getTable();
+        $productKeyName = $productModel->getKeyName();
+
+        $inventoryModel = app(resolve_model('inventory'));
+        $inventoryTable = method_exists($inventoryModel, 'getTableName')
+            ? $inventoryModel->getTableName()
+            : $inventoryModel->getTable();
+
+        $sortDirection = $this->sanitizeSortDirection(
+            is_string($filters['sort_dir'] ?? null)
+                ? $filters['sort_dir']
+                : 'asc'
+        );
+
+        $query->orderBy(
+            $inventoryModel->newQuery()
+                ->select($inventoryTable . '.price')
+                ->whereColumn(
+                    $inventoryTable . '.product_id',
+                    $productTable . '.' . $productKeyName
+                )
+                ->limit(1),
+            $sortDirection
+        );
+    }
+
+    protected function sanitizePriceOperator(string $operator): string
+    {
+        return in_array($operator, ['>', '<', '>=', '<=', '='], true)
+            ? $operator
+            : '=';
+    }
+
+    protected function sanitizeSortDirection(string $sortDirection): string
+    {
+        $sortDirection = mb_strtolower($sortDirection);
+
+        return in_array($sortDirection, ['asc', 'desc'], true)
+            ? $sortDirection
+            : 'asc';
     }
 
     protected function shouldExcludeVariantsFromIndex(): bool

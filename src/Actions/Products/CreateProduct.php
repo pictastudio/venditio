@@ -55,6 +55,10 @@ class CreateProduct
         }
 
         if (is_array($inventoryPayload)) {
+            if (!array_key_exists('price', $inventoryPayload)) {
+                $inventoryPayload['price'] = 0;
+            }
+
             $product->inventory()->updateOrCreate([], $inventoryPayload);
         }
 

@@ -284,6 +284,35 @@ it('creates a product with nested inventory fields', function () {
     ]);
 });
 
+it('defaults nested inventory price to zero when omitted on product creation', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/products', [
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Inventory Product Without Price',
+        'sku' => 'INVENTORY-PRODUCT-NO-PRICE-001',
+        'status' => ProductStatus::Published,
+        'inventory' => [
+            'stock' => 12,
+            'stock_reserved' => 2,
+            'stock_min' => 1,
+        ],
+    ])->assertCreated();
+
+    $productId = $response->json('id');
+
+    assertDatabaseHas('inventories', [
+        'product_id' => $productId,
+        'stock' => 12,
+        'stock_reserved' => 2,
+        'stock_min' => 1,
+        'price' => 0,
+        'stock_available' => 10,
+    ]);
+});
+
 it('updates nested inventory fields via product api', function () {
     $product = Product::factory()->create([
         'active' => true,
@@ -520,6 +549,96 @@ it('validates products index brand_ids and category_ids filters', function () {
         . '/products?brand_ids[]=999999&category_ids[]=999999'
     )->assertUnprocessable()
         ->assertJsonValidationErrors(['brand_ids.0', 'category_ids.0']);
+});
+
+it('filters products index by inventory price with operator', function () {
+    $productLow = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productMid = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productHigh = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $productLow->inventory()->update(['price' => 10]);
+    $productMid->inventory()->update(['price' => 20]);
+    $productHigh->inventory()->update(['price' => 30]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix')
+        . '/products?all=1&price_operator=' . urlencode('>=') . '&price=20'
+    )->assertOk();
+
+    $json = $response->json();
+    $items = is_array(data_get($json, 'data'))
+        ? data_get($json, 'data')
+        : $json;
+
+    $ids = collect($items)
+        ->pluck('id')
+        ->all();
+
+    expect($ids)
+        ->toContain($productMid->getKey(), $productHigh->getKey())
+        ->not->toContain($productLow->getKey());
+});
+
+it('sorts products index by inventory price', function () {
+    $productMid = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productHigh = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productLow = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $productMid->inventory()->update(['price' => 20]);
+    $productHigh->inventory()->update(['price' => 30]);
+    $productLow->inventory()->update(['price' => 10]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix') . '/products?all=1&sort_by=price&sort_dir=asc'
+    )->assertOk();
+
+    $json = $response->json();
+    $items = is_array(data_get($json, 'data'))
+        ? data_get($json, 'data')
+        : $json;
+
+    $ids = collect($items)
+        ->pluck('id')
+        ->values()
+        ->all();
+
+    expect($ids)->toBe([
+        $productLow->getKey(),
+        $productMid->getKey(),
+        $productHigh->getKey(),
+    ]);
+});
+
+it('validates inventory price operator on products index', function () {
+    getJson(
+        config('venditio.routes.api.v1.prefix')
+        . '/products?price=10&price_operator=invalid'
+    )->assertUnprocessable()
+        ->assertJsonValidationErrors(['price_operator']);
 });
 
 it('includes variants and variants options table when requested', function () {
