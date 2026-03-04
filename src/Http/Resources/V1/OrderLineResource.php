@@ -41,16 +41,18 @@ class OrderLineResource extends JsonResource
             'product_data.images' => fn (?array $images) => (
                 collect($images)
                     ->map(fn (array $image) => [
-                        'alt' => $image['alt'],
-                        'src' => $this->getImageAssetUrl($image['src']),
+                        'name' => data_get($image, 'name'),
+                        'alt' => data_get($image, 'alt'),
+                        'src' => $this->getImageAssetUrl(data_get($image, 'src')),
                     ])
                     ->toArray()
             ),
             'product_data.files' => fn (?array $files) => (
                 collect($files)
                     ->map(fn (array $file) => [
-                        'name' => $file['name'],
-                        'src' => $this->getImageAssetUrl($file['src']),
+                        'name' => data_get($file, 'name'),
+                        'alt' => data_get($file, 'alt'),
+                        'src' => $this->getImageAssetUrl(data_get($file, 'src')),
                     ])
                     ->toArray()
             ),

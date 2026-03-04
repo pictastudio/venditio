@@ -9,7 +9,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\ExcelServiceProvider;
-use PictaStudio\Venditio\Console\Commands\{InstallCommand, ReleaseStockForAbandonedCarts};
+use PictaStudio\Venditio\Console\Commands\{InstallCommand, ReleaseStockForAbandonedCarts, SeedRandomDataCommand};
 use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface};
 use PictaStudio\Venditio\Discounts\{CartTotalDiscountCalculator, DiscountCalculator, DiscountUsageRecorder, DiscountablesResolver};
 use PictaStudio\Venditio\Facades\Venditio as VenditioFacade;
@@ -38,7 +38,7 @@ class VenditioServiceProvider extends PackageServiceProvider
             //         ->askToRunMigrations()
             //         ->copyAndRegisterServiceProviderInApp();
             // })
-            ->hasCommands([ReleaseStockForAbandonedCarts::class, InstallCommand::class])
+            ->hasCommands([ReleaseStockForAbandonedCarts::class, SeedRandomDataCommand::class, InstallCommand::class])
             ->hasMigrations([
                 'create_addresses_table',
                 'create_countries_table',

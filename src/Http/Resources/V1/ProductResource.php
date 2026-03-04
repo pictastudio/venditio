@@ -135,8 +135,9 @@ class ProductResource extends JsonResource
 
                 return collect($images)
                     ->map(fn (array $image) => [
-                        'alt' => $image['alt'],
-                        'src' => $this->getImageAssetUrl($image['src']),
+                        'name' => data_get($image, 'name'),
+                        'alt' => data_get($image, 'alt'),
+                        'src' => $this->getImageAssetUrl(data_get($image, 'src')),
                     ])
                     ->toArray();
             },
@@ -151,8 +152,9 @@ class ProductResource extends JsonResource
 
                 return collect($files)
                     ->map(fn (array $file) => [
-                        'name' => $file['name'],
-                        'src' => $this->getImageAssetUrl($file['src']),
+                        'name' => data_get($file, 'name'),
+                        'alt' => data_get($file, 'alt'),
+                        'src' => $this->getImageAssetUrl(data_get($file, 'src')),
                     ])
                     ->toArray();
             },

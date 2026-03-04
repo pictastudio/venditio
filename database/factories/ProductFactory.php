@@ -40,10 +40,12 @@ class ProductFactory extends Factory
             'files' => [
                 [
                     'name' => fake()->word(),
+                    'alt' => fake()->sentence(),
                     'src' => fake()->url(),
                 ],
                 [
                     'name' => fake()->word(),
+                    'alt' => fake()->sentence(),
                     'src' => fake()->url(),
                 ],
             ],

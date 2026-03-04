@@ -2,6 +2,7 @@
 
 namespace PictaStudio\Venditio\Actions\Products;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use PictaStudio\Venditio\Models\Product;
 
@@ -13,8 +14,12 @@ class UpdateProduct
         $categoryIds = Arr::pull($payload, 'category_ids', []);
         $inventoryProvided = array_key_exists('inventory', $payload);
         $inventoryPayload = Arr::pull($payload, 'inventory');
+        $imagesProvided = array_key_exists('images', $payload);
+        $filesProvided = array_key_exists('files', $payload);
 
-        $product->fill($payload);
+        $product->fill(
+            $this->prepareMediaPayload($product, $payload, $imagesProvided, $filesProvided)
+        );
         $product->save();
 
         if ($categoryIdsProvided) {
@@ -29,5 +34,54 @@ class UpdateProduct
         }
 
         return $product->refresh()->load(['inventory', 'variantOptions']);
+    }
+
+    private function prepareMediaPayload(
+        Product $product,
+        array $payload,
+        bool $imagesProvided,
+        bool $filesProvided
+    ): array {
+        if ($imagesProvided) {
+            $payload['images'] = $this->storeMediaCollection(
+                $product,
+                Arr::get($payload, 'images'),
+                'images'
+            );
+        }
+
+        if ($filesProvided) {
+            $payload['files'] = $this->storeMediaCollection(
+                $product,
+                Arr::get($payload, 'files'),
+                'files'
+            );
+        }
+
+        return $payload;
+    }
+
+    private function storeMediaCollection(
+        Product $product,
+        mixed $items,
+        string $folder
+    ): ?array {
+        if ($items === null) {
+            return null;
+        }
+
+        return collect(is_array($items) ? $items : [])
+            ->map(function (array $item) use ($product, $folder): array {
+                /** @var UploadedFile $file */
+                $file = $item['file'];
+
+                return [
+                    'src' => $file->store("products/{$product->getKey()}/{$folder}", 'public'),
+                    'alt' => Arr::get($item, 'alt'),
+                    'name' => Arr::get($item, 'name'),
+                ];
+            })
+            ->values()
+            ->all();
     }
 }

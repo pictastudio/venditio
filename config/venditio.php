@@ -28,6 +28,9 @@ return [
             'inactive_for_minutes' => (int) env('VENDITIO_RELEASE_STOCK_FOR_ABANDONED_CARTS_INACTIVE_FOR_MINUTES', 1_440),
             'schedule_every_minutes' => (int) env('VENDITIO_RELEASE_STOCK_FOR_ABANDONED_CARTS_SCHEDULE_EVERY_MINUTES', 60),
         ],
+        'seed_random_data' => [
+            'enabled' => env('VENDITIO_SEED_RANDOM_DATA_ENABLED', false),
+        ],
     ],
 
     /*
