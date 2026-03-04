@@ -2,6 +2,33 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.1.5 - 2026-03-04
+
+### What's Changed
+
+#### Features
+
+- **Product categories batch update** - New bulk update endpoint for product categories. Supports updating multiple categories in a single request; validation and HTTP resource layer (transformations trait) fixes included.
+- **Product list: includes and inventory price** - Products list and export support filtering and sorting by inventory price. Products index supports `include` query param to load relations (e.g. variants, categories). Documented in `docs/API.md`; Bruno requests updated.
+- **Product media** - Fix images and files uploads for products. Validation and `UpdateProduct` action updated; `ProductResource`, `CartLineResource`, and `OrderLineResource` expose media URLs correctly.
+- **Seed random data** - New `venditio:seed-random-data` Artisan command to seed products, variants, and related data for development. Configurable via `config/venditio.php`.
+- **Discounts** - Fix discount usage recording; correct handling of discount applications and order line constraints. Migration added for `discount_applications` order line constraint. Price calculation fixes for discounted carts and order lines.
+- **Bruno** - Bruno requests updated across list, store, and update operations for addresses, brands, cart lines, carts, countries, country tax classes, currencies, discount applications, discounts, inventories, municipalities, order lines, orders, product categories, product custom fields, product types, product variant options, product variants, products, provinces, regions, shipping statuses, and tax classes. New Bruno collections for price lists and price list prices (CRUD + associate multiple prices for product).
+- **Products & exports** - Product resource and controller updates; export controller improvements (inventory price filtering/sorting). Cart line pipeline fills product information correctly.
+
+#### Fixes
+
+- Discount usage recording and order-line constraint for discount applications.
+- HTTP resource layer `CanTransformAttributes` trait transformations.
+- Price calculation when discounts are applied.
+- Product images and files upload handling.
+
+#### Tests
+
+- Extended coverage for product category bulk update, discount pipeline, discount API resource, exports API (incl. inventory price params), price list API, product API (includes, inventory price filtering/sorting), product media upload API, and seed random data command.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.1.4...v1.1.5
+
 ## v1.1.4 - 2026-03-03
 
 ### What's Changed
