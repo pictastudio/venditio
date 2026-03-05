@@ -28,6 +28,13 @@ class ProductVariant extends Model implements TranslatableContract
         'deleted_at',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'accept_hex_color' => 'boolean',
+        ];
+    }
+
     protected static function booted(): void
     {
         static::addGlobalScope(Ordered::class);

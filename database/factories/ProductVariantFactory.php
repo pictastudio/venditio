@@ -14,6 +14,7 @@ class ProductVariantFactory extends Factory
         return [
             'product_type_id' => ProductType::factory(),
             'name' => fake()->word(),
+            'accept_hex_color' => fake()->boolean(),
             'sort_order' => fake()->numberBetween(1, 100),
         ];
     }

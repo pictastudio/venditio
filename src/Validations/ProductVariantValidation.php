@@ -21,6 +21,7 @@ class ProductVariantValidation implements ProductVariantValidationRules
                 Rule::exists($this->tableFor('product_type'), 'id'),
             ],
             'name' => ['sometimes', 'filled', 'string', 'max:255'],
+            'accept_hex_color' => ['sometimes', 'boolean'],
             'sort_order' => ['required', 'integer', 'min:0'],
             ...$this->translatableLocaleRules([
                 'name' => ['sometimes', 'filled', 'string', 'max:255'],
@@ -37,6 +38,7 @@ class ProductVariantValidation implements ProductVariantValidationRules
                 Rule::exists($this->tableFor('product_type'), 'id'),
             ],
             'name' => ['sometimes', 'filled', 'string', 'max:255'],
+            'accept_hex_color' => ['sometimes', 'boolean'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
             ...$this->translatableLocaleRules([
                 'name' => ['sometimes', 'filled', 'string', 'max:255'],

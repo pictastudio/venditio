@@ -2,10 +2,12 @@
 
 namespace PictaStudio\Venditio\Validations;
 
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
 use PictaStudio\Venditio\Validations\Concerns\InteractsWithTranslatableRules;
+
 use PictaStudio\Venditio\Validations\Contracts\ProductVariantOptionValidationRules;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -30,7 +32,7 @@ class ProductVariantOptionValidation implements ProductVariantOptionValidationRu
                 $this->uniqueNameWithinProductVariantRule(),
             ],
             'image' => ['sometimes', 'nullable', 'string'],
-            'hex_color' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'hex_color' => ['sometimes', 'nullable', 'string', 'max:20', $this->hexColorAllowedByVariantRule()],
             'sort_order' => ['required', 'integer', 'min:0'],
             ...$this->translatableLocaleRules([
                 'name' => ['sometimes', 'filled', 'string', 'max:255'],
@@ -55,7 +57,7 @@ class ProductVariantOptionValidation implements ProductVariantOptionValidationRu
                 $this->uniqueNameWithinProductVariantRule($this->routeModelKey('product_variant_option')),
             ],
             'image' => ['sometimes', 'nullable', 'string'],
-            'hex_color' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'hex_color' => ['sometimes', 'nullable', 'string', 'max:20', $this->hexColorAllowedByVariantRule()],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
             ...$this->translatableLocaleRules([
                 'name' => ['sometimes', 'filled', 'string', 'max:255'],
@@ -144,5 +146,32 @@ class ProductVariantOptionValidation implements ProductVariantOptionValidationRu
         }
 
         return null;
+    }
+
+    private function hexColorAllowedByVariantRule(): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail): void {
+            if ($value === null || $value === '') {
+                return;
+            }
+
+            $productVariantId = $this->resolveProductVariantId();
+
+            if ($productVariantId === null) {
+                return;
+            }
+
+            $productVariant = resolve_model('product_variant')::withoutGlobalScopes()->find($productVariantId);
+
+            if ($productVariant === null) {
+                return;
+            }
+
+            if ((bool) $productVariant->accept_hex_color) {
+                return;
+            }
+
+            $fail('The selected product variant does not accept hex_color values.');
+        };
     }
 }

@@ -165,3 +165,47 @@ it('rejects update when moving an option to a variant that already has the same 
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['product_variant_id']);
 });
+
+it('stores accept_hex_color on product variants', function () {
+    $productType = ProductType::factory()->create();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_variants', [
+        'product_type_id' => $productType->getKey(),
+        'name' => 'Color',
+        'accept_hex_color' => true,
+        'sort_order' => 1,
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'accept_hex_color' => true,
+        ]);
+});
+
+it('rejects hex_color when variant does not accept it', function () {
+    $variant = ProductVariant::factory()->create([
+        'accept_hex_color' => false,
+    ]);
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_variant_options', [
+        'product_variant_id' => $variant->getKey(),
+        'name' => 'red',
+        'hex_color' => '#ff0000',
+        'sort_order' => 1,
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['hex_color']);
+});
+
+it('allows hex_color when variant accepts it', function () {
+    $variant = ProductVariant::factory()->create([
+        'accept_hex_color' => true,
+    ]);
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_variant_options', [
+        'product_variant_id' => $variant->getKey(),
+        'name' => 'red',
+        'hex_color' => '#ff0000',
+        'sort_order' => 1,
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'hex_color' => '#ff0000',
+        ]);
+});
