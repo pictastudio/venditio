@@ -4,6 +4,7 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Arr;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Brand\{StoreBrandRequest, UpdateBrandRequest};
 use PictaStudio\Venditio\Http\Resources\V1\BrandResource;
@@ -28,26 +29,38 @@ class BrandController extends Controller
     {
         $this->authorizeIfConfigured('create', resolve_model('brand'));
 
-        return BrandResource::make(
-            query('brand')->create($request->validated())
-        );
+        $payload = $request->validated();
+        $tagIds = Arr::pull($payload, 'tag_ids', []);
+
+        $brand = query('brand')->create($payload);
+        $brand->tags()->sync($tagIds);
+
+        return BrandResource::make($brand->refresh()->load('tags'));
     }
 
     public function show(Brand $brand): JsonResource
     {
         $this->authorizeIfConfigured('view', $brand);
 
-        return BrandResource::make($brand);
+        return BrandResource::make($brand->loadMissing('tags'));
     }
 
     public function update(UpdateBrandRequest $request, Brand $brand): JsonResource
     {
         $this->authorizeIfConfigured('update', $brand);
 
-        $brand->fill($request->validated());
+        $payload = $request->validated();
+        $tagIdsProvided = array_key_exists('tag_ids', $payload);
+        $tagIds = Arr::pull($payload, 'tag_ids', []);
+
+        $brand->fill($payload);
         $brand->save();
 
-        return BrandResource::make($brand->refresh());
+        if ($tagIdsProvided) {
+            $brand->tags()->sync($tagIds);
+        }
+
+        return BrandResource::make($brand->refresh()->load('tags'));
     }
 
     public function destroy(Brand $brand)

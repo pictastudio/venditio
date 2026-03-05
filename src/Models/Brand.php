@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\{HasMany, MorphToMany};
 use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
 use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods, LogsActivity, ResolvesRouteBindingByIdOrSlug};
@@ -35,6 +35,12 @@ class Brand extends Model implements TranslatableContract
     public function products(): HasMany
     {
         return $this->hasMany(resolve_model('product'));
+    }
+
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(resolve_model('product_tag'), 'taggable', 'taggables')
+            ->withTimestamps();
     }
 
     public function getSlugOptions(): SlugOptions

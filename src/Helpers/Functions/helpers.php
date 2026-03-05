@@ -15,7 +15,7 @@ if (!function_exists('resolve_model')) {
      *                         'order', 'order_line', 'product', 'product_category',
      *                         'shipping_status', 'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
-     *                         'product_variant', 'product_variant_option',
+     *                         'product_variant', 'product_variant_option', 'product_tag',
      *                         'price_list', 'price_list_price'
      */
     function resolve_model(string $model): string
@@ -35,7 +35,7 @@ if (!function_exists('query')) {
      *                         'order', 'order_line', 'product', 'product_category',
      *                         'shipping_status', 'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
-     *                         'product_variant', 'product_variant_option',
+     *                         'product_variant', 'product_variant_option', 'product_tag',
      *                         'price_list', 'price_list_price'
      */
     function query(string $model): Builder
@@ -55,7 +55,7 @@ if (!function_exists('get_fresh_model_instance')) {
      *                         'order', 'order_line', 'product', 'product_category',
      *                         'shipping_status', 'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
-     *                         'product_variant', 'product_variant_option',
+     *                         'product_variant', 'product_variant_option', 'product_tag',
      *                         'price_list', 'price_list_price'
      */
     function get_fresh_model_instance(string $model): Model

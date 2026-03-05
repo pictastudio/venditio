@@ -57,6 +57,11 @@ class ProductType extends Model implements TranslatableContract
         return $this->hasMany(resolve_model('product_custom_field'));
     }
 
+    public function productTags(): HasMany
+    {
+        return $this->hasMany(resolve_model('product_tag'));
+    }
+
     public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()

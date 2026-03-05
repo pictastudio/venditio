@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Brand, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductType, ProductVariant, ProductVariantOption, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductTag, ProductType, ProductVariant, ProductVariantOption, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patchJson, postJson};
 
@@ -970,4 +970,86 @@ it('stops discount propagation when stop_after_propagation is enabled', function
         ->assertOk()
         ->assertJsonPath('price_calculated.price', 100)
         ->assertJsonPath('price_calculated.price_final', 50);
+});
+
+it('filters products index by tags', function () {
+    $tagA = ProductTag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $tagB = ProductTag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $productWithTagA = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productWithTagA->tags()->sync([$tagA->getKey()]);
+
+    $productWithTagB = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productWithTagB->tags()->sync([$tagB->getKey()]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix') . '/products?all=1&tag_ids[]=' . $tagA->getKey()
+    )->assertOk();
+
+    $json = $response->json();
+    $items = is_array(data_get($json, 'data'))
+        ? data_get($json, 'data')
+        : $json;
+
+    $ids = collect($items)->pluck('id')->all();
+
+    expect($ids)->toContain($productWithTagA->getKey())
+        ->not->toContain($productWithTagB->getKey());
+});
+
+it('includes tags relation on products api when requested', function () {
+    $tag = ProductTag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $product->tags()->sync([$tag->getKey()]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/products/' . $product->getKey() . '?include=tags')
+        ->assertOk()
+        ->assertJsonPath('tags.0.id', $tag->getKey());
+});
+
+it('validates product type compatibility when associating tags to products', function () {
+    $productType = ProductType::factory()->create();
+    $otherProductType = ProductType::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $tag = ProductTag::factory()->create([
+        'product_type_id' => $otherProductType->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/products', [
+        'tax_class_id' => $taxClass->getKey(),
+        'product_type_id' => $productType->getKey(),
+        'name' => 'Tagged product',
+        'sku' => 'TAGGED-PRODUCT-001',
+        'status' => ProductStatus::Published,
+        'tag_ids' => [$tag->getKey()],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['tag_ids']);
 });

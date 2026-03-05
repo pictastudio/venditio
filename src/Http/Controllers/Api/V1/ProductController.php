@@ -134,6 +134,7 @@ class ProductController extends Controller
         $allowedIncludes = [
             'brand',
             'categories',
+            'tags',
             'product_type',
             'tax_class',
             'variants',
@@ -174,6 +175,10 @@ class ProductController extends Controller
             $relations[] = 'categories';
         }
 
+        if ($includesCollection->contains('tags')) {
+            $relations[] = 'tags';
+        }
+
         if ($includesCollection->contains('product_type')) {
             $relations[] = 'productType';
         }
@@ -192,6 +197,10 @@ class ProductController extends Controller
 
             if ($includesCollection->contains('categories')) {
                 $relations[] = 'variants.categories';
+            }
+
+            if ($includesCollection->contains('tags')) {
+                $relations[] = 'variants.tags';
             }
 
             if ($includesCollection->contains('product_type')) {
@@ -227,6 +236,12 @@ class ProductController extends Controller
             : $categoryModel->getTable();
         $categoryKeyName = $categoryModel->getKeyName();
 
+        $tagModel = app(resolve_model('product_tag'));
+        $tagTable = method_exists($tagModel, 'getTableName')
+            ? $tagModel->getTableName()
+            : $tagModel->getTable();
+        $tagKeyName = $tagModel->getKeyName();
+
         return [
             'include_variants' => [
                 'sometimes',
@@ -253,6 +268,15 @@ class ProductController extends Controller
             'category_ids.*' => [
                 'integer',
                 Rule::exists($categoryTable, $categoryKeyName),
+            ],
+            'tag_ids' => [
+                'sometimes',
+                'array',
+                'min:1',
+            ],
+            'tag_ids.*' => [
+                'integer',
+                Rule::exists($tagTable, $tagKeyName),
             ],
             'price' => [
                 'sometimes',
@@ -290,6 +314,13 @@ class ProductController extends Controller
                     ->select($foreignPivotKey)
                     ->from($pivotTable)
                     ->whereIn($relatedPivotKey, $filters['category_ids'])
+            );
+        }
+
+        if (isset($filters['tag_ids']) && is_array($filters['tag_ids'])) {
+            $query->whereHas(
+                'tags',
+                fn (Builder $tagsQuery) => $tagsQuery->whereKey($filters['tag_ids'])
             );
         }
 

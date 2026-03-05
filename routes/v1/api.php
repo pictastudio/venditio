@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ShippingStatusController, TaxClassController};
+use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductController, ProductCustomFieldController, ProductTagController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ShippingStatusController, TaxClassController};
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +20,7 @@ Route::post('products/{product}/variants', [ProductController::class, 'createVar
 
 Route::patch('product_categories/bulk/update', [ProductCategoryController::class, 'updateMultiple'])->name('product_categories.updateMultiple');
 Route::apiResource('product_categories', ProductCategoryController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+Route::apiResource('product_tags', ProductTagController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 Route::apiResource('product_types', ProductTypeController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 Route::apiResource('product_variants', ProductVariantController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 Route::apiResource('product_variant_options', ProductVariantOptionController::class)->only(['index', 'show', 'store', 'update', 'destroy']);

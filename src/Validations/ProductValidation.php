@@ -75,6 +75,11 @@ class ProductValidation implements ProductValidationRules
                 'integer',
                 Rule::exists($this->tableFor('product_category'), 'id'),
             ],
+            'tag_ids' => ['nullable', 'array'],
+            'tag_ids.*' => [
+                'integer',
+                Rule::exists($this->tableFor('product_tag'), 'id'),
+            ],
             'inventory' => ['sometimes', 'array'],
             'inventory.currency_id' => ['nullable', 'integer', Rule::exists($this->tableFor('currency'), 'id')],
             'inventory.stock' => ['sometimes', 'integer', 'min:0'],
@@ -163,6 +168,11 @@ class ProductValidation implements ProductValidationRules
             'category_ids.*' => [
                 'integer',
                 Rule::exists($this->tableFor('product_category'), 'id'),
+            ],
+            'tag_ids' => ['nullable', 'array'],
+            'tag_ids.*' => [
+                'integer',
+                Rule::exists($this->tableFor('product_tag'), 'id'),
             ],
             'inventory' => ['sometimes', 'array'],
             'inventory.currency_id' => ['nullable', 'integer', Rule::exists($this->tableFor('currency'), 'id')],

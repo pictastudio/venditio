@@ -19,6 +19,7 @@ class CreateProduct
     public function handle(array $payload): Product
     {
         $categoryIds = Arr::pull($payload, 'category_ids', []);
+        $tagIds = Arr::pull($payload, 'tag_ids', []);
         $inventoryPayload = Arr::pull($payload, 'inventory');
 
         if (blank($payload['sku'] ?? null)) {
@@ -47,11 +48,17 @@ class CreateProduct
             ]);
         }
 
+        $this->validateTagProductTypeCompatibility($tagIds, $payload['product_type_id'] ?? null);
+
         /** @var Product $product */
         $product = resolve_model('product')::create($payload);
 
         if (!empty($categoryIds)) {
             $product->categories()->sync($categoryIds);
+        }
+
+        if (!empty($tagIds)) {
+            $product->tags()->sync($tagIds);
         }
 
         if (is_array($inventoryPayload)) {
@@ -63,5 +70,36 @@ class CreateProduct
         }
 
         return $product->refresh()->load(['inventory', 'variantOptions']);
+    }
+
+    private function validateTagProductTypeCompatibility(array $tagIds, mixed $productTypeId): void
+    {
+        if ($tagIds === []) {
+            return;
+        }
+
+        $resolvedProductTypeId = is_numeric($productTypeId) ? (int) $productTypeId : null;
+        $invalidTags = resolve_model('product_tag')::withoutGlobalScopes()
+            ->whereKey($tagIds)
+            ->whereNotNull('product_type_id')
+            ->when(
+                $resolvedProductTypeId !== null,
+                fn ($query) => $query->where('product_type_id', '!=', $resolvedProductTypeId),
+                fn ($query) => $query
+                    ->whereNotNull('product_type_id')
+            )
+            ->pluck('id')
+            ->values()
+            ->all();
+
+        if ($invalidTags === []) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'tag_ids' => [
+                'The selected tags are not compatible with the product type: ' . implode(', ', $invalidTags),
+            ],
+        ]);
     }
 }
