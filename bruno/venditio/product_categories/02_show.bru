@@ -14,6 +14,7 @@ params:query {
   ~exclude_all_scopes: 0
   ~exclude_active_scope: 0
   ~exclude_date_range_scope: 0
+  ~include: tags
 }
 
 params:path {
@@ -37,6 +38,7 @@ docs {
   - exclude_all_scopes (boolean): Skip all global scopes for this request.
   - exclude_active_scope (boolean): Skip only the active global scope when available.
   - exclude_date_range_scope (boolean): Skip only the date range global scope when available.
+  - include (string|array): Optional includes: tags.
 
   path params:
   - id-or-slug: Replace with target resource identifier.

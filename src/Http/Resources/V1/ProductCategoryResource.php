@@ -28,6 +28,7 @@ class ProductCategoryResource extends JsonResource
     {
         return [
             'products' => ProductResource::collection($this->whenLoaded('products')),
+            'tags' => TagResource::collection($this->whenLoaded('tags')),
             'parent' => self::make($this->whenLoaded('parent')),
             'ancestors' => self::make($this->whenLoaded('ancestors')),
             'children' => self::collection($this->whenLoaded('children')),

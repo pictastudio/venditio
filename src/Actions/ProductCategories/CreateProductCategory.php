@@ -14,8 +14,10 @@ class CreateProductCategory
     {
         $thumbProvided = array_key_exists('img_thumb', $payload);
         $coverProvided = array_key_exists('img_cover', $payload);
+        $tagIdsProvided = array_key_exists('tag_ids', $payload);
         $thumb = Arr::pull($payload, 'img_thumb');
         $cover = Arr::pull($payload, 'img_cover');
+        $tagIds = Arr::pull($payload, 'tag_ids', []);
 
         /** @var ProductCategory $category */
         $category = resolve_model('product_category')::create($payload);
@@ -32,7 +34,11 @@ class CreateProductCategory
             $category->save();
         }
 
-        return $category->refresh();
+        if ($tagIdsProvided) {
+            $category->tags()->sync($tagIds ?? []);
+        }
+
+        return $category->refresh()->load('tags');
     }
 
     private function storeImage(ProductCategory $category, mixed $payload, string $folder): ?array

@@ -20,6 +20,7 @@ class BrandValidation implements BrandValidationRules
             'tag_ids' => ['nullable', 'array'],
             'tag_ids.*' => [
                 'integer',
+                'distinct',
                 Rule::exists($this->tableFor('tag'), 'id'),
             ],
             ...$this->translatableLocaleRules([
@@ -37,6 +38,7 @@ class BrandValidation implements BrandValidationRules
             'tag_ids' => ['nullable', 'array'],
             'tag_ids.*' => [
                 'integer',
+                'distinct',
                 Rule::exists($this->tableFor('tag'), 'id'),
             ],
             ...$this->translatableLocaleRules([

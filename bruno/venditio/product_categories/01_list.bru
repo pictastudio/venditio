@@ -49,6 +49,8 @@ params:query {
   ~only_trashed: 0
   ~is_active: 1
   ~as_tree: 1
+  ~tag_ids[]: 1
+  ~include: tags
 }
 
 headers {
@@ -103,6 +105,8 @@ docs {
   - only_trashed (boolean): Return only soft deleted records.
   - is_active (boolean): Alias filter for active state.
   - as_tree (boolean): When true, returns categories as a hierarchical tree.
+  - tag_ids[] (integer[]): Match categories assigned to at least one tag in this list.
+  - include (string|array): Optional includes: tags.
 
   path params:
   - none

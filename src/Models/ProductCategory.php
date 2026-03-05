@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\{BelongsToMany, MorphToMany};
 use Nevadskiy\Tree\AsTree;
 use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
@@ -61,6 +61,12 @@ class ProductCategory extends Model implements TranslatableContract
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(resolve_model('product'), 'product_category_product')
+            ->withTimestamps();
+    }
+
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(resolve_model('tag'), 'taggable', 'taggables')
             ->withTimestamps();
     }
 

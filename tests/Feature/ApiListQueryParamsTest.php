@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PictaStudio\Venditio\Models\{Brand, PriceList};
+use PictaStudio\Venditio\Models\{Brand, PriceList, Tag};
 
 use function Pest\Laravel\getJson;
 
@@ -28,6 +28,34 @@ it('filters list endpoints by id array query param', function () {
 
     expect($ids)->toEqualCanonicalizing([$brandA->getKey(), $brandC->getKey()])
         ->not->toContain($brandB->getKey());
+});
+
+it('filters brands by related tag ids', function () {
+    $tagA = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $tagB = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $brandWithTagA = Brand::factory()->create();
+    $brandWithTagB = Brand::factory()->create();
+
+    $brandWithTagA->tags()->sync([$tagA->getKey()]);
+    $brandWithTagB->tags()->sync([$tagB->getKey()]);
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . '/brands?all=1&tag_ids[]=' . $tagA->getKey())
+        ->assertOk();
+
+    $ids = collect(apiListData($response->json()))
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toContain($brandWithTagA->getKey())
+        ->not->toContain($brandWithTagB->getKey());
 });
 
 it('supports pagination and sorting query params on list endpoints', function () {

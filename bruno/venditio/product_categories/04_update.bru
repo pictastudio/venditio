@@ -10,6 +10,10 @@ patch {
   auth: inherit
 }
 
+params:query {
+  ~include: tags
+}
+
 params:path {
   id-or-slug: 
 }
@@ -27,7 +31,8 @@ body:json {
       "icon": "diamond"
     },
     "show_in_menu": false,
-    "in_evidence": true
+    "in_evidence": true,
+    "tag_ids": [1]
   }
 }
 
@@ -40,7 +45,7 @@ docs {
   - path: /product_categories/:id-or-slug
 
   query params:
-  - none
+  - include (string|array): Optional includes: tags.
 
   path params:
   - id-or-slug: Replace with target resource identifier.
@@ -66,6 +71,8 @@ docs {
   - show_in_menu
   - in_evidence
   - sort_order
+  - tag_ids (array)
+  - tag_ids.*
   - visible_from
   - visible_until
   - {locale}.name / name:{locale}

@@ -10,6 +10,10 @@ post {
   auth: inherit
 }
 
+params:query {
+  ~include: tags
+}
+
 headers {
   Accept: application/json
   Content-Type: application/json
@@ -26,6 +30,7 @@ body:json {
     "show_in_menu": true,
     "in_evidence": false,
     "sort_order": 1,
+    "tag_ids": [1, 2],
     "visible_from": "2026-01-01 00:00:00",
     "visible_until": "2026-12-31 23:59:59"
   }
@@ -40,7 +45,7 @@ docs {
   - path: /product_categories
 
   query params:
-  - none
+  - include (string|array): Optional includes: tags.
 
   path params:
   - none
@@ -66,6 +71,8 @@ docs {
   - show_in_menu
   - in_evidence
   - sort_order
+  - tag_ids (array)
+  - tag_ids.*
   - visible_from
   - visible_until
   - {locale}.name / name:{locale}

@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\ProductStatus;
-use PictaStudio\Venditio\Models\{Brand, Product, Tag, ProductType, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Product, ProductCategory, ProductType, Tag, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, getJson, patchJson, postJson};
 
@@ -85,7 +85,7 @@ it('propagates updated product_type_id from parent to children', function () {
     ]);
 });
 
-it('associates tags polymorphically to products, brands, and tags', function () {
+it('associates tags polymorphically to products, brands, product categories, and tags', function () {
     $taxClass = TaxClass::factory()->create();
 
     $tag = Tag::factory()->create([
@@ -109,12 +109,21 @@ it('associates tags polymorphically to products, brands, and tags', function () 
     ]);
 
     $brand = Brand::factory()->create();
+    $productCategory = ProductCategory::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
 
     patchJson(config('venditio.routes.api.v1.prefix') . '/products/' . $product->getKey(), [
         'tag_ids' => [$tag->getKey()],
     ])->assertOk();
 
     patchJson(config('venditio.routes.api.v1.prefix') . '/brands/' . $brand->getKey(), [
+        'tag_ids' => [$tag->getKey()],
+    ])->assertOk();
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/product_categories/' . $productCategory->getKey(), [
         'tag_ids' => [$tag->getKey()],
     ])->assertOk();
 
@@ -136,9 +145,29 @@ it('associates tags polymorphically to products, brands, and tags', function () 
 
     assertDatabaseHas('taggables', [
         'tag_id' => $tag->getKey(),
+        'taggable_type' => $productCategory->getMorphClass(),
+        'taggable_id' => $productCategory->getKey(),
+    ]);
+
+    assertDatabaseHas('taggables', [
+        'tag_id' => $tag->getKey(),
         'taggable_type' => $taggableTag->getMorphClass(),
         'taggable_id' => $taggableTag->getKey(),
     ]);
+});
+
+it('includes tags relation on brands api when requested', function () {
+    $tag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $brand = Brand::factory()->create();
+    $brand->tags()->sync([$tag->getKey()]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/brands/' . $brand->getKey() . '?include=tags')
+        ->assertOk()
+        ->assertJsonPath('tags.0.id', $tag->getKey());
 });
 
 it('orders tags by sort_order within each tree branch', function () {

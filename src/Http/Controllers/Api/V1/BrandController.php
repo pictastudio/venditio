@@ -2,9 +2,11 @@
 
 namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Brand\{StoreBrandRequest, UpdateBrandRequest};
 use PictaStudio\Venditio\Http\Resources\V1\BrandResource;
@@ -18,10 +20,13 @@ class BrandController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', resolve_model('brand'));
 
-        $filters = request()->all();
+        $includes = $this->resolveBrandIncludes();
+        $filters = request()->except('include');
+        $query = query('brand')->with($this->brandRelationsForIncludes($includes));
+        $this->applyBrandIndexRelationFilters($query, $filters);
 
         return BrandResource::collection(
-            $this->applyBaseFilters(query('brand'), $filters, 'brand')
+            $this->applyBaseFilters($query, $filters, 'brand', $this->brandIndexValidationRules())
         );
     }
 
@@ -70,5 +75,67 @@ class BrandController extends Controller
         $brand->delete();
 
         return response()->noContent();
+    }
+
+    protected function resolveBrandIncludes(): array
+    {
+        $rawIncludes = request()->query('include', []);
+
+        $includes = collect(is_array($rawIncludes) ? $rawIncludes : [$rawIncludes])
+            ->flatMap(fn (mixed $include) => is_string($include) ? explode(',', $include) : [])
+            ->map(fn (string $include) => mb_trim($include))
+            ->filter(fn (string $include) => filled($include))
+            ->unique()
+            ->values()
+            ->all();
+
+        $this->validateData([
+            'include' => $includes,
+        ], [
+            'include' => ['array'],
+            'include.*' => [
+                'string',
+                Rule::in(['tags']),
+            ],
+        ]);
+
+        return $includes;
+    }
+
+    protected function brandRelationsForIncludes(array $includes): array
+    {
+        $relations = [];
+
+        if (in_array('tags', $includes, true)) {
+            $relations[] = 'tags';
+        }
+
+        return $relations;
+    }
+
+    protected function brandIndexValidationRules(): array
+    {
+        $tagModel = app(resolve_model('tag'));
+        $tagTable = method_exists($tagModel, 'getTableName')
+            ? $tagModel->getTableName()
+            : $tagModel->getTable();
+
+        return [
+            'tag_ids' => ['sometimes', 'array', 'min:1'],
+            'tag_ids.*' => [
+                'integer',
+                Rule::exists($tagTable, $tagModel->getKeyName()),
+            ],
+        ];
+    }
+
+    protected function applyBrandIndexRelationFilters(Builder $query, array &$filters): void
+    {
+        if (isset($filters['tag_ids']) && is_array($filters['tag_ids'])) {
+            $query->whereHas(
+                'tags',
+                fn (Builder $tagsQuery) => $tagsQuery->whereKey($filters['tag_ids'])
+            );
+        }
     }
 }

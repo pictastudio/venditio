@@ -30,6 +30,8 @@ params:query {
   ~deleted_at_end: 2026-12-31
   ~with_trashed: 0
   ~only_trashed: 0
+  ~tag_ids[]: 1
+  ~include: tags
 }
 
 headers {
@@ -65,6 +67,8 @@ docs {
   - deleted_at_end (date): Filter deleted_at less than or equal to this date.
   - with_trashed (boolean): Include soft deleted records in results.
   - only_trashed (boolean): Return only soft deleted records.
+  - tag_ids[] (integer[]): Match brands assigned to at least one tag in this list.
+  - include (string|array): Optional includes: tags.
 
   path params:
   - none

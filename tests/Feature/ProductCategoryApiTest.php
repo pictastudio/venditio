@@ -3,9 +3,9 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use PictaStudio\Venditio\Models\ProductCategory;
+use PictaStudio\Venditio\Models\{ProductCategory, Tag};
 
-use function Pest\Laravel\{assertDatabaseHas, getJson, patch, patchJson, postJson};
+use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patch, patchJson, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -73,6 +73,125 @@ it('updates a product category', function () {
         'attribute' => 'name',
         'value' => 'New Name',
     ]);
+});
+
+it('stores a product category with tags', function () {
+    $tag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/product_categories?include=tags', [
+        'name' => 'Tagged category',
+        'active' => true,
+        'sort_order' => 1,
+        'tag_ids' => [$tag->getKey()],
+    ])->assertCreated()
+        ->assertJsonPath('tags.0.id', $tag->getKey());
+
+    assertDatabaseHas('taggables', [
+        'tag_id' => $tag->getKey(),
+        'taggable_type' => (new ProductCategory)->getMorphClass(),
+        'taggable_id' => $response->json('id'),
+    ]);
+});
+
+it('updates product category tags using sync semantics', function () {
+    $firstTag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $secondTag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+        'sort_order' => 1,
+    ]);
+
+    $category->tags()->sync([$firstTag->getKey()]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/product_categories/' . $category->getKey() . '?include=tags', [
+        'tag_ids' => [$secondTag->getKey()],
+    ])->assertOk()
+        ->assertJsonPath('tags.0.id', $secondTag->getKey());
+
+    assertDatabaseMissing('taggables', [
+        'tag_id' => $firstTag->getKey(),
+        'taggable_type' => $category->getMorphClass(),
+        'taggable_id' => $category->getKey(),
+    ]);
+    assertDatabaseHas('taggables', [
+        'tag_id' => $secondTag->getKey(),
+        'taggable_type' => $category->getMorphClass(),
+        'taggable_id' => $category->getKey(),
+    ]);
+});
+
+it('filters product categories index by tags', function () {
+    $tagA = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $tagB = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $categoryWithTagA = ProductCategory::factory()->create([
+        'active' => true,
+        'sort_order' => 1,
+    ]);
+    $categoryWithTagB = ProductCategory::factory()->create([
+        'active' => true,
+        'sort_order' => 2,
+    ]);
+
+    $categoryWithTagA->tags()->sync([$tagA->getKey()]);
+    $categoryWithTagB->tags()->sync([$tagB->getKey()]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix') . '/product_categories?all=1&tag_ids[]=' . $tagA->getKey()
+    )->assertOk();
+
+    $ids = collect($response->json())
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toContain($categoryWithTagA->getKey())
+        ->not->toContain($categoryWithTagB->getKey());
+});
+
+it('validates tag ids when storing a product category', function () {
+    postJson(config('venditio.routes.api.v1.prefix') . '/product_categories', [
+        'name' => 'Invalid tags category',
+        'sort_order' => 1,
+        'tag_ids' => [999999],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['tag_ids.0']);
+});
+
+it('includes tags relation on product categories api when requested', function () {
+    $tag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+        'sort_order' => 1,
+    ]);
+
+    $category->tags()->sync([$tag->getKey()]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/product_categories/' . $category->getKey() . '?include=tags')
+        ->assertOk()
+        ->assertJsonPath('tags.0.id', $tag->getKey());
 });
 
 it('returns product categories as a tree when as_tree is true', function () {
