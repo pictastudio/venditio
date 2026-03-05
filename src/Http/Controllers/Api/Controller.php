@@ -636,7 +636,7 @@ class Controller extends BaseController
                 'updated_at' => 'date',
                 'deleted_at' => 'date',
             ],
-            'product_tag' => [
+            'tag' => [
                 'parent_id' => 'integer',
                 'product_type_id' => 'integer',
                 'path' => 'string',

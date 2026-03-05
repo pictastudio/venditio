@@ -1,17 +1,17 @@
 <?php
 
-namespace PictaStudio\Venditio\Actions\ProductTags;
+namespace PictaStudio\Venditio\Actions\Tags;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
-use PictaStudio\Venditio\Models\ProductTag;
+use PictaStudio\Venditio\Models\Tag;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
-class UpdateProductTag
+class UpdateTag
 {
-    public function handle(ProductTag $tag, array $payload): ProductTag
+    public function handle(Tag $tag, array $payload): Tag
     {
         $tagIdsProvided = array_key_exists('tag_ids', $payload);
         $tagIds = Arr::pull($payload, 'tag_ids', []);
@@ -62,7 +62,7 @@ class UpdateProductTag
         return $tag->refresh()->load(['productType', 'tags']);
     }
 
-    private function guardAgainstInvalidParent(ProductTag $tag, mixed $parentId): void
+    private function guardAgainstInvalidParent(Tag $tag, mixed $parentId): void
     {
         if (!is_numeric($parentId)) {
             return;
@@ -83,9 +83,9 @@ class UpdateProductTag
         }
     }
 
-    private function isDescendantOf(ProductTag $tag, int $candidateParentId): bool
+    private function isDescendantOf(Tag $tag, int $candidateParentId): bool
     {
-        $children = resolve_model('product_tag')::withoutGlobalScopes()
+        $children = resolve_model('tag')::withoutGlobalScopes()
             ->where('parent_id', $tag->getKey())
             ->get();
 
@@ -102,17 +102,17 @@ class UpdateProductTag
         return false;
     }
 
-    private function resolveParent(mixed $parentId): ?ProductTag
+    private function resolveParent(mixed $parentId): ?Tag
     {
         if (!is_numeric($parentId)) {
             return null;
         }
 
-        /** @var ProductTag|null $parent */
-        return resolve_model('product_tag')::withoutGlobalScopes()->find((int) $parentId);
+        /** @var Tag|null $parent */
+        return resolve_model('tag')::withoutGlobalScopes()->find((int) $parentId);
     }
 
-    private function resolveProductTypeId(?ProductTag $parent, mixed $payloadProductTypeId): ?int
+    private function resolveProductTypeId(?Tag $parent, mixed $payloadProductTypeId): ?int
     {
         $resolvedProductTypeId = is_numeric($payloadProductTypeId)
             ? (int) $payloadProductTypeId
@@ -133,9 +133,9 @@ class UpdateProductTag
         return (int) $parent->product_type_id;
     }
 
-    private function propagateProductTypeToChildren(ProductTag $tag): void
+    private function propagateProductTypeToChildren(Tag $tag): void
     {
-        $children = resolve_model('product_tag')::withoutGlobalScopes()
+        $children = resolve_model('tag')::withoutGlobalScopes()
             ->where('parent_id', $tag->getKey())
             ->get();
 
@@ -147,7 +147,7 @@ class UpdateProductTag
         }
     }
 
-    private function storeImage(ProductTag $tag, mixed $payload, string $folder): ?array
+    private function storeImage(Tag $tag, mixed $payload, string $folder): ?array
     {
         if ($payload === null) {
             return null;
@@ -158,7 +158,7 @@ class UpdateProductTag
         }
 
         return [
-            'src' => $payload['file']->store("product_tags/{$tag->getKey()}/{$folder}", 'public'),
+            'src' => $payload['file']->store("tags/{$tag->getKey()}/{$folder}", 'public'),
             'alt' => Arr::get($payload, 'alt'),
             'name' => Arr::get($payload, 'name'),
         ];

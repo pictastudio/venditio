@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PictaStudio\Venditio\Http\Resources\Traits\{CanTransformAttributes, HasAttributesToExclude};
 
-class ProductTagResource extends JsonResource
+class TagResource extends JsonResource
 {
     use CanTransformAttributes;
     use HasAttributesToExclude;

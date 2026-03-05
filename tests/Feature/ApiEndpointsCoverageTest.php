@@ -13,7 +13,7 @@ it('registers index endpoints for all exposed models', function () {
     $endpoints = [
         '/products',
         '/product_categories',
-        '/product_tags',
+        '/tags',
         '/product_types',
         '/product_variants',
         '/product_variant_options',

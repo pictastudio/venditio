@@ -1,12 +1,12 @@
 <?php
 
-namespace PictaStudio\Venditio\Http\Requests\V1\ProductTag;
+namespace PictaStudio\Venditio\Http\Requests\V1\Tag;
 
 use Illuminate\Foundation\Http\FormRequest;
 use PictaStudio\Venditio\Http\Requests\V1\Concerns\InteractsWithTranslatableInput;
-use PictaStudio\Venditio\Validations\Contracts\ProductTagValidationRules;
+use PictaStudio\Venditio\Validations\Contracts\TagValidationRules;
 
-class StoreProductTagRequest extends FormRequest
+class StoreTagRequest extends FormRequest
 {
     use InteractsWithTranslatableInput;
 
@@ -15,9 +15,9 @@ class StoreProductTagRequest extends FormRequest
         return true;
     }
 
-    public function rules(ProductTagValidationRules $productTagValidationRules): array
+    public function rules(TagValidationRules $tagValidationRules): array
     {
-        return $productTagValidationRules->getStoreValidationRules();
+        return $tagValidationRules->getStoreValidationRules();
     }
 
     public function withValidator($validator): void

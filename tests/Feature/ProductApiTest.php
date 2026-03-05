@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Brand, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductTag, ProductType, ProductVariant, ProductVariantOption, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductType, ProductVariant, ProductVariantOption, Tag, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patchJson, postJson};
 
@@ -973,12 +973,12 @@ it('stops discount propagation when stop_after_propagation is enabled', function
 });
 
 it('filters products index by tags', function () {
-    $tagA = ProductTag::factory()->create([
+    $tagA = Tag::factory()->create([
         'active' => true,
         'visible_from' => null,
         'visible_until' => null,
     ]);
-    $tagB = ProductTag::factory()->create([
+    $tagB = Tag::factory()->create([
         'active' => true,
         'visible_from' => null,
         'visible_until' => null,
@@ -1014,7 +1014,7 @@ it('filters products index by tags', function () {
 });
 
 it('includes tags relation on products api when requested', function () {
-    $tag = ProductTag::factory()->create([
+    $tag = Tag::factory()->create([
         'active' => true,
         'visible_from' => null,
         'visible_until' => null,
@@ -1036,7 +1036,7 @@ it('validates product type compatibility when associating tags to products', fun
     $productType = ProductType::factory()->create();
     $otherProductType = ProductType::factory()->create();
     $taxClass = TaxClass::factory()->create();
-    $tag = ProductTag::factory()->create([
+    $tag = Tag::factory()->create([
         'product_type_id' => $otherProductType->getKey(),
         'active' => true,
         'visible_from' => null,

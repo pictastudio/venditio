@@ -5,19 +5,19 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\Rule;
-use PictaStudio\Venditio\Actions\ProductTags\{CreateProductTag, UpdateProductTag};
+use PictaStudio\Venditio\Actions\Tags\{CreateTag, UpdateTag};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
-use PictaStudio\Venditio\Http\Requests\V1\ProductTag\{StoreProductTagRequest, UpdateProductTagRequest};
-use PictaStudio\Venditio\Http\Resources\V1\ProductTagResource;
-use PictaStudio\Venditio\Models\ProductTag;
+use PictaStudio\Venditio\Http\Requests\V1\Tag\{StoreTagRequest, UpdateTagRequest};
+use PictaStudio\Venditio\Http\Resources\V1\TagResource;
+use PictaStudio\Venditio\Models\Tag;
 
 use function PictaStudio\Venditio\Helpers\Functions\{query, resolve_model};
 
-class ProductTagController extends Controller
+class TagController extends Controller
 {
     public function index(): JsonResource|JsonResponse
     {
-        $this->authorizeIfConfigured('viewAny', ProductTag::class);
+        $this->authorizeIfConfigured('viewAny', Tag::class);
 
         $filters = request()->all();
         $this->validateData($filters, [
@@ -25,69 +25,69 @@ class ProductTagController extends Controller
         ]);
 
         $asTree = request()->boolean('as_tree');
-        $includes = $this->resolveProductTagIncludes();
+        $includes = $this->resolveTagIncludes();
         unset($filters['as_tree'], $filters['include']);
 
-        $query = query('product_tag')->with($this->productTagRelationsForIncludes($includes));
+        $query = query('tag')->with($this->tagRelationsForIncludes($includes));
 
         if ($asTree) {
-            return ProductTagResource::collection(
+            return TagResource::collection(
                 $this->applyBaseFilters(
                     $query,
                     [
                         ...$filters,
                         'all' => true,
                     ],
-                    'product_tag',
-                    $this->productTagIndexValidationRules()
+                    'tag',
+                    $this->tagIndexValidationRules()
                 )->tree()
             );
         }
 
-        return ProductTagResource::collection(
-            $this->applyBaseFilters($query, $filters, 'product_tag', $this->productTagIndexValidationRules())
+        return TagResource::collection(
+            $this->applyBaseFilters($query, $filters, 'tag', $this->tagIndexValidationRules())
         );
     }
 
-    public function store(StoreProductTagRequest $request): JsonResource
+    public function store(StoreTagRequest $request): JsonResource
     {
-        $this->authorizeIfConfigured('create', ProductTag::class);
+        $this->authorizeIfConfigured('create', Tag::class);
 
-        $tag = app(CreateProductTag::class)
+        $tag = app(CreateTag::class)
             ->handle($request->validated());
 
-        return ProductTagResource::make($tag);
+        return TagResource::make($tag);
     }
 
-    public function show(ProductTag $productTag): JsonResource
+    public function show(Tag $tag): JsonResource
     {
-        $this->authorizeIfConfigured('view', $productTag);
+        $this->authorizeIfConfigured('view', $tag);
 
-        $includes = $this->resolveProductTagIncludes();
+        $includes = $this->resolveTagIncludes();
 
-        return ProductTagResource::make($productTag->load($this->productTagRelationsForIncludes($includes)));
+        return TagResource::make($tag->load($this->tagRelationsForIncludes($includes)));
     }
 
-    public function update(UpdateProductTagRequest $request, ProductTag $productTag): JsonResource
+    public function update(UpdateTagRequest $request, Tag $tag): JsonResource
     {
-        $this->authorizeIfConfigured('update', $productTag);
+        $this->authorizeIfConfigured('update', $tag);
 
-        $tag = app(UpdateProductTag::class)
-            ->handle($productTag, $request->validated());
+        $updatedTag = app(UpdateTag::class)
+            ->handle($tag, $request->validated());
 
-        return ProductTagResource::make($tag);
+        return TagResource::make($updatedTag);
     }
 
-    public function destroy(ProductTag $productTag): JsonResponse
+    public function destroy(Tag $tag): JsonResponse
     {
-        $this->authorizeIfConfigured('delete', $productTag);
+        $this->authorizeIfConfigured('delete', $tag);
 
-        $productTag->delete();
+        $tag->delete();
 
         return response()->noContent();
     }
 
-    protected function resolveProductTagIncludes(): array
+    protected function resolveTagIncludes(): array
     {
         $rawIncludes = request()->query('include', []);
 
@@ -109,7 +109,7 @@ class ProductTagController extends Controller
         return $includes;
     }
 
-    protected function productTagRelationsForIncludes(array $includes): array
+    protected function tagRelationsForIncludes(array $includes): array
     {
         $relations = [];
 
@@ -120,7 +120,7 @@ class ProductTagController extends Controller
         return $relations;
     }
 
-    protected function productTagIndexValidationRules(): array
+    protected function tagIndexValidationRules(): array
     {
         $productTypeModel = app(resolve_model('product_type'));
         $productTypeTable = method_exists($productTypeModel, 'getTableName')

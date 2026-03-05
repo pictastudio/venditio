@@ -4,11 +4,11 @@ namespace PictaStudio\Venditio\Validations;
 
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Validations\Concerns\InteractsWithTranslatableRules;
-use PictaStudio\Venditio\Validations\Contracts\ProductTagValidationRules;
+use PictaStudio\Venditio\Validations\Contracts\TagValidationRules;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
-class ProductTagValidation implements ProductTagValidationRules
+class TagValidation implements TagValidationRules
 {
     use InteractsWithTranslatableRules;
 
@@ -18,7 +18,7 @@ class ProductTagValidation implements ProductTagValidationRules
             'parent_id' => [
                 'nullable',
                 'integer',
-                Rule::exists($this->tableFor('product_tag'), 'id'),
+                Rule::exists($this->tableFor('tag'), 'id'),
             ],
             'product_type_id' => [
                 'nullable',
@@ -45,7 +45,7 @@ class ProductTagValidation implements ProductTagValidationRules
             'visible_from' => ['nullable', 'date'],
             'visible_until' => ['nullable', 'date', 'after_or_equal:visible_from'],
             'tag_ids' => ['nullable', 'array'],
-            'tag_ids.*' => ['integer', 'distinct', Rule::exists($this->tableFor('product_tag'), 'id')],
+            'tag_ids.*' => ['integer', 'distinct', Rule::exists($this->tableFor('tag'), 'id')],
             ...$this->translatableLocaleRules([
                 'name' => ['sometimes', 'filled', 'string', 'max:255'],
                 'slug' => ['sometimes', 'filled', 'string', 'max:255'],
@@ -62,7 +62,7 @@ class ProductTagValidation implements ProductTagValidationRules
                 'sometimes',
                 'nullable',
                 'integer',
-                Rule::exists($this->tableFor('product_tag'), 'id'),
+                Rule::exists($this->tableFor('tag'), 'id'),
             ],
             'product_type_id' => [
                 'sometimes',
@@ -90,7 +90,7 @@ class ProductTagValidation implements ProductTagValidationRules
             'visible_from' => ['nullable', 'date'],
             'visible_until' => ['nullable', 'date', 'after_or_equal:visible_from'],
             'tag_ids' => ['nullable', 'array'],
-            'tag_ids.*' => ['integer', 'distinct', Rule::exists($this->tableFor('product_tag'), 'id')],
+            'tag_ids.*' => ['integer', 'distinct', Rule::exists($this->tableFor('tag'), 'id')],
             ...$this->translatableLocaleRules([
                 'name' => ['sometimes', 'filled', 'string', 'max:255'],
                 'slug' => ['sometimes', 'filled', 'string', 'max:255'],

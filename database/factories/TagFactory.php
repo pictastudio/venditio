@@ -3,11 +3,11 @@
 namespace PictaStudio\Venditio\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use PictaStudio\Venditio\Models\ProductTag;
+use PictaStudio\Venditio\Models\Tag;
 
-class ProductTagFactory extends Factory
+class TagFactory extends Factory
 {
-    protected $model = ProductTag::class;
+    protected $model = Tag::class;
 
     public function definition(): array
     {

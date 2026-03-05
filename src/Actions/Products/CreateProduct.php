@@ -79,7 +79,7 @@ class CreateProduct
         }
 
         $resolvedProductTypeId = is_numeric($productTypeId) ? (int) $productTypeId : null;
-        $invalidTags = resolve_model('product_tag')::withoutGlobalScopes()
+        $invalidTags = resolve_model('tag')::withoutGlobalScopes()
             ->whereKey($tagIds)
             ->whereNotNull('product_type_id')
             ->when(

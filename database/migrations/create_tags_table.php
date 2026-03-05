@@ -3,15 +3,15 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use PictaStudio\Venditio\Models\{ProductTag, ProductType};
+use PictaStudio\Venditio\Models\{Tag, ProductType};
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('product_tags', function (Blueprint $table) {
+        Schema::create('tags', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(ProductTag::class, 'parent_id')->nullable();
+            $table->foreignIdFor(Tag::class, 'parent_id')->nullable();
             $table->foreignIdFor(ProductType::class)->nullable();
             $table->string('path')->nullable()->index()->comment('path of the tag in the tree');
             $table->string('name');
@@ -34,6 +34,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('product_tags');
+        Schema::dropIfExists('tags');
     }
 };

@@ -236,7 +236,7 @@ class ProductController extends Controller
             : $categoryModel->getTable();
         $categoryKeyName = $categoryModel->getKeyName();
 
-        $tagModel = app(resolve_model('product_tag'));
+        $tagModel = app(resolve_model('tag'));
         $tagTable = method_exists($tagModel, 'getTableName')
             ? $tagModel->getTableName()
             : $tagModel->getTable();

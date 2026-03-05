@@ -14,7 +14,7 @@ use Spatie\Sluggable\{HasSlug, SlugOptions};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
-class ProductTag extends Model implements TranslatableContract
+class Tag extends Model implements TranslatableContract
 {
     use AsTree;
     use HasDiscounts;
@@ -72,7 +72,7 @@ class ProductTag extends Model implements TranslatableContract
 
     public function tags(): MorphToMany
     {
-        return $this->morphToMany(resolve_model('product_tag'), 'taggable', 'taggables')
+        return $this->morphToMany(resolve_model('tag'), 'taggable', 'taggables')
             ->withTimestamps();
     }
 

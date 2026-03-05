@@ -44,7 +44,7 @@ class ProductResource extends JsonResource
             'tax_class' => TaxClassResource::make($this->whenLoaded('taxClass')),
             'parent' => self::make($this->whenLoaded('parent')),
             'categories' => ProductCategoryResource::collection($this->whenLoaded('categories')),
-            'tags' => ProductTagResource::collection($this->whenLoaded('tags')),
+            'tags' => TagResource::collection($this->whenLoaded('tags')),
             'price_lists_relation' => PriceListResource::collection($this->whenLoaded('priceLists')),
             'price_list_prices' => PriceListPriceResource::collection($this->whenLoaded('priceListPrices')),
             'variant_options' => ProductVariantOptionResource::collection($this->whenLoaded('variantOptions')),

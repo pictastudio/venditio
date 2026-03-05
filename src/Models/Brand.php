@@ -39,7 +39,7 @@ class Brand extends Model implements TranslatableContract
 
     public function tags(): MorphToMany
     {
-        return $this->morphToMany(resolve_model('product_tag'), 'taggable', 'taggables')
+        return $this->morphToMany(resolve_model('tag'), 'taggable', 'taggables')
             ->withTimestamps();
     }
 
