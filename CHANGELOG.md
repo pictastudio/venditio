@@ -2,6 +2,33 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.2.1 - 2026-03-05
+
+### What's Changed
+
+#### Features
+
+- **Price list prices bulk upsert** - Added `POST /price_list_prices/bulk/upsert` to create or update multiple prices across multiple products and price lists in a single request, using the natural key `product_id + price_list_id`.
+- **Default price normalization in bulk flows** - Bulk upsert now enforces a single `is_default=true` price per product after persistence, keeping pricing resolution deterministic.
+- **Validation for bulk payloads** - Added dedicated bulk request validation for `price_list_prices` with checks for required nested fields, duplicate `(product_id, price_list_id)` tuples in the same payload, and conflicting multiple defaults per product.
+- **Authorization behavior** - Bulk endpoint applies policy checks per target row: `update` for existing tuples and `create` when new tuples are introduced.
+- **Soft-deleted tuple handling** - Bulk upsert restores soft-deleted `price_list_prices` rows when matching tuples are re-submitted.
+
+#### API & Tooling
+
+- **Routes** - Registered `price_list_prices.upsertMultiple` route.
+- **Bruno** - Added request collection entry for bulk upsert (`bruno/venditio/price_list_prices/07_bulk_upsert.bru`).
+- **Docs** - Updated API reference with the new bulk endpoint.
+
+#### Tests
+
+- Extended `PriceListApiTest` coverage for:
+  - successful multi-product/multi-price-list bulk upsert
+  - default flag normalization behavior
+  - validation errors for duplicate tuples and multiple defaults per product
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/1.2.0...v1.2.1
+
 ## v1.1.5 - 2026-03-04
 
 ### What's Changed

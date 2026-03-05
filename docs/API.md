@@ -258,6 +258,7 @@ Discount columns are first-level fields on `discounts`:
 - `GET /price_list_prices`
 - `GET /price_list_prices/{price_list_price}`
 - `POST /price_list_prices`
+- `POST /price_list_prices/bulk/upsert`
 - `PATCH /price_list_prices/{price_list_price}`
 - `DELETE /price_list_prices/{price_list_price}`
 

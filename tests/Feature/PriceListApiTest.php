@@ -167,6 +167,143 @@ it('provides full crud for product prices attached to price lists', function () 
     ]);
 });
 
+it('upserts multiple price list prices across multiple products and price lists', function () {
+    config()->set('venditio.price_lists.enabled', true);
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $firstProduct = pl_createProduct();
+    $secondProduct = Product::factory()->create([
+        'tax_class_id' => $firstProduct->tax_class_id,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $secondProduct->inventory()->updateOrCreate([], [
+        'stock' => 100,
+        'stock_reserved' => 0,
+        'stock_available' => 100,
+        'stock_min' => 0,
+        'price' => 110,
+        'purchase_price' => 45,
+        'price_includes_tax' => false,
+    ]);
+    $secondProduct = $secondProduct->refresh();
+    $retail = PriceList::factory()->create(['name' => 'Retail']);
+    $wholesale = PriceList::factory()->create(['name' => 'Wholesale']);
+
+    $existingPrice = PriceListPrice::factory()->create([
+        'product_id' => $firstProduct->getKey(),
+        'price_list_id' => $retail->getKey(),
+        'price' => 120,
+        'is_default' => true,
+    ]);
+
+    postJson($prefix . '/price_list_prices/bulk/upsert', [
+        'prices' => [
+            [
+                'product_id' => $firstProduct->getKey(),
+                'price_list_id' => $retail->getKey(),
+                'price' => 99.90,
+                'is_default' => false,
+            ],
+            [
+                'product_id' => $firstProduct->getKey(),
+                'price_list_id' => $wholesale->getKey(),
+                'price' => 89.90,
+                'is_default' => true,
+            ],
+            [
+                'product_id' => $secondProduct->getKey(),
+                'price_list_id' => $retail->getKey(),
+                'price' => 79.90,
+                'is_default' => true,
+            ],
+            [
+                'product_id' => $secondProduct->getKey(),
+                'price_list_id' => $wholesale->getKey(),
+                'price' => 69.90,
+                'is_default' => false,
+            ],
+        ],
+    ])->assertOk()
+        ->assertJsonCount(4)
+        ->assertJsonFragment([
+            'product_id' => $firstProduct->getKey(),
+            'price_list_id' => $wholesale->getKey(),
+            'price' => 89.9,
+            'is_default' => true,
+        ])
+        ->assertJsonFragment([
+            'product_id' => $secondProduct->getKey(),
+            'price_list_id' => $retail->getKey(),
+            'price' => 79.9,
+            'is_default' => true,
+        ]);
+
+    assertDatabaseHas('price_list_prices', [
+        'product_id' => $firstProduct->getKey(),
+        'price_list_id' => $retail->getKey(),
+        'price' => 99.90,
+        'is_default' => false,
+    ]);
+
+    assertDatabaseHas('price_list_prices', [
+        'product_id' => $firstProduct->getKey(),
+        'price_list_id' => $wholesale->getKey(),
+        'price' => 89.90,
+        'is_default' => true,
+    ]);
+
+    assertDatabaseHas('price_list_prices', [
+        'product_id' => $secondProduct->getKey(),
+        'price_list_id' => $retail->getKey(),
+        'price' => 79.90,
+        'is_default' => true,
+    ]);
+
+    assertDatabaseHas('price_list_prices', [
+        'product_id' => $secondProduct->getKey(),
+        'price_list_id' => $wholesale->getKey(),
+        'price' => 69.90,
+        'is_default' => false,
+    ]);
+
+    expect($existingPrice->fresh()->is_default)->toBeFalse();
+});
+
+it('validates duplicate tuples and multiple defaults in bulk upsert payloads', function () {
+    config()->set('venditio.price_lists.enabled', true);
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $product = pl_createProduct();
+    $retail = PriceList::factory()->create(['name' => 'Retail']);
+    $wholesale = PriceList::factory()->create(['name' => 'Wholesale']);
+
+    postJson($prefix . '/price_list_prices/bulk/upsert', [
+        'prices' => [
+            [
+                'product_id' => $product->getKey(),
+                'price_list_id' => $retail->getKey(),
+                'price' => 99.90,
+                'is_default' => true,
+            ],
+            [
+                'product_id' => $product->getKey(),
+                'price_list_id' => $retail->getKey(),
+                'price' => 89.90,
+                'is_default' => false,
+            ],
+            [
+                'product_id' => $product->getKey(),
+                'price_list_id' => $wholesale->getKey(),
+                'price' => 79.90,
+                'is_default' => true,
+            ],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['prices.1.price_list_id', 'prices.2.is_default']);
+});
+
 it('uses the default price list price in cart line pricing when enabled', function () {
     config()->set('venditio.price_lists.enabled', true);
 

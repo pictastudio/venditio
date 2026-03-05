@@ -49,6 +49,7 @@ Route::apiResource('discounts', DiscountController::class);
 Route::apiResource('discount_applications', DiscountApplicationController::class);
 Route::apiResource('product_custom_fields', ProductCustomFieldController::class);
 Route::apiResource('price_lists', PriceListController::class);
+Route::post('price_list_prices/bulk/upsert', [PriceListPriceController::class, 'upsertMultiple'])->name('price_list_prices.upsertMultiple');
 Route::apiResource('price_list_prices', PriceListPriceController::class);
 Route::apiResource('cart_lines', CartLineController::class);
 Route::apiResource('order_lines', OrderLineController::class);

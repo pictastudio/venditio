@@ -5,8 +5,9 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\Rule;
+use PictaStudio\Venditio\Actions\PriceListPrices\UpsertMultiplePriceListPrices;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
-use PictaStudio\Venditio\Http\Requests\V1\PriceListPrice\{StorePriceListPriceRequest, UpdatePriceListPriceRequest};
+use PictaStudio\Venditio\Http\Requests\V1\PriceListPrice\{StorePriceListPriceRequest, UpdatePriceListPriceRequest, UpsertMultiplePriceListPriceRequest};
 use PictaStudio\Venditio\Http\Resources\V1\PriceListPriceResource;
 use PictaStudio\Venditio\Models\PriceListPrice;
 
@@ -76,6 +77,76 @@ class PriceListPriceController extends Controller
         return PriceListPriceResource::make($priceListPrice->refresh()->load('priceList'));
     }
 
+    public function upsertMultiple(UpsertMultiplePriceListPriceRequest $request): JsonResource
+    {
+        $this->ensureFeatureIsEnabled();
+
+        $validated = $request->validated();
+        $prices = collect($validated['prices']);
+        $targetTuples = $prices
+            ->map(
+                fn (array $pricePayload): string => $this->priceTupleKey(
+                    (int) $pricePayload['product_id'],
+                    (int) $pricePayload['price_list_id']
+                )
+            )
+            ->flip();
+
+        $existingPrices = query('price_list_price')
+            ->whereIn(
+                'product_id',
+                $prices
+                    ->pluck('product_id')
+                    ->map(fn (mixed $productId): int => (int) $productId)
+                    ->unique()
+                    ->all()
+            )
+            ->whereIn(
+                'price_list_id',
+                $prices
+                    ->pluck('price_list_id')
+                    ->map(fn (mixed $priceListId): int => (int) $priceListId)
+                    ->unique()
+                    ->all()
+            )
+            ->get()
+            ->filter(
+                fn (PriceListPrice $priceListPrice): bool => $targetTuples->has(
+                    $this->priceTupleKey((int) $priceListPrice->product_id, (int) $priceListPrice->price_list_id)
+                )
+            )
+            ->keyBy(
+                fn (PriceListPrice $priceListPrice): string => $this->priceTupleKey(
+                    (int) $priceListPrice->product_id,
+                    (int) $priceListPrice->price_list_id
+                )
+            );
+
+        $needsCreateAuthorization = false;
+
+        foreach ($prices as $pricePayload) {
+            $tupleKey = $this->priceTupleKey((int) $pricePayload['product_id'], (int) $pricePayload['price_list_id']);
+            $existingPrice = $existingPrices->get($tupleKey);
+
+            if ($existingPrice instanceof PriceListPrice) {
+                $this->authorizeIfConfigured('update', $existingPrice);
+
+                continue;
+            }
+
+            $needsCreateAuthorization = true;
+        }
+
+        if ($needsCreateAuthorization) {
+            $this->authorizeIfConfigured('create', resolve_model('price_list_price'));
+        }
+
+        $upsertedPrices = app(UpsertMultiplePriceListPrices::class)
+            ->handle($prices->all());
+
+        return PriceListPriceResource::collection($upsertedPrices->load('priceList'));
+    }
+
     public function destroy(PriceListPrice $priceListPrice)
     {
         $this->ensureFeatureIsEnabled();
@@ -101,5 +172,10 @@ class PriceListPriceController extends Controller
             ->where('product_id', $priceListPrice->product_id)
             ->whereKeyNot($priceListPrice->getKey())
             ->update(['is_default' => false]);
+    }
+
+    private function priceTupleKey(int $productId, int $priceListId): string
+    {
+        return $productId . ':' . $priceListId;
     }
 }

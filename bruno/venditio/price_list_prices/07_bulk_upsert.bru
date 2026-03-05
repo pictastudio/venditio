@@ -1,0 +1,67 @@
+meta {
+  name: Bulk upsert price list prices
+  type: http
+  seq: 112
+}
+
+post {
+  url: {{baseUrl}}/price_list_prices/bulk/upsert
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "prices": [
+      {
+        "product_id": 1,
+        "price_list_id": 1,
+        "price": 19.99,
+        "purchase_price": 10.99,
+        "price_includes_tax": false,
+        "is_default": false,
+        "metadata": {
+          "source": "bulk-import"
+        }
+      },
+      {
+        "product_id": 1,
+        "price_list_id": 2,
+        "price": 15.99,
+        "is_default": true
+      },
+      {
+        "product_id": 2,
+        "price_list_id": 1,
+        "price": 8.50
+      }
+    ]
+  }
+}
+
+docs {
+  summary:
+  - Upsert multiple price list prices
+
+  endpoint:
+  - method: POST
+  - path: /price_list_prices/bulk/upsert
+
+  query params:
+  - none
+
+  path params:
+  - none
+
+  body:
+  - JSON payload with prices array.
+  - Required per item: product_id, price_list_id, price.
+  - Optional per item: purchase_price, price_includes_tax, is_default, metadata.
+  - Each product_id + price_list_id tuple must be unique inside payload.
+  - At most one item per product can set is_default=true in the same request.
+}

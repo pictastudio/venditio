@@ -9,6 +9,20 @@ use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
 class PriceListPriceValidation implements PriceListPriceValidationRules
 {
+    public function getBulkUpsertValidationRules(): array
+    {
+        return [
+            'prices' => ['required', 'array', 'min:1'],
+            'prices.*.product_id' => ['required', 'integer', Rule::exists($this->tableFor('product'), 'id')],
+            'prices.*.price_list_id' => ['required', 'integer', Rule::exists($this->tableFor('price_list'), 'id')],
+            'prices.*.price' => ['required', 'numeric', 'min:0'],
+            'prices.*.purchase_price' => ['nullable', 'numeric', 'min:0'],
+            'prices.*.price_includes_tax' => ['sometimes', 'boolean'],
+            'prices.*.is_default' => ['sometimes', 'boolean'],
+            'prices.*.metadata' => ['nullable', 'array'],
+        ];
+    }
+
     public function getStoreValidationRules(): array
     {
         $productId = (int) request('product_id');
