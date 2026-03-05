@@ -1,9 +1,11 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use PictaStudio\Venditio\Models\ProductCategory;
 
-use function Pest\Laravel\{assertDatabaseHas, getJson, patchJson, postJson};
+use function Pest\Laravel\{assertDatabaseHas, getJson, patch, patchJson, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -193,4 +195,63 @@ it('prevents circular references in bulk product category updates', function () 
         ],
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['categories.0.parent_id', 'categories.1.parent_id']);
+});
+
+it('stores and exposes additional catalog fields on product categories', function () {
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/product_categories', [
+        'name' => 'Accessories',
+        'abstract' => 'Category abstract',
+        'description' => 'Category description',
+        'metadata' => ['seo' => ['title' => 'Accessories']],
+        'show_in_menu' => true,
+        'in_evidence' => true,
+        'visible_from' => now()->subDay()->toDateTimeString(),
+        'visible_until' => now()->addDay()->toDateTimeString(),
+        'sort_order' => 1,
+    ])->assertCreated();
+
+    $categoryId = $response->json('id');
+
+    assertDatabaseHas('product_categories', [
+        'id' => $categoryId,
+        'show_in_menu' => true,
+        'in_evidence' => true,
+    ]);
+});
+
+it('uploads category thumb and cover images on update', function () {
+    Storage::fake('public');
+
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    patch(
+        config('venditio.routes.api.v1.prefix') . '/product_categories/' . $category->getKey(),
+        [
+            'img_thumb' => [
+                'file' => UploadedFile::fake()->image('thumb.jpg'),
+                'alt' => 'thumb',
+                'name' => 'Thumb',
+            ],
+            'img_cover' => [
+                'file' => UploadedFile::fake()->image('cover.jpg'),
+                'alt' => 'cover',
+                'name' => 'Cover',
+            ],
+        ],
+        ['Accept' => 'application/json']
+    )->assertOk();
+
+    $category->refresh();
+
+    expect(str_starts_with((string) data_get($category->img_thumb, 'src'), 'product_categories/' . $category->getKey() . '/img_thumb/'))
+        ->toBeTrue()
+        ->and(str_starts_with((string) data_get($category->img_cover, 'src'), 'product_categories/' . $category->getKey() . '/img_cover/'))
+        ->toBeTrue();
+
+    Storage::disk('public')->assertExists((string) data_get($category->img_thumb, 'src'));
+    Storage::disk('public')->assertExists((string) data_get($category->img_cover, 'src'));
 });

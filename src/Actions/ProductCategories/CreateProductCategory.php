@@ -2,6 +2,8 @@
 
 namespace PictaStudio\Venditio\Actions\ProductCategories;
 
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use PictaStudio\Venditio\Models\ProductCategory;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -10,9 +12,43 @@ class CreateProductCategory
 {
     public function handle(array $payload): ProductCategory
     {
+        $thumbProvided = array_key_exists('img_thumb', $payload);
+        $coverProvided = array_key_exists('img_cover', $payload);
+        $thumb = Arr::pull($payload, 'img_thumb');
+        $cover = Arr::pull($payload, 'img_cover');
+
         /** @var ProductCategory $category */
         $category = resolve_model('product_category')::create($payload);
 
+        if ($thumbProvided) {
+            $category->img_thumb = $this->storeImage($category, $thumb, 'img_thumb');
+        }
+
+        if ($coverProvided) {
+            $category->img_cover = $this->storeImage($category, $cover, 'img_cover');
+        }
+
+        if ($thumbProvided || $coverProvided) {
+            $category->save();
+        }
+
         return $category->refresh();
+    }
+
+    private function storeImage(ProductCategory $category, mixed $payload, string $folder): ?array
+    {
+        if ($payload === null) {
+            return null;
+        }
+
+        if (!is_array($payload) || !isset($payload['file']) || !$payload['file'] instanceof UploadedFile) {
+            return null;
+        }
+
+        return [
+            'src' => $payload['file']->store("product_categories/{$category->getKey()}/{$folder}", 'public'),
+            'alt' => Arr::get($payload, 'alt'),
+            'name' => Arr::get($payload, 'name'),
+        ];
     }
 }
