@@ -712,6 +712,7 @@ it('includes variants and variants options table when requested', function () {
     getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=variants,variants_options_table")
         ->assertOk()
         ->assertJsonCount(2, 'variants')
+        ->assertJsonMissingPath('variants_relation')
         ->assertJsonPath('variants_options_table.0.id', $size->getKey())
         ->assertJsonPath('variants_options_table.0.name', 'Size')
         ->assertJsonPath('variants_options_table.0.values.0.value', 's')

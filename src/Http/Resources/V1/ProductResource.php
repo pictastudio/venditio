@@ -79,7 +79,6 @@ class ProductResource extends JsonResource
                 $shouldIncludeVariants,
                 fn () => self::collection($this->whenLoaded('variants'))
             ),
-            'variants_relation' => self::collection($this->whenLoaded('variants')),
             'variants_options_table' => $this->when(
                 $shouldIncludeVariantsOptionsTable,
                 fn () => $this->buildVariantsOptionsTable()
