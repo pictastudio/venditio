@@ -63,6 +63,7 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_product_category_product_table',
                 'create_zz_taggables_table',
                 'create_product_variants_table',
+                'update_product_variants_add_accept_hex_color',
                 'create_product_custom_fields_table',
                 'create_product_variant_options_table',
                 'create_product_configuration_table',
