@@ -102,6 +102,51 @@ it('returns product categories as a tree when as_tree is true', function () {
     expect($child->fresh()->path)->not->toBeNull();
 });
 
+it('orders product categories by sort_order within each tree branch', function () {
+    $rootA = ProductCategory::factory()->create([
+        'name' => 'Root A',
+        'sort_order' => 20,
+    ]);
+
+    $rootB = ProductCategory::factory()->create([
+        'name' => 'Root B',
+        'sort_order' => 10,
+    ]);
+
+    ProductCategory::factory()->create([
+        'name' => 'Root A Child Late',
+        'parent_id' => $rootA->getKey(),
+        'sort_order' => 30,
+    ]);
+
+    ProductCategory::factory()->create([
+        'name' => 'Root A Child Early',
+        'parent_id' => $rootA->getKey(),
+        'sort_order' => 5,
+    ]);
+
+    ProductCategory::factory()->create([
+        'name' => 'Root B Child Late',
+        'parent_id' => $rootB->getKey(),
+        'sort_order' => 40,
+    ]);
+
+    ProductCategory::factory()->create([
+        'name' => 'Root B Child Early',
+        'parent_id' => $rootB->getKey(),
+        'sort_order' => 1,
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/product_categories?as_tree=1')
+        ->assertOk()
+        ->assertJsonPath('0.name', 'Root B')
+        ->assertJsonPath('1.name', 'Root A')
+        ->assertJsonPath('0.children.0.name', 'Root B Child Early')
+        ->assertJsonPath('0.children.1.name', 'Root B Child Late')
+        ->assertJsonPath('1.children.0.name', 'Root A Child Early')
+        ->assertJsonPath('1.children.1.name', 'Root A Child Late');
+});
+
 it('updates multiple product categories in one request', function () {
     $root = ProductCategory::factory()->create([
         'sort_order' => 1,

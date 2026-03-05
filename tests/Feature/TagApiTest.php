@@ -140,3 +140,66 @@ it('associates tags polymorphically to products, brands, and tags', function () 
         'taggable_id' => $taggableTag->getKey(),
     ]);
 });
+
+it('orders tags by sort_order within each tree branch', function () {
+    $rootA = Tag::factory()->create([
+        'name' => 'Root A',
+        'sort_order' => 20,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $rootB = Tag::factory()->create([
+        'name' => 'Root B',
+        'sort_order' => 10,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    Tag::factory()->create([
+        'name' => 'Root A Child Late',
+        'parent_id' => $rootA->getKey(),
+        'sort_order' => 30,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    Tag::factory()->create([
+        'name' => 'Root A Child Early',
+        'parent_id' => $rootA->getKey(),
+        'sort_order' => 5,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    Tag::factory()->create([
+        'name' => 'Root B Child Late',
+        'parent_id' => $rootB->getKey(),
+        'sort_order' => 40,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    Tag::factory()->create([
+        'name' => 'Root B Child Early',
+        'parent_id' => $rootB->getKey(),
+        'sort_order' => 1,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/tags?as_tree=1')
+        ->assertOk()
+        ->assertJsonPath('0.name', 'Root B')
+        ->assertJsonPath('1.name', 'Root A')
+        ->assertJsonPath('0.children.0.name', 'Root B Child Early')
+        ->assertJsonPath('0.children.1.name', 'Root B Child Late')
+        ->assertJsonPath('1.children.0.name', 'Root A Child Early')
+        ->assertJsonPath('1.children.1.name', 'Root A Child Late');
+});

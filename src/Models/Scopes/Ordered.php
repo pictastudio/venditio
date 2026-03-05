@@ -15,6 +15,12 @@ class Ordered implements Scope
             return;
         }
 
-        $builder->orderBy('sort_order', 'asc');
+        if (method_exists($model, 'getParentKeyName')) {
+            $builder->orderBy($model->getParentKeyName(), 'asc');
+        }
+
+        $builder
+            ->orderBy('sort_order', 'asc')
+            ->orderBy($model->getQualifiedKeyName(), 'asc');
     }
 }
