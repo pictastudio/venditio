@@ -21,7 +21,8 @@ headers {
 
 body:json {
   {
-    "name": "Updated example"
+    "name": "Updated example",
+    "tag_ids": [1]
   }
 }
 
@@ -44,6 +45,8 @@ docs {
   - Available fields:
   - name
   - slug
+  - tag_ids (array)
+  - tag_ids.*
   - {locale}.name (locale object notation)
   - {locale}.slug (locale object notation)
   - name:{locale} (locale suffix notation)

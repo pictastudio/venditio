@@ -18,7 +18,16 @@ headers {
 body:json {
   {
     "name": "Product Category 1",
-    "sort_order": 1
+    "abstract": "Short abstract",
+    "description": "Long description",
+    "metadata": {
+      "icon": "star"
+    },
+    "show_in_menu": true,
+    "in_evidence": false,
+    "sort_order": 1,
+    "visible_from": "2026-01-01 00:00:00",
+    "visible_until": "2026-12-31 23:59:59"
   }
 }
 
@@ -42,10 +51,26 @@ docs {
   - parent_id
   - name
   - slug
+  - abstract
+  - description
+  - metadata (array)
+  - img_thumb (object|nullable)
+  - img_thumb.file (file|image, required_with:img_thumb)
+  - img_thumb.alt
+  - img_thumb.name
+  - img_cover (object|nullable)
+  - img_cover.file (file|image, required_with:img_cover)
+  - img_cover.alt
+  - img_cover.name
   - active
+  - show_in_menu
+  - in_evidence
   - sort_order
-  - {locale}.name (locale object notation)
-  - {locale}.slug (locale object notation)
-  - name:{locale} (locale suffix notation)
-  - slug:{locale} (locale suffix notation)
+  - visible_from
+  - visible_until
+  - {locale}.name / name:{locale}
+  - {locale}.slug / slug:{locale}
+  - {locale}.abstract / abstract:{locale}
+  - {locale}.description / description:{locale}
+  - Note: for image upload use multipart/form-data.
 }

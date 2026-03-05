@@ -1,11 +1,11 @@
 meta {
-  name: Update product_categories
+  name: Update tags
   type: http
-  seq: 9
+  seq: 15
 }
 
 patch {
-  url: {{baseUrl}}/product_categories/:id-or-slug
+  url: {{baseUrl}}/tags/:id-or-slug
   body: json
   auth: inherit
 }
@@ -21,23 +21,19 @@ headers {
 
 body:json {
   {
-    "name": "Updated category",
-    "abstract": "Updated abstract",
-    "metadata": {
-      "icon": "diamond"
-    },
-    "show_in_menu": false,
-    "in_evidence": true
+    "name": "Updated tag",
+    "product_type_id": 1,
+    "tag_ids": [2, 3]
   }
 }
 
 docs {
   summary:
-  - Update product_categories
+  - Update tags
 
   endpoint:
   - method: PATCH
-  - path: /product_categories/:id-or-slug
+  - path: /tags/:id-or-slug
 
   query params:
   - none
@@ -49,6 +45,7 @@ docs {
   - JSON payload.
   - Available fields:
   - parent_id
+  - product_type_id
   - name
   - slug
   - abstract
@@ -68,6 +65,8 @@ docs {
   - sort_order
   - visible_from
   - visible_until
+  - tag_ids (array): polymorphic link to child tags.
+  - tag_ids.*
   - {locale}.name / name:{locale}
   - {locale}.slug / slug:{locale}
   - {locale}.abstract / abstract:{locale}

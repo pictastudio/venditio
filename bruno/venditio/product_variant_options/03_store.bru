@@ -19,6 +19,7 @@ body:json {
   {
     "name": "Variant option 1 example",
     "product_variant_id": 1,
+    "hex_color": "#FFAA00",
     "sort_order": 1
   }
 }
@@ -47,4 +48,5 @@ docs {
   - sort_order
   - {locale}.name (locale object notation)
   - name:{locale} (locale suffix notation)
+  - Note: hex_color is accepted only when the linked product_variant has accept_hex_color=true.
 }

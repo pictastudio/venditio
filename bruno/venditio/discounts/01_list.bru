@@ -16,6 +16,8 @@ params:query {
   ~per_page: 30
   ~sort_by: discountable_type
   ~sort_dir: asc
+  ~exclude_all_scopes: 0
+  ~exclude_active_scope: 0
   ~id[]: 1
   ~discountable_type: sample
   ~discountable_id: 1
@@ -73,6 +75,8 @@ docs {
   - per_page (integer): Items per page (bounded by API config).
   - sort_by (string): Sort field. Allowed: id and filterable columns.
   - sort_dir (string): Sort direction: asc or desc.
+  - exclude_all_scopes (boolean): Skip all global scopes for this request.
+  - exclude_active_scope (boolean): Skip only the active global scope when available.
   - id[] (integer[]): Filter by one or more resource IDs.
   - discountable_type (string): Exact-match filter for discountable_type.
   - discountable_id (integer): Exact-match filter for discountable_id.

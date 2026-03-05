@@ -16,6 +16,7 @@ params:query {
   ~per_page: 30
   ~sort_by: product_variant_id
   ~sort_dir: asc
+  ~exclude_all_scopes: 0
   ~id[]: 1
   ~product_variant_id: 1
   ~name: sample
@@ -54,6 +55,7 @@ docs {
   - per_page (integer): Items per page (bounded by API config).
   - sort_by (string): Sort field. Allowed: id and filterable columns.
   - sort_dir (string): Sort direction: asc or desc.
+  - exclude_all_scopes (boolean): Skip all global scopes for this request.
   - id[] (integer[]): Filter by one or more resource IDs.
   - product_variant_id (integer): Exact-match filter for product_variant_id.
   - name (string): Exact-match filter for name.

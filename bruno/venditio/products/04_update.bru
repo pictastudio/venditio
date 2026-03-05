@@ -11,7 +11,7 @@ patch {
 }
 
 params:query {
-  ~include: variants,variants_options_table
+  ~include: variants,variants_options_table,brand,categories,tags,product_type,tax_class,price_lists
 }
 
 params:path {
@@ -27,10 +27,11 @@ body:json {
   {
     "name": "T-shirt v2",
     "status": "published",
+    "category_ids": [1, 2],
+    "tag_ids": [1, 3],
     "inventory": {
       "price": 34.99
-    },
-    "category_ids": [1, 2]
+    }
   }
 }
 
@@ -43,7 +44,7 @@ docs {
   - path: /products/:id-or-slug
 
   query params:
-  - include (string|array): Optional includes: variants, variants_options_table, and price_lists (if enabled).
+  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, tags, product_type, tax_class, price_lists (if enabled).
 
   path params:
   - id-or-slug: Replace with target resource identifier.
@@ -68,11 +69,13 @@ docs {
   - description
   - description_short
   - images (array)
+  - images.*.file
   - images.*.alt
-  - images.*.src
+  - images.*.name
   - files (array)
+  - files.*.file
+  - files.*.alt
   - files.*.name
-  - files.*.src
   - measuring_unit
   - qty_for_unit
   - length
@@ -82,6 +85,8 @@ docs {
   - metadata (array)
   - category_ids (array)
   - category_ids.*
+  - tag_ids (array)
+  - tag_ids.*
   - inventory (object)
   - inventory.currency_id
   - inventory.stock
@@ -94,4 +99,5 @@ docs {
   - {locale}.slug / slug:{locale}
   - {locale}.description / description:{locale}
   - {locale}.description_short / description_short:{locale}
+  - Note: file uploads require multipart/form-data.
 }

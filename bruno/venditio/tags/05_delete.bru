@@ -1,0 +1,38 @@
+meta {
+  name: Delete tags
+  type: http
+  seq: 16
+}
+
+delete {
+  url: {{baseUrl}}/tags/:id-or-slug
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id-or-slug: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Delete tags
+
+  endpoint:
+  - method: DELETE
+  - path: /tags/:id-or-slug
+
+  query params:
+  - none
+
+  path params:
+  - id-or-slug: Replace with target resource identifier.
+
+  body:
+  - none
+}

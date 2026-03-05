@@ -21,7 +21,8 @@ headers {
 
 body:json {
   {
-    "name": "Updated example"
+    "name": "Updated option",
+    "hex_color": "#111111"
   }
 }
 
@@ -49,4 +50,5 @@ docs {
   - sort_order
   - {locale}.name (locale object notation)
   - name:{locale} (locale suffix notation)
+  - Note: hex_color is accepted only when the linked product_variant has accept_hex_color=true.
 }

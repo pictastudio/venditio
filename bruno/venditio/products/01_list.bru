@@ -16,12 +16,17 @@ params:query {
   ~per_page: 30
   ~sort_by: parent_id
   ~sort_dir: asc
+  ~exclude_all_scopes: 0
+  ~exclude_active_scope: 0
+  ~exclude_date_range_scope: 0
   ~id[]: 1
   ~parent_id: 1
+  ~brand_id: 1
   ~brand_ids[]: 1
   ~product_type_id: 1
   ~tax_class_id: 1
   ~category_ids[]: 1
+  ~tag_ids[]: 1
   ~name: sample
   ~slug: sample
   ~status: sample
@@ -60,7 +65,7 @@ params:query {
   ~exclude_variants: 1
   ~price: 10
   ~price_operator: >=
-  ~include: variants,variants_options_table,brand,categories,product_type,tax_class,price_lists
+  ~include: variants,variants_options_table,brand,categories,tags,product_type,tax_class,price_lists
 }
 
 headers {
@@ -82,6 +87,9 @@ docs {
   - per_page (integer): Items per page (bounded by API config).
   - sort_by (string): Sort field. Allowed: id and filterable columns.
   - sort_dir (string): Sort direction: asc or desc.
+  - exclude_all_scopes (boolean): Skip all global scopes for this request.
+  - exclude_active_scope (boolean): Skip only the active global scope when available.
+  - exclude_date_range_scope (boolean): Skip only the date range global scope when available.
   - id[] (integer[]): Filter by one or more resource IDs.
   - parent_id (integer): Exact-match filter for parent_id.
   - brand_id (integer): Exact-match filter for brand_id.
@@ -89,6 +97,7 @@ docs {
   - product_type_id (integer): Exact-match filter for product_type_id.
   - tax_class_id (integer): Exact-match filter for tax_class_id.
   - category_ids[] (integer[]): Match products assigned to at least one category in this list.
+  - tag_ids[] (integer[]): Match products assigned to at least one tag in this list.
   - name (string): Exact-match filter for name.
   - slug (string): Exact-match filter for slug.
   - status (string): Exact-match filter for status.
@@ -128,7 +137,7 @@ docs {
   - price (number): Filter products by inventory price value.
   - price_operator (string): Operator used with price. Allowed: >, <, >=, <=, =.
   - sort_by=price (string): Sort products by related inventory price.
-  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, product_type, tax_class, price_lists (if enabled).
+  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, tags, product_type, tax_class, price_lists (if enabled).
 
   path params:
   - none

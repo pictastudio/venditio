@@ -1,16 +1,17 @@
 meta {
-  name: Show product_categories
+  name: Show tags
   type: http
-  seq: 7
+  seq: 13
 }
 
 get {
-  url: {{baseUrl}}/product_categories/:id-or-slug
+  url: {{baseUrl}}/tags/:id-or-slug
   body: none
   auth: inherit
 }
 
 params:query {
+  ~include: product_type
   ~exclude_all_scopes: 0
   ~exclude_active_scope: 0
   ~exclude_date_range_scope: 0
@@ -27,13 +28,14 @@ headers {
 
 docs {
   summary:
-  - Show product_categories
+  - Show tags
 
   endpoint:
   - method: GET
-  - path: /product_categories/:id-or-slug
+  - path: /tags/:id-or-slug
 
   query params:
+  - include (string|array): Optional includes: product_type.
   - exclude_all_scopes (boolean): Skip all global scopes for this request.
   - exclude_active_scope (boolean): Skip only the active global scope when available.
   - exclude_date_range_scope (boolean): Skip only the date range global scope when available.

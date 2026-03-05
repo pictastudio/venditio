@@ -11,7 +11,10 @@ get {
 }
 
 params:query {
-  ~include: variants,variants_options_table
+  ~include: variants,variants_options_table,brand,categories,tags,product_type,tax_class,price_lists
+  ~exclude_all_scopes: 0
+  ~exclude_active_scope: 0
+  ~exclude_date_range_scope: 0
 }
 
 params:path {
@@ -32,7 +35,10 @@ docs {
   - path: /products/:id-or-slug
 
   query params:
-  - include (string|array): Optional includes: variants, variants_options_table, and price_lists (if enabled).
+  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, tags, product_type, tax_class, price_lists (if enabled).
+  - exclude_all_scopes (boolean): Skip all global scopes for this request.
+  - exclude_active_scope (boolean): Skip only the active global scope when available.
+  - exclude_date_range_scope (boolean): Skip only the date range global scope when available.
 
   path params:
   - id-or-slug: Replace with target resource identifier.
