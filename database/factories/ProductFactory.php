@@ -17,7 +17,7 @@ class ProductFactory extends Factory
             // 'product_type_id' => ProductType::factory(),
             'tax_class_id' => TaxClass::factory(),
             'name' => fake()->word(),
-            'status' => fake()->randomElement(ProductStatus::cases())->value,
+            'status' => ProductStatus::Published->value,
             'active' => fake()->boolean(),
             'new' => fake()->boolean(),
             'in_evidence' => fake()->boolean(),
