@@ -5,13 +5,13 @@ namespace PictaStudio\Venditio\Models\Scopes;
 use Illuminate\Database\Eloquent\{Builder, Model, Scope};
 use PictaStudio\Venditio\Models\Scopes\Concerns\CanBeExcludedByRequest;
 
-class Active implements Scope
+class ProductStatusActive implements Scope
 {
     use CanBeExcludedByRequest;
 
     public function apply(Builder $builder, Model $model): void
     {
-        if ($this->shouldExcludeScope('exclude_active_scope')) {
+        if ($this->shouldExcludeScope()) {
             return;
         }
 
@@ -19,6 +19,10 @@ class Active implements Scope
             return;
         }
 
-        $builder->where('active', true);
+        if (!method_exists($model, 'scopeActiveStatuses')) {
+            return;
+        }
+
+        $model->scopeActiveStatuses($builder);
     }
 }

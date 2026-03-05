@@ -25,6 +25,7 @@ beforeEach(function () {
 });
 
 it('seeds random venditio data from command options', function () {
+    config()->set('venditio.commands.seed_random_data.enabled', true);
     config()->set('venditio.price_lists.enabled', true);
 
     artisan('venditio:seed-random', [
@@ -46,7 +47,7 @@ it('seeds random venditio data from command options', function () {
     expect(Brand::query()->count())->toBeGreaterThanOrEqual(3)
         ->and(ProductCategory::query()->count())->toBeGreaterThanOrEqual(4)
         ->and(ProductType::query()->count())->toBeGreaterThanOrEqual(2)
-        ->and(Product::query()->count())->toBeGreaterThanOrEqual(8)
+        ->and(Product::withoutGlobalScopes()->count())->toBeGreaterThanOrEqual(8)
         ->and(Discount::withoutGlobalScopes()->count())->toBeGreaterThanOrEqual(4)
         ->and(Cart::query()->count())->toBeGreaterThanOrEqual(2)
         ->and(CartLine::query()->count())->toBeGreaterThan(0)
@@ -71,6 +72,7 @@ it('does nothing when random seed command is disabled', function () {
 });
 
 it('skips price list seeding when price lists are disabled', function () {
+    config()->set('venditio.commands.seed_random_data.enabled', true);
     config()->set('venditio.price_lists.enabled', false);
 
     artisan('venditio:seed-random', [
@@ -80,5 +82,5 @@ it('skips price list seeding when price lists are disabled', function () {
 
     expect(PriceList::query()->count())->toBe(0)
         ->and(PriceListPrice::query()->count())->toBe(0)
-        ->and(Product::query()->count())->toBeGreaterThanOrEqual(5);
+        ->and(Product::withoutGlobalScopes()->count())->toBeGreaterThanOrEqual(5);
 });

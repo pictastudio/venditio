@@ -3,9 +3,12 @@
 namespace PictaStudio\Venditio\Models\Scopes;
 
 use Illuminate\Database\Eloquent\{Builder, Model, Scope};
+use PictaStudio\Venditio\Models\Scopes\Concerns\CanBeExcludedByRequest;
 
 class InDateRange implements Scope
 {
+    use CanBeExcludedByRequest;
+
     public function __construct(
         private ?string $startColumn = null,
         private ?string $endColumn = null,
@@ -24,6 +27,10 @@ class InDateRange implements Scope
 
     public function apply(Builder $builder, Model $model): void
     {
+        if ($this->shouldExcludeScope('exclude_date_range_scope')) {
+            return;
+        }
+
         if (request()->routeIs(config('venditio.scopes.routes_to_exclude'))) {
             return;
         }

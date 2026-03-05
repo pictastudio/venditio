@@ -2,12 +2,13 @@
 
 namespace PictaStudio\Venditio\Models;
 
+use Illuminate\Database\Eloquent\{Builder, Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, BelongsToMany, HasMany, HasOne};
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, BelongsToMany, HasMany, HasOne, MorphToMany};
 use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
-use PictaStudio\Venditio\Models\Scopes\{Active, InDateRange};
+use PictaStudio\Venditio\Enums\Contracts\ProductStatus as ProductStatusContract;
+use PictaStudio\Venditio\Models\Scopes\{Active, InDateRange, ProductStatusActive};
 use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods, LogsActivity, ResolvesRouteBindingByIdOrSlug};
 use Spatie\Sluggable\{HasSlug, SlugOptions};
 
@@ -64,6 +65,7 @@ class Product extends Model implements TranslatableContract
         static::addGlobalScopes([
             Active::class,
             new InDateRange('visible_from', 'visible_until'),
+            ProductStatusActive::class,
         ]);
 
         static::created(function (self $product) {
@@ -104,6 +106,12 @@ class Product extends Model implements TranslatableContract
             ->withTimestamps();
     }
 
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(resolve_model('product_tag'), 'taggable', 'taggables')
+            ->withTimestamps();
+    }
+
     public function inventory(): HasOne
     {
         return $this->hasOne(resolve_model('inventory'));
@@ -133,6 +141,27 @@ class Product extends Model implements TranslatableContract
     {
         return $this->belongsToMany(resolve_model('product_variant_option'), 'product_configuration')
             ->withTimestamps();
+    }
+
+    public function scopeActiveStatuses(Builder $builder): Builder
+    {
+        $statusEnum = config('venditio.product.status_enum');
+
+        if (!is_string($statusEnum) || !is_a($statusEnum, ProductStatusContract::class, true)) {
+            return $builder;
+        }
+
+        $activeStatuses = collect($statusEnum::getActiveStatuses())
+            ->map(fn (mixed $status) => is_object($status) && isset($status->value) ? $status->value : $status)
+            ->filter(fn (mixed $status) => is_string($status) && filled($status))
+            ->values()
+            ->all();
+
+        if ($activeStatuses === []) {
+            return $builder;
+        }
+
+        return $builder->whereIn('status', $activeStatuses);
     }
 
     public function getSlugOptions(): SlugOptions
