@@ -2,6 +2,16 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.2.4 - 2026-03-09
+
+### What's Changed
+
+#### Features
+
+- **Translatable dependency range** - Relaxed the `pictastudio/translatable` Composer constraint from `^0.1` to `^0` so the package can install against the broader set of compatible stable `0.x` releases.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.2.3...v1.2.4
+
 ## v1.2.3 - 2026-03-09
 
 ### What's Changed
