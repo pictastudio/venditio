@@ -84,6 +84,11 @@ class VenditioServiceProvider extends PackageServiceProvider
         ));
     }
 
+    public function packageRegistered(): void
+    {
+        $this->mergeVenditioConfig();
+    }
+
     public function packageBooted(): void
     {
         $this->registerExcelProvider();
@@ -109,6 +114,48 @@ class VenditioServiceProvider extends PackageServiceProvider
         }
 
         $this->app->register(ExcelServiceProvider::class);
+    }
+
+    private function mergeVenditioConfig(): void
+    {
+        $packageConfig = require dirname(__DIR__) . '/config/venditio.php';
+        $applicationConfig = config('venditio', []);
+
+        config()->set(
+            'venditio',
+            $this->mergeConfigRecursively(
+                $packageConfig,
+                is_array($applicationConfig) ? $applicationConfig : []
+            )
+        );
+    }
+
+    /**
+     * Merge associative config arrays recursively while preserving list overrides.
+     *
+     * @param  array<string, mixed>  $defaults
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function mergeConfigRecursively(array $defaults, array $overrides): array
+    {
+        foreach ($overrides as $key => $value) {
+            if (
+                array_key_exists($key, $defaults)
+                && is_array($defaults[$key])
+                && is_array($value)
+                && !array_is_list($defaults[$key])
+                && !array_is_list($value)
+            ) {
+                $defaults[$key] = $this->mergeConfigRecursively($defaults[$key], $value);
+
+                continue;
+            }
+
+            $defaults[$key] = $value;
+        }
+
+        return $defaults;
     }
 
     private function bindIdentifierGenerators(): void
