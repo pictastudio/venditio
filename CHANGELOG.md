@@ -2,6 +2,20 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.2.3 - 2026-03-09
+
+### What's Changed
+
+#### Features
+
+- **Recursive config merge** - The service provider now merges package and application `venditio` config recursively during registration, preserving nested defaults while allowing host apps to override only the keys they need.
+
+#### API & Tooling
+
+- **Bruno locale header** - Added the `Locale` header to Bruno requests across the catalog endpoints and introduced a default `locale` environment variable for localized API testing.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.2.2...v1.2.3
+
 ## v1.2.1 - 2026-03-05
 
 ### What's Changed
