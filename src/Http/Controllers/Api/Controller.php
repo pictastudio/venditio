@@ -12,6 +12,7 @@ use Illuminate\Http\{JsonResponse, Response};
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\{Rule, ValidationException};
+use PictaStudio\Venditio\Models\Scopes\{Active, InDateRange, ProductStatusActive};
 use PictaStudio\Venditio\Traits\ValidatesData;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -112,6 +113,8 @@ class Controller extends BaseController
 
         $this->ensureNoUnknownFilterParameters($filters, $rules);
         $validatedFilters = $this->validateData($filters, $rules);
+
+        $this->removeImplicitScopesOverriddenByExplicitFilters($query, $model, $validatedFilters);
 
         if (isset($validatedFilters['sort_by'])) {
             $query->reorder(
@@ -758,6 +761,48 @@ class Controller extends BaseController
         }
 
         return false;
+    }
+
+    protected function removeImplicitScopesOverriddenByExplicitFilters(Builder $query, string $model, array $validatedFilters): void
+    {
+        if (
+            array_key_exists('active', $validatedFilters)
+            || array_key_exists('is_active', $validatedFilters)
+        ) {
+            $query->withoutGlobalScope(Active::class);
+        }
+
+        if ($model === 'product' && array_key_exists('status', $validatedFilters)) {
+            $query->withoutGlobalScope(ProductStatusActive::class);
+        }
+
+        $dateScopedColumns = $this->dateScopedColumns()[$model] ?? [];
+
+        if ($dateScopedColumns === []) {
+            return;
+        }
+
+        foreach ($dateScopedColumns as $column) {
+            if (
+                array_key_exists($column, $validatedFilters)
+                || array_key_exists($column . '_start', $validatedFilters)
+                || array_key_exists($column . '_end', $validatedFilters)
+            ) {
+                $query->withoutGlobalScope(InDateRange::class);
+
+                return;
+            }
+        }
+    }
+
+    protected function dateScopedColumns(): array
+    {
+        return [
+            'discount' => ['starts_at', 'ends_at'],
+            'product' => ['visible_from', 'visible_until'],
+            'product_category' => ['visible_from', 'visible_until'],
+            'tag' => ['visible_from', 'visible_until'],
+        ];
     }
 
     protected function modelSupportsSoftDeletes(mixed $modelInstance): bool

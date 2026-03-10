@@ -115,3 +115,76 @@ it('filters product index by active statuses and allows bypassing with exclude_a
 
     expect($excludeAllIds)->toContain($published->getKey(), $draft->getKey());
 });
+
+it('allows explicit status filters to override the product status global scope', function () {
+    $taxClass = TaxClass::factory()->create();
+
+    $draft = Product::factory()->create([
+        'tax_class_id' => $taxClass->getKey(),
+        'status' => ProductStatus::Draft,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    Product::factory()->create([
+        'tax_class_id' => $taxClass->getKey(),
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix') . '/products?all=1&include_variants=1&status=draft'
+    )->assertOk();
+
+    $json = $response->json();
+    $items = is_array(data_get($json, 'data'))
+        ? data_get($json, 'data')
+        : $json;
+
+    expect(collect($items)->pluck('id')->all())->toBe([$draft->getKey()]);
+});
+
+it('allows explicit active filters to override the active global scope', function () {
+    $inactiveCategory = ProductCategory::factory()->create([
+        'active' => false,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    ProductCategory::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix') . '/product_categories?all=1&active=0'
+    )->assertOk();
+
+    expect(collect($response->json())->pluck('id')->all())->toBe([$inactiveCategory->getKey()]);
+});
+
+it('allows explicit date filters to override the date range global scope', function () {
+    $futureCategory = ProductCategory::factory()->create([
+        'active' => true,
+        'visible_from' => now()->addDay(),
+        'visible_until' => null,
+    ]);
+
+    ProductCategory::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix')
+        . '/product_categories?all=1&visible_from_start='
+        . urlencode($futureCategory->visible_from?->toDateTimeString() ?? '')
+    )->assertOk();
+
+    expect(collect($response->json())->pluck('id')->all())->toContain($futureCategory->getKey());
+});

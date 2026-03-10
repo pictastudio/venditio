@@ -2,6 +2,20 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.2.5 - 2026-03-10
+
+### What's Changed
+
+#### Fixes
+
+- **API filters and global scopes** - Explicit list filters now override matching implicit global scopes in the shared API filter pipeline. Product `status` filters correctly return draft products, and explicit `active` / date-window filters no longer get masked by default active or visibility scopes.
+
+#### Tests
+
+- Added regression coverage for explicit `status`, `active`, and date-range filters against scoped endpoints.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.2.4...v1.2.5
+
 ## v1.2.4 - 2026-03-09
 
 ### What's Changed
