@@ -22,7 +22,7 @@ All notable changes to `venditio` will be documented in this file.
 
 - Extended feature coverage for product media append/update/delete flows, media ordering and active filtering, shared variant-option media propagation, and shared-file deletion safety.
 
-**Full Changelog**: https://github.com/pictastudio/venditio-core/compare/v1.2.5...v1.3.0
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.2.5...v1.3.0
 
 ## v1.2.5 - 2026-03-10
 
