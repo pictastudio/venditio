@@ -2,6 +2,28 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.3.0 - 2026-03-10
+
+### What's Changed
+
+#### Features
+
+- **Product media metadata** - Product images and files now support stable backend-generated ids, `mimetype`, `sort_order`, `active`, and shared-media flags; images also support `thumbnail`. Media updates can modify metadata without re-uploading the underlying file.
+- **Product media lifecycle** - Product media uploads append to the existing collection instead of replacing it, and products now expose dedicated media deletion by unique id with configurable filesystem cleanup.
+- **Variant option shared media** - Added `POST /product/{product}/{productVariantOption}/upload` to upload media once for a variant option and propagate it to all matching variant products, storing assets under `products/{product_id}/variant_options/{variant_option_id}/...`.
+- **Shared media semantics** - Variant-option media is marked with `shared_from_variant_option` and returned after variant-specific media in product API responses, making color-level galleries reusable across size variants without duplicating uploads.
+
+#### API & Tooling
+
+- **Bruno** - Added Bruno requests for product media deletion and variant-option media upload, and updated the product update request documentation for the expanded media payload fields.
+- **Configuration** - Added `VENDITIO_PRODUCT_MEDIA_DELETE_FILES_FROM_FILESYSTEM` to let host apps decide whether filesystem assets should be removed when product media is deleted.
+
+#### Tests
+
+- Extended feature coverage for product media append/update/delete flows, media ordering and active filtering, shared variant-option media propagation, and shared-file deletion safety.
+
+**Full Changelog**: https://github.com/pictastudio/venditio-core/compare/v1.2.5...v1.3.0
+
 ## v1.2.5 - 2026-03-10
 
 ### What's Changed
