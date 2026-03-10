@@ -6,6 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 use PictaStudio\Venditio\Models\Product;
+use PictaStudio\Venditio\Support\ProductMedia;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
@@ -89,46 +90,172 @@ class UpdateProduct
         bool $imagesProvided,
         bool $filesProvided
     ): array {
+        $currentMedia = ProductMedia::normalizeProductMedia(
+            $product->getAttribute('images'),
+            $product->getAttribute('files')
+        );
+        $usedMediaIds = ProductMedia::collectUsedIds($currentMedia['images'], $currentMedia['files']);
+        $validationErrors = [];
+
         if ($imagesProvided) {
-            $payload['images'] = $this->storeMediaCollection(
-                $product,
+            $validationErrors += $this->collectMediaItemPayloadErrors(
                 Arr::get($payload, 'images'),
-                'images'
+                'images',
+                array_keys(collect($currentMedia['images'])->keyBy('id')->all()),
+                true
             );
         }
 
         if ($filesProvided) {
-            $payload['files'] = $this->storeMediaCollection(
+            $validationErrors += $this->collectMediaItemPayloadErrors(
+                Arr::get($payload, 'files'),
+                'files',
+                array_keys(collect($currentMedia['files'])->keyBy('id')->all()),
+                false
+            );
+        }
+
+        if ($validationErrors !== []) {
+            throw ValidationException::withMessages($validationErrors);
+        }
+
+        if ($imagesProvided) {
+            $payload['images'] = $this->mergeMediaCollection(
+                $product,
+                Arr::get($payload, 'images'),
+                'images',
+                $currentMedia['images'],
+                true,
+                $usedMediaIds
+            );
+        }
+
+        if ($filesProvided) {
+            $payload['files'] = $this->mergeMediaCollection(
                 $product,
                 Arr::get($payload, 'files'),
-                'files'
+                'files',
+                $currentMedia['files'],
+                false,
+                $usedMediaIds
             );
         }
 
         return $payload;
     }
 
-    private function storeMediaCollection(
+    private function mergeMediaCollection(
         Product $product,
         mixed $items,
-        string $folder
+        string $folder,
+        array $currentItems,
+        bool $isImage,
+        array &$usedMediaIds
     ): ?array {
         if ($items === null) {
             return null;
         }
 
-        return collect(is_array($items) ? $items : [])
-            ->map(function (array $item) use ($product, $folder): array {
-                /** @var UploadedFile $file */
-                $file = $item['file'];
-
-                return [
-                    'src' => $file->store("products/{$product->getKey()}/{$folder}", 'public'),
-                    'alt' => Arr::get($item, 'alt'),
-                    'name' => Arr::get($item, 'name'),
-                ];
-            })
-            ->values()
+        $items = is_array($items) ? $items : [];
+        $currentItemsById = collect($currentItems)
+            ->keyBy(fn (array $item) => (string) Arr::get($item, 'id'))
             ->all();
+
+        foreach ($items as $index => $item) {
+            $mediaId = Arr::get($item, 'id');
+
+            if (is_string($mediaId) && $mediaId !== '') {
+                /** @var array<string, mixed> $existingItem */
+                $existingItem = $currentItemsById[$mediaId];
+                $currentItemsById[$mediaId] = ProductMedia::mergeItem($existingItem, $item, $isImage);
+
+                continue;
+            }
+
+            /** @var UploadedFile $file */
+            $file = $item['file'];
+            $generatedId = ProductMedia::generateUniqueId($usedMediaIds);
+            $currentItemsById[$generatedId] = [
+                'id' => $generatedId,
+                'src' => $file->store("products/{$product->getKey()}/{$folder}", 'public'),
+                'alt' => Arr::get($item, 'alt'),
+                'name' => Arr::get($item, 'name'),
+                'mimetype' => Arr::get($item, 'mimetype', $file->getMimeType()),
+                'sort_order' => ProductMedia::resolveSortOrder(
+                    Arr::get($item, 'sort_order'),
+                    count($currentItemsById)
+                ),
+                'active' => ProductMedia::resolveBoolean(Arr::get($item, 'active'), true),
+                ...($isImage ? [
+                    'thumbnail' => ProductMedia::resolveBoolean(Arr::get($item, 'thumbnail'), false),
+                ] : []),
+            ];
+        }
+
+        return array_values($currentItemsById);
+    }
+
+    /**
+     * @param  array<int, string>  $existingIds
+     * @return array<string, array<int, string>>
+     */
+    private function collectMediaItemPayloadErrors(
+        mixed $items,
+        string $attribute,
+        array $existingIds,
+        bool $isImage
+    ): array {
+        if ($items === null) {
+            return [];
+        }
+
+        $items = is_array($items) ? $items : [];
+        $errors = [];
+
+        foreach ($items as $index => $item) {
+            $errors += $this->validateMediaItemPayload(
+                is_array($item) ? $item : [],
+                $attribute,
+                $index,
+                $existingIds,
+                $isImage
+            );
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<int, string>  $existingIds
+     * @return array<string, array<int, string>>
+     */
+    private function validateMediaItemPayload(
+        array $item,
+        string $attribute,
+        int $index,
+        array $existingIds,
+        bool $isImage
+    ): array {
+        $hasId = is_string(Arr::get($item, 'id')) && Arr::get($item, 'id') !== '';
+        $hasFile = Arr::get($item, 'file') instanceof UploadedFile;
+        $errors = [];
+
+        if (!$hasId && !$hasFile) {
+            $errors["{$attribute}.{$index}.file"] = ['The file field is required when id is not present.'];
+        }
+
+        if ($hasId && !in_array((string) Arr::get($item, 'id'), $existingIds, true)) {
+            $errors["{$attribute}.{$index}.id"] = ['The selected media item is invalid.'];
+        }
+
+        if ($hasId && $hasFile) {
+            $errors["{$attribute}.{$index}.file"] = ['Omit the file when updating an existing media item.'];
+        }
+
+        if (!$isImage && array_key_exists('thumbnail', $item)) {
+            $errors["{$attribute}.{$index}.thumbnail"] = ['The thumbnail field is only supported for images.'];
+        }
+
+        return $errors;
     }
 }

@@ -3,6 +3,7 @@
 namespace PictaStudio\Venditio\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 use PictaStudio\Venditio\Enums\{ProductMeasuringUnit, ProductStatus};
 use PictaStudio\Venditio\Models\{Brand, Product, ProductType, TaxClass};
 
@@ -29,23 +30,41 @@ class ProductFactory extends Factory
             'description_short' => fake()->sentence(),
             'images' => [
                 [
+                    'id' => (string) Str::ulid(),
                     'alt' => fake()->sentence(),
+                    'mimetype' => 'image/jpeg',
+                    'sort_order' => 0,
+                    'active' => true,
+                    'thumbnail' => true,
                     'src' => fake()->imageUrl(),
                 ],
                 [
+                    'id' => (string) Str::ulid(),
                     'alt' => fake()->sentence(),
+                    'mimetype' => 'image/jpeg',
+                    'sort_order' => 1,
+                    'active' => true,
+                    'thumbnail' => false,
                     'src' => fake()->imageUrl(),
                 ],
             ],
             'files' => [
                 [
+                    'id' => (string) Str::ulid(),
                     'name' => fake()->word(),
                     'alt' => fake()->sentence(),
+                    'mimetype' => 'application/pdf',
+                    'sort_order' => 0,
+                    'active' => true,
                     'src' => fake()->url(),
                 ],
                 [
+                    'id' => (string) Str::ulid(),
                     'name' => fake()->word(),
                     'alt' => fake()->sentence(),
+                    'mimetype' => 'text/plain',
+                    'sort_order' => 1,
+                    'active' => true,
                     'src' => fake()->url(),
                 ],
             ],

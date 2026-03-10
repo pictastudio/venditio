@@ -124,40 +124,8 @@ class ProductResource extends JsonResource
     protected function transformAttributes(): array
     {
         return [
-            'images' => function (mixed $images) {
-                if (is_string($images)) {
-                    $images = json_decode($images, true) ?: [];
-                }
-
-                if (!is_array($images)) {
-                    return [];
-                }
-
-                return collect($images)
-                    ->map(fn (array $image) => [
-                        'name' => data_get($image, 'name'),
-                        'alt' => data_get($image, 'alt'),
-                        'src' => $this->getImageAssetUrl(data_get($image, 'src')),
-                    ])
-                    ->toArray();
-            },
-            'files' => function (mixed $files) {
-                if (is_string($files)) {
-                    $files = json_decode($files, true) ?: [];
-                }
-
-                if (!is_array($files)) {
-                    return [];
-                }
-
-                return collect($files)
-                    ->map(fn (array $file) => [
-                        'name' => data_get($file, 'name'),
-                        'alt' => data_get($file, 'alt'),
-                        'src' => $this->getImageAssetUrl(data_get($file, 'src')),
-                    ])
-                    ->toArray();
-            },
+            'images' => fn (mixed $images) => $this->transformProductMediaCollection($images, true),
+            'files' => fn (mixed $files) => $this->transformProductMediaCollection($files, false),
         ];
     }
 

@@ -38,24 +38,8 @@ class OrderLineResource extends JsonResource
     protected function transformAttributes(): array
     {
         return [
-            'product_data.images' => fn (?array $images) => (
-                collect($images)
-                    ->map(fn (array $image) => [
-                        'name' => data_get($image, 'name'),
-                        'alt' => data_get($image, 'alt'),
-                        'src' => $this->getImageAssetUrl(data_get($image, 'src')),
-                    ])
-                    ->toArray()
-            ),
-            'product_data.files' => fn (?array $files) => (
-                collect($files)
-                    ->map(fn (array $file) => [
-                        'name' => data_get($file, 'name'),
-                        'alt' => data_get($file, 'alt'),
-                        'src' => $this->getImageAssetUrl(data_get($file, 'src')),
-                    ])
-                    ->toArray()
-            ),
+            'product_data.images' => fn (mixed $images) => $this->transformProductMediaCollection($images, true),
+            'product_data.files' => fn (mixed $files) => $this->transformProductMediaCollection($files, false),
         ];
     }
 }

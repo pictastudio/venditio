@@ -70,13 +70,22 @@ docs {
   - description
   - description_short
   - images (array)
+  - images.*.id
   - images.*.file
   - images.*.alt
   - images.*.name
+  - images.*.mimetype
+  - images.*.sort_order
+  - images.*.active
+  - images.*.thumbnail
   - files (array)
+  - files.*.id
   - files.*.file
   - files.*.alt
   - files.*.name
+  - files.*.mimetype
+  - files.*.sort_order
+  - files.*.active
   - measuring_unit
   - qty_for_unit
   - length
@@ -101,4 +110,6 @@ docs {
   - {locale}.description / description:{locale}
   - {locale}.description_short / description_short:{locale}
   - Note: file uploads require multipart/form-data.
+  - Note: if `mimetype` is omitted, the backend fills it from the uploaded file.
+  - Note: if `id` is provided, the item updates an existing media entry and `file` must be omitted.
 }

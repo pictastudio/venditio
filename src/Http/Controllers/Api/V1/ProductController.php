@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\Rule;
-use PictaStudio\Venditio\Actions\Products\{CreateProduct, CreateProductVariants, UpdateProduct};
+use PictaStudio\Venditio\Actions\Products\{CreateProduct, CreateProductVariants, DeleteProductMedia, UpdateProduct};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Product\{GenerateProductVariantsRequest, StoreProductRequest, UpdateProductRequest};
 use PictaStudio\Venditio\Http\Resources\V1\ProductResource;
@@ -113,6 +113,15 @@ class ProductController extends Controller
         $this->authorizeIfConfigured('delete', $product);
 
         $product->delete();
+
+        return response()->noContent();
+    }
+
+    public function destroyMedia(Product $product, string $mediaId, DeleteProductMedia $action)
+    {
+        $this->authorizeIfConfigured('update', $product);
+
+        $action->handle($product, $mediaId);
 
         return response()->noContent();
     }

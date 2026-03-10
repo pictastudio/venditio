@@ -221,6 +221,9 @@ return [
         'sku_prefix' => env('VENDITIO_PRODUCT_SKU_PREFIX', 'SW-'),
         'sku_counter_padding' => (int) env('VENDITIO_PRODUCT_SKU_COUNTER_PADDING', 0),
         'exclude_variants_from_index' => env('VENDITIO_PRODUCT_EXCLUDE_VARIANTS_FROM_INDEX', true),
+        'media' => [
+            'delete_files_from_filesystem' => env('VENDITIO_PRODUCT_MEDIA_DELETE_FILES_FROM_FILESYSTEM', true),
+        ],
     ],
 
     /*
