@@ -186,6 +186,7 @@ class UpdateProduct
                     count($currentItemsById)
                 ),
                 'active' => ProductMedia::resolveBoolean(Arr::get($item, 'active'), true),
+                'shared_from_variant_option' => false,
                 ...($isImage ? [
                     'thumbnail' => ProductMedia::resolveBoolean(Arr::get($item, 'thumbnail'), false),
                 ] : []),

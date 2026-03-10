@@ -1,0 +1,64 @@
+meta {
+  name: Upload variant option media
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/product/:product-id-or-slug/:variant-option-id/upload
+  body: multipartForm
+  auth: inherit
+}
+
+params:path {
+  product-id-or-slug: 
+  variant-option-id: 
+}
+
+headers {
+  Accept: application/json
+  Locale: {{locale}}
+}
+
+body:multipart-form {
+  images[0][file]: @file(/absolute/path/to/image.jpg)
+  images[0][alt]: Red front
+  images[0][thumbnail]: true
+  files[0][file]: @file(/absolute/path/to/manual.pdf)
+  files[0][alt]: Red manual
+}
+
+docs {
+  summary:
+  - Upload media shared by a variant option and propagate it to all matching variant products.
+
+  endpoint:
+  - method: POST
+  - path: /product/:product-id-or-slug/:variant-option-id/upload
+
+  path params:
+  - product-id-or-slug: Base product id/slug, or a variant product id/slug to target a single matching variant.
+  - variant-option-id: Variant option id whose matching products will receive the uploaded media.
+
+  body:
+  - multipart/form-data
+  - images (array)
+  - images.*.file
+  - images.*.alt
+  - images.*.name
+  - images.*.mimetype
+  - images.*.active
+  - images.*.thumbnail
+  - files (array)
+  - files.*.file
+  - files.*.alt
+  - files.*.name
+  - files.*.mimetype
+  - files.*.active
+
+  behavior:
+  - Files are stored under `products/{product_id}/variant_options/{variant_option_id}/...`.
+  - Media is appended to all products matching the variant option.
+  - Uploaded media is automatically marked as `shared_from_variant_option=true`.
+  - In API responses, variant-specific media stays before shared variant-option media.
+}

@@ -37,6 +37,10 @@ class ProductMedia
                     'src' => Arr::get($item, 'src'),
                     'sort_order' => self::resolveSortOrder(Arr::get($item, 'sort_order'), $index),
                     'active' => self::resolveBoolean(Arr::get($item, 'active'), true),
+                    'shared_from_variant_option' => self::resolveBoolean(
+                        Arr::get($item, 'shared_from_variant_option'),
+                        false
+                    ),
                 ];
 
                 if ($isImage) {
@@ -46,6 +50,7 @@ class ProductMedia
                 return $normalized;
             })
             ->sortBy([
+                ['shared_from_variant_option', 'asc'],
                 ['sort_order', 'asc'],
                 ['id', 'asc'],
             ])
@@ -104,6 +109,13 @@ class ProductMedia
             $updated['thumbnail'] = self::resolveBoolean(
                 Arr::get($payload, 'thumbnail'),
                 (bool) Arr::get($existingItem, 'thumbnail', false)
+            );
+        }
+
+        if (array_key_exists('shared_from_variant_option', $payload)) {
+            $updated['shared_from_variant_option'] = self::resolveBoolean(
+                Arr::get($payload, 'shared_from_variant_option'),
+                (bool) Arr::get($existingItem, 'shared_from_variant_option', false)
             );
         }
 

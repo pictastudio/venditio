@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\Rule;
-use PictaStudio\Venditio\Actions\Products\{CreateProduct, CreateProductVariants, DeleteProductMedia, UpdateProduct};
+use PictaStudio\Venditio\Actions\Products\{CreateProduct, CreateProductVariants, DeleteProductMedia, UpdateProduct, UploadProductVariantOptionMedia};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
-use PictaStudio\Venditio\Http\Requests\V1\Product\{GenerateProductVariantsRequest, StoreProductRequest, UpdateProductRequest};
+use PictaStudio\Venditio\Http\Requests\V1\Product\{GenerateProductVariantsRequest, StoreProductRequest, UpdateProductRequest, UploadProductVariantOptionMediaRequest};
 use PictaStudio\Venditio\Http\Resources\V1\ProductResource;
-use PictaStudio\Venditio\Models\Product;
+use PictaStudio\Venditio\Models\{Product, ProductVariantOption};
 
 use function PictaStudio\Venditio\Helpers\Functions\{query, resolve_model};
 
@@ -124,6 +124,25 @@ class ProductController extends Controller
         $action->handle($product, $mediaId);
 
         return response()->noContent();
+    }
+
+    public function uploadVariantOptionMedia(
+        UploadProductVariantOptionMediaRequest $request,
+        Product $product,
+        ProductVariantOption $productVariantOption,
+        UploadProductVariantOptionMedia $action
+    ): JsonResponse {
+        $this->authorizeIfConfigured('update', $product);
+
+        $updatedProducts = $action->handle($product, $productVariantOption, $request->validated());
+
+        return response()->json([
+            'data' => ProductResource::collection($updatedProducts),
+            'meta' => [
+                'updated' => $updatedProducts->count(),
+                'product_variant_option_id' => $productVariantOption->getKey(),
+            ],
+        ]);
     }
 
     protected function resolveProductIncludes(): array

@@ -55,6 +55,7 @@ trait CanTransformAttributes
                     'mimetype' => Arr::get($item, 'mimetype'),
                     'sort_order' => Arr::get($item, 'sort_order'),
                     'active' => (bool) Arr::get($item, 'active', true),
+                    'shared_from_variant_option' => (bool) Arr::get($item, 'shared_from_variant_option', false),
                     'src' => $this->getImageAssetUrl(Arr::get($item, 'src')),
                 ];
 

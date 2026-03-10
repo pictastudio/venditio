@@ -92,6 +92,7 @@ return [
         Validations\Contracts\OrderValidationRules::class => Validations\OrderValidation::class,
         Validations\Contracts\ProductValidationRules::class => Validations\ProductValidation::class,
         Validations\Contracts\ProductCategoryValidationRules::class => Validations\ProductCategoryValidation::class,
+        Validations\Contracts\ProductVariantOptionMediaUploadValidationRules::class => Validations\ProductVariantOptionMediaUploadValidation::class,
         Validations\Contracts\TagValidationRules::class => Validations\TagValidation::class,
         Validations\Contracts\ProductTypeValidationRules::class => Validations\ProductTypeValidation::class,
         Validations\Contracts\ProductVariantValidationRules::class => Validations\ProductVariantValidation::class,

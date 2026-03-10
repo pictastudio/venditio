@@ -18,6 +18,7 @@ Route::apiResource('products', ProductController::class)->only(['index', 'show',
 Route::get('products/{product}/variants', [ProductController::class, 'variants'])->name('products.variants');
 Route::post('products/{product}/variants', [ProductController::class, 'createVariants'])->name('products.createVariants');
 Route::delete('products/{product}/media/{mediaId}', [ProductController::class, 'destroyMedia'])->name('products.media.destroy');
+Route::post('product/{product}/{productVariantOption}/upload', [ProductController::class, 'uploadVariantOptionMedia'])->name('product.variantOptionMedia.upload');
 
 Route::patch('product_categories/bulk/update', [ProductCategoryController::class, 'updateMultiple'])->name('product_categories.updateMultiple');
 Route::apiResource('product_categories', ProductCategoryController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
