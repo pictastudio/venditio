@@ -505,6 +505,7 @@ class Controller extends BaseController
                 'stock_reserved' => 'integer',
                 'stock_available' => 'integer',
                 'stock_min' => 'integer',
+                'manage_stock' => 'boolean',
                 'price' => 'numeric',
                 'price_includes_tax' => 'boolean',
                 'purchase_price' => 'numeric',

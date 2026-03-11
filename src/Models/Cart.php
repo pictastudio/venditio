@@ -158,7 +158,10 @@ class Cart extends Model
         foreach ($reservedQtyByProduct as $productId => $qtyToRelease) {
             $inventory = $inventories->get((int) $productId);
 
-            if (!$inventory instanceof Model) {
+            if (
+                !$inventory instanceof Model
+                || !(bool) ($inventory->getAttribute('manage_stock') ?? true)
+            ) {
                 continue;
             }
 

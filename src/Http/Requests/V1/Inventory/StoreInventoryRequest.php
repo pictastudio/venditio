@@ -22,6 +22,7 @@ class StoreInventoryRequest extends FormRequest
             'stock' => ['sometimes', 'integer', 'min:0'],
             'stock_reserved' => ['sometimes', 'integer', 'min:0'],
             'stock_min' => ['nullable', 'integer', 'min:0'],
+            'manage_stock' => ['sometimes', 'boolean'],
             'price' => ['required', 'numeric', 'min:0'],
             'price_includes_tax' => ['sometimes', 'boolean'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],

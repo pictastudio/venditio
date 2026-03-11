@@ -57,6 +57,10 @@ class ReserveStock
                 ]);
             }
 
+            if (!$this->managesStock($inventory)) {
+                continue;
+            }
+
             $stock = (int) $inventory->stock;
             $stockReserved = (int) $inventory->stock_reserved;
             $stockAvailable = $stock - $stockReserved;
@@ -74,6 +78,11 @@ class ReserveStock
         }
 
         return $next($cart);
+    }
+
+    private function managesStock(Model $inventory): bool
+    {
+        return (bool) ($inventory->getAttribute('manage_stock') ?? true);
     }
 
     private function sumLinesByProduct(Collection $lines): Collection

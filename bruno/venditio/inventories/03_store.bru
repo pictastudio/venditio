@@ -17,7 +17,15 @@ headers {
 
 body:json {
   {
-    "name": "Example"
+    "product_id": 1,
+    "currency_id": 1,
+    "stock": 25,
+    "stock_reserved": 0,
+    "stock_min": 3,
+    "manage_stock": true,
+    "price": 29.99,
+    "price_includes_tax": false,
+    "purchase_price": 18.50
   }
 }
 
@@ -43,6 +51,7 @@ docs {
   - stock
   - stock_reserved
   - stock_min
+  - manage_stock
   - price
   - price_includes_tax
   - purchase_price

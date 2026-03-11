@@ -206,6 +206,7 @@ Table inventories {
   stock_reserved mediumint [not null, default: 0, note: 'reserved quantity']
   stock_available mediumint [not null, default: 0, note: 'available quantity']
   stock_min mediumint [note: 'minimum stock quantity']
+  manage_stock boolean [not null, default: true, note: 'disable automatic stock checks and movements']
   price decimal(10,2) [not null, default: 0]
   price_includes_tax boolean [not null, default: false]
   purchase_price decimal(10,2)

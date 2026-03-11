@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\ValidationException;
-use PictaStudio\Venditio\Events\ProductStockBelowMinimum;
+use PictaStudio\Venditio\Events\{ProductOutOfStock, ProductStockBelowMinimum};
 use PictaStudio\Venditio\Models\Traits\{HasHelperMethods, LogsActivity};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -32,6 +32,7 @@ class Inventory extends Model
             'stock_reserved' => 'integer',
             'stock_available' => 'integer',
             'stock_min' => 'integer',
+            'manage_stock' => 'boolean',
             'price' => 'decimal:2',
             'price_includes_tax' => 'boolean',
             'purchase_price' => 'decimal:2',
@@ -55,18 +56,29 @@ class Inventory extends Model
         });
 
         static::saved(function (self $inventory) {
-            $stockMin = $inventory->stock_min;
-
-            if ($stockMin === null || !$inventory->wasChanged('stock')) {
+            if (!$inventory->wasChanged('stock')) {
                 return;
             }
 
             $previousStock = $inventory->getOriginal('stock');
             $currentStock = (int) $inventory->stock;
+            $freshInventory = null;
+
+            if ($previousStock !== null && (int) $previousStock > 0 && $currentStock === 0) {
+                event(new ProductOutOfStock(
+                    inventory: $freshInventory ??= $inventory->fresh(['product']) ?? $inventory,
+                ));
+            }
+
+            $stockMin = $inventory->stock_min;
+
+            if ($stockMin === null) {
+                return;
+            }
 
             if ($previousStock !== null && (int) $previousStock >= $stockMin && $currentStock < $stockMin) {
                 event(new ProductStockBelowMinimum(
-                    inventory: $inventory->fresh(['product']) ?? $inventory,
+                    inventory: $freshInventory ??= $inventory->fresh(['product']) ?? $inventory,
                 ));
             }
         });

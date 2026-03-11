@@ -14,6 +14,7 @@ class InventoryFactory extends Factory
         return [
             'stock' => fake()->numberBetween(1, 1000),
             'stock_min' => fake()->numberBetween(1, 1000),
+            'manage_stock' => true,
             'price' => fake()->randomFloat(2, 1, 1000),
             'price_includes_tax' => false,
             'purchase_price' => fake()->optional()->randomFloat(2, 1, 1000),

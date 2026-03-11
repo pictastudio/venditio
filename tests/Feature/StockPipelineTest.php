@@ -5,7 +5,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\{Event, Schema};
 use PictaStudio\Venditio\Dto\{CartDto, OrderDto};
 use PictaStudio\Venditio\Enums\ProductStatus;
-use PictaStudio\Venditio\Events\ProductStockBelowMinimum;
+use PictaStudio\Venditio\Events\{ProductOutOfStock, ProductStockBelowMinimum};
 use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, Product, TaxClass, User};
 use PictaStudio\Venditio\Pipelines\Cart\CartCreationPipeline;
 use PictaStudio\Venditio\Pipelines\Order\OrderCreationPipeline;
@@ -52,7 +52,7 @@ function setupStockTaxEnvironment(TaxClass $taxClass): void
     ]);
 }
 
-function createStockProduct(TaxClass $taxClass, int $stock, int $stockMin = 0): Product
+function createStockProduct(TaxClass $taxClass, int $stock, int $stockMin = 0, bool $manageStock = true): Product
 {
     $product = Product::factory()->create([
         'tax_class_id' => $taxClass->getKey(),
@@ -67,6 +67,7 @@ function createStockProduct(TaxClass $taxClass, int $stock, int $stockMin = 0): 
         'stock_reserved' => 0,
         'stock_available' => $stock,
         'stock_min' => $stockMin,
+        'manage_stock' => $manageStock,
         'price' => 100,
         'price_includes_tax' => false,
         'purchase_price' => null,
@@ -148,6 +149,47 @@ it('reserves stock on cart creation and commits stock on order creation for mult
         ->and($cart->status->value)->toBe(config('venditio.cart.status_enum')::getConvertedStatus()->value);
 });
 
+it('skips stock validation and movements when inventory stock management is disabled', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupStockTaxEnvironment($taxClass);
+
+    $user = User::query()->create([
+        'first_name' => 'Giulia',
+        'last_name' => 'Verdi',
+        'email' => 'giulia-stock-disabled@example.test',
+        'phone' => '123456789',
+    ]);
+
+    $product = createStockProduct($taxClass, 2, 0, false);
+
+    $cart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'user_id' => $user->getKey(),
+            'user_first_name' => $user->first_name,
+            'user_last_name' => $user->last_name,
+            'user_email' => $user->email,
+            'lines' => [
+                ['product_id' => $product->getKey(), 'qty' => 5],
+            ],
+        ])
+    );
+
+    $product->inventory->refresh();
+
+    expect($product->inventory->manage_stock)->toBeFalse()
+        ->and($product->inventory->stock)->toBe(2)
+        ->and($product->inventory->stock_reserved)->toBe(0)
+        ->and($product->inventory->stock_available)->toBe(2);
+
+    OrderCreationPipeline::make()->run(OrderDto::fromCart($cart));
+
+    $product->inventory->refresh();
+
+    expect($product->inventory->stock)->toBe(2)
+        ->and($product->inventory->stock_reserved)->toBe(0)
+        ->and($product->inventory->stock_available)->toBe(2);
+});
+
 it('dispatches a `low stock` event with the expected data when `stock` goes below `stock_min`', function () {
     Event::fake([ProductStockBelowMinimum::class]);
 
@@ -183,5 +225,43 @@ it('dispatches a `low stock` event with the expected data when `stock` goes belo
             && $event->stock_reserved === 0
             && $event->stock_available === 7
             && $event->stock_min === 8;
+    });
+});
+
+it('dispatches an `out of stock` event with the expected data when `stock` reaches zero', function () {
+    Event::fake([ProductOutOfStock::class]);
+
+    $taxClass = TaxClass::factory()->create();
+    setupStockTaxEnvironment($taxClass);
+
+    $user = User::query()->create([
+        'first_name' => 'Sara',
+        'last_name' => 'Neri',
+        'email' => 'sara-out-of-stock@example.test',
+        'phone' => '123456789',
+    ]);
+
+    $product = createStockProduct($taxClass, 3, 1);
+
+    $cart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'user_id' => $user->getKey(),
+            'user_first_name' => $user->first_name,
+            'user_last_name' => $user->last_name,
+            'user_email' => $user->email,
+            'lines' => [
+                ['product_id' => $product->getKey(), 'qty' => 3],
+            ],
+        ])
+    );
+
+    OrderCreationPipeline::make()->run(OrderDto::fromCart($cart));
+
+    Event::assertDispatched(ProductOutOfStock::class, function (ProductOutOfStock $event) use ($product) {
+        return $event->product->getKey() === $product->getKey()
+            && $event->stock === 0
+            && $event->stock_reserved === 0
+            && $event->stock_available === 0
+            && $event->stock_min === 1;
     });
 });

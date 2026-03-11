@@ -31,6 +31,9 @@ body:json {
     "qty_for_unit": 1,
     "sku": "ZR-001",
     "inventory": {
+      "stock": 25,
+      "stock_min": 3,
+      "manage_stock": true,
       "price": 29.99
     }
   }
@@ -85,6 +88,7 @@ docs {
   - inventory.stock
   - inventory.stock_reserved
   - inventory.stock_min
+  - inventory.manage_stock
   - inventory.price
   - inventory.price_includes_tax
   - inventory.purchase_price

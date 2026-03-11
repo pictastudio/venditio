@@ -40,6 +40,10 @@ class CommitStock
                     ]);
                 }
 
+                if (!$this->managesStock($inventory)) {
+                    continue;
+                }
+
                 $stock = (int) $inventory->stock;
                 $stockReserved = (int) $inventory->stock_reserved;
 
@@ -74,5 +78,10 @@ class CommitStock
         }
 
         return $next($order);
+    }
+
+    private function managesStock(Model $inventory): bool
+    {
+        return (bool) ($inventory->getAttribute('manage_stock') ?? true);
     }
 }

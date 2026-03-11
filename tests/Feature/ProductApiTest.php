@@ -277,6 +277,7 @@ it('creates a product with nested inventory fields', function () {
         'stock' => 120,
         'stock_reserved' => 15,
         'stock_min' => 10,
+        'manage_stock' => true,
         'price' => 99.50,
         'price_includes_tax' => true,
         'purchase_price' => 65.10,
@@ -308,8 +309,36 @@ it('defaults nested inventory price to zero when omitted on product creation', f
         'stock' => 12,
         'stock_reserved' => 2,
         'stock_min' => 1,
+        'manage_stock' => true,
         'price' => 0,
         'stock_available' => 10,
+    ]);
+});
+
+it('creates a product with stock management disabled in nested inventory', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/products', [
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Inventory Product Without Stock Management',
+        'sku' => 'INVENTORY-PRODUCT-NO-STOCK-MANAGEMENT-001',
+        'status' => ProductStatus::Published,
+        'inventory' => [
+            'stock' => 12,
+            'manage_stock' => false,
+            'price' => 10,
+        ],
+    ])->assertCreated();
+
+    $productId = $response->json('id');
+
+    assertDatabaseHas('inventories', [
+        'product_id' => $productId,
+        'stock' => 12,
+        'manage_stock' => false,
+        'stock_available' => 12,
     ]);
 });
 
@@ -342,6 +371,7 @@ it('updates nested inventory fields via product api', function () {
         'stock' => 75,
         'stock_reserved' => 5,
         'stock_min' => 8,
+        'manage_stock' => true,
         'price' => 120.00,
         'purchase_price' => 70.00,
         'stock_available' => 70,
