@@ -30,7 +30,7 @@ class Order extends Model
     {
         return [
             'status' => config('venditio.order.status_enum'),
-            'last_tracked_at' => 'datetime',
+            'last_tracked_at' => 'datetime:Y-m-d H:i:s',
             'sub_total_taxable' => 'decimal:2',
             'sub_total_tax' => 'decimal:2',
             'sub_total' => 'decimal:2',
@@ -39,7 +39,7 @@ class Order extends Model
             'discount_amount' => 'decimal:2',
             'total_final' => 'decimal:2',
             'addresses' => 'json',
-            'approved_at' => 'datetime',
+            'approved_at' => 'datetime:Y-m-d H:i:s',
         ];
     }
 
