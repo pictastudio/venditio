@@ -2,6 +2,32 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.4.0 - 2026-03-11
+
+### What's Changed
+
+#### Features
+
+- **Inventory stock management toggle** - Added `manage_stock` support on inventories and product payloads so host apps can choose when stock should actually be reserved and committed. A dedicated migration adds the new column and stock pipelines now skip reservations for non-managed inventory.
+- **Country tax classes bulk upsert** - Added `POST /country_tax_classes/bulk/upsert` to create or update country tax rates by the natural key `country_id + tax_class_id`, with tuple-level validation and policy checks.
+- **Header-driven product tax resolution** - Product responses can now resolve tax calculations from the `Country-ISO-2` request header, allowing headless storefronts to preview localized tax totals without changing the product resource contract.
+
+#### Fixes
+
+- **Datetime casts** - Standardized datetime casting on catalog and commerce models so timestamp serialization is consistent across the API surface.
+- **Country tax class uniqueness** - `country_tax_classes` create and update validation now reject duplicate `country_id + tax_class_id` combinations to keep tax-rate resolution deterministic.
+
+#### API & Tooling
+
+- **Bruno** - Added the new country tax class bulk upsert request, corrected the country tax class CRUD examples, and introduced the `Country-ISO-2` environment/header setup for product requests.
+- **Docs** - Updated the API reference with the new bulk upsert endpoint.
+
+#### Tests
+
+- Extended feature coverage for stock reservation behavior with `manage_stock`, country tax class bulk upsert and uniqueness validation, localized product tax calculation, cart/order tax flows, and discount scenarios affected by country tax resolution.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.3.0...v1.4.0
+
 ## v1.3.0 - 2026-03-10
 
 ### What's Changed
