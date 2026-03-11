@@ -32,6 +32,7 @@ class CartValidation implements CartValidationRules
             'user_last_name' => ['nullable', 'string', 'max:255'],
             'user_email' => ['nullable', 'email', 'max:255'],
             'discount_code' => ['nullable', 'string'],
+            'addresses' => ['nullable', 'array'],
             ...$this->getAddressValidationRulesFromEnum(),
             'lines' => ['sometimes', 'array'],
             'lines.*.product_id' => ['required_with:lines', 'integer', 'exists:products,id'],

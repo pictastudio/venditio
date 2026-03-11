@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Brand, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductType, ProductVariant, ProductVariantOption, Tag, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Country, CountryTaxClass, Currency, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductType, ProductVariant, ProductVariantOption, Tag, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patchJson, postJson};
 
@@ -868,6 +868,74 @@ it('always exposes price_calculated on product payloads', function () {
         ->assertJsonPath('price_calculated.purchase_price', 20)
         ->assertJsonPath('price_calculated.price_includes_tax', false);
 });
+
+// it('uses the country-iso-2 header when calculating product tax', function () {
+//     $taxClass = TaxClass::factory()->create();
+//     $currencyId = Currency::query()->firstOrCreate(
+//         ['code' => 'EUR'],
+//         ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+//     )->getKey();
+
+//     $italy = Country::query()->create([
+//         'name' => 'Italy',
+//         'iso_2' => 'IT',
+//         'iso_3' => 'ITA',
+//         'phone_code' => '+39',
+//         'currency_id' => $currencyId,
+//         'flag_emoji' => 'it',
+//         'capital' => 'Rome',
+//         'native' => 'Italia',
+//     ]);
+
+//     $germany = Country::query()->create([
+//         'name' => 'Germany',
+//         'iso_2' => 'DE',
+//         'iso_3' => 'DEU',
+//         'phone_code' => '+49',
+//         'currency_id' => $currencyId,
+//         'flag_emoji' => 'de',
+//         'capital' => 'Berlin',
+//         'native' => 'Deutschland',
+//     ]);
+
+//     CountryTaxClass::query()->create([
+//         'country_id' => $italy->getKey(),
+//         'tax_class_id' => $taxClass->getKey(),
+//         'rate' => 22,
+//     ]);
+
+//     CountryTaxClass::query()->create([
+//         'country_id' => $germany->getKey(),
+//         'tax_class_id' => $taxClass->getKey(),
+//         'rate' => 10,
+//     ]);
+
+//     $product = Product::factory()->create([
+//         'tax_class_id' => $taxClass->getKey(),
+//         'active' => true,
+//         'visible_from' => null,
+//         'visible_until' => null,
+//     ]);
+
+//     $product->inventory()->updateOrCreate([], [
+//         'price' => 100,
+//         'purchase_price' => 20,
+//         'price_includes_tax' => false,
+//     ]);
+
+//     getJson(
+//         config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}",
+//         ['country-iso-2' => 'DE']
+//     )
+//         ->assertOk()
+//         ->assertJsonPath('price_calculated.tax_rate', 10)
+//         ->assertJsonPath('price_calculated.price_taxable', 100)
+//         ->assertJsonPath('price_calculated.price_tax', 10)
+//         ->assertJsonPath('price_calculated.price_total', 110)
+//         ->assertJsonPath('price_calculated.price_final_taxable', 100)
+//         ->assertJsonPath('price_calculated.price_final_tax', 10)
+//         ->assertJsonPath('price_calculated.price_final_total', 110);
+// })->note('this test works when uncommenting the tax rate calculation in the ProductResource class');
 
 it('calculates product price_calculated by applying automatic discounts', function () {
     $product = Product::factory()->create([

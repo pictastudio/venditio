@@ -43,6 +43,7 @@ Route::apiResource('countries', CountryController::class)->only(['index', 'show'
 Route::apiResource('regions', RegionController::class)->only(['index', 'show']);
 Route::apiResource('provinces', ProvinceController::class)->only(['index', 'show']);
 Route::apiResource('municipalities', MunicipalityController::class)->only(['index', 'show']);
+Route::post('country_tax_classes/bulk/upsert', [CountryTaxClassController::class, 'upsertMultiple'])->name('country_tax_classes.upsertMultiple');
 Route::apiResource('country_tax_classes', CountryTaxClassController::class);
 Route::apiResource('currencies', CurrencyController::class);
 Route::apiResource('tax_classes', TaxClassController::class);

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
+use PictaStudio\Venditio\Actions\Taxes\{ExtractTaxFromGrossPrice, ResolveTaxRate};
 use PictaStudio\Venditio\Contracts\{DiscountCalculatorInterface, ProductPriceResolverInterface};
 use PictaStudio\Venditio\Discounts\DiscountContext;
 use PictaStudio\Venditio\Http\Resources\Traits\{CanTransformAttributes, HasAttributesToExclude};
@@ -92,12 +93,26 @@ class ProductResource extends JsonResource
         $resolved = app(ProductPriceResolverInterface::class)->resolve($this->resource);
         $baseUnitPrice = (float) ($resolved['unit_price'] ?? 0);
         $calculatedPriceFinal = $this->resolveAutomaticDiscountedPrice($baseUnitPrice, $request);
+        $priceIncludesTax = (bool) ($resolved['price_includes_tax'] ?? false);
+        // $taxRate = app(ResolveTaxRate::class)->handle(
+        //     $this->resource->getAttribute('tax_class_id'),
+        //     countryIso2: $this->resolveCountryIso2Header($request),
+        // );
+        // $baseTaxBreakdown = $this->resolveTaxBreakdown($baseUnitPrice, $taxRate, $priceIncludesTax);
+        // $finalTaxBreakdown = $this->resolveTaxBreakdown($calculatedPriceFinal, $taxRate, $priceIncludesTax);
 
         return [
             'price' => $baseUnitPrice,
             'price_final' => $calculatedPriceFinal,
             'purchase_price' => isset($resolved['purchase_price']) ? (float) $resolved['purchase_price'] : null,
-            'price_includes_tax' => (bool) ($resolved['price_includes_tax'] ?? false),
+            'price_includes_tax' => $priceIncludesTax,
+            // 'tax_rate' => $taxRate,
+            // 'price_taxable' => $baseTaxBreakdown['taxable'],
+            // 'price_tax' => $baseTaxBreakdown['tax'],
+            // 'price_total' => $baseTaxBreakdown['total'],
+            // 'price_final_taxable' => $finalTaxBreakdown['taxable'],
+            // 'price_final_tax' => $finalTaxBreakdown['tax'],
+            // 'price_final_total' => $finalTaxBreakdown['total'],
             'price_list' => $resolved['price_list'] ?? null,
         ];
     }
@@ -184,5 +199,38 @@ class ProductResource extends JsonResource
             ->values();
 
         return $table->toArray();
+    }
+
+    private function resolveCountryIso2Header(Request $request): ?string
+    {
+        $countryIso2 = $request->header('country-iso-2');
+
+        return is_string($countryIso2) && filled($countryIso2)
+            ? $countryIso2
+            : null;
+    }
+
+    /**
+     * @return array{taxable: float, tax: float, total: float}
+     */
+    private function resolveTaxBreakdown(float $amount, float $taxRate, bool $priceIncludesTax): array
+    {
+        if ($priceIncludesTax) {
+            $breakdown = app(ExtractTaxFromGrossPrice::class)->handle($amount, $taxRate);
+
+            return [
+                'taxable' => $breakdown['taxable'],
+                'tax' => $breakdown['tax'],
+                'total' => $amount,
+            ];
+        }
+
+        $tax = round($amount * ($taxRate / 100), 2);
+
+        return [
+            'taxable' => $amount,
+            'tax' => $tax,
+            'total' => round($amount + $tax, 2),
+        ];
     }
 }

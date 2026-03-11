@@ -1,0 +1,52 @@
+meta {
+  name: Bulk upsert country_tax_classes
+  type: http
+  seq: 61
+}
+
+post {
+  url: {{baseUrl}}/country_tax_classes/bulk/upsert
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  [
+    {
+      "country_id": 1,
+      "tax_class_id": 1,
+      "rate": 22
+    },
+    {
+      "country_id": 2,
+      "tax_class_id": 1,
+      "rate": 10
+    }
+  ]
+}
+
+docs {
+  summary:
+  - Bulk create or update country_tax_classes
+
+  endpoint:
+  - method: POST
+  - path: /country_tax_classes/bulk/upsert
+
+  query params:
+  - none
+
+  path params:
+  - none
+
+  body:
+  - Top-level JSON array.
+  - Required per item: country_id, tax_class_id, rate.
+  - Upsert key: country_id + tax_class_id.
+  - Duplicate country_id + tax_class_id combinations in the same request are rejected.
+}

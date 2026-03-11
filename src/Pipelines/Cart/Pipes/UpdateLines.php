@@ -63,19 +63,22 @@ class UpdateLines
             return $next($cart);
         }
 
-        $existingLines->map(fn ($line) => (
-            CartLineUpdatePipeline::make()->run(
+        $updatedLines = $existingLines->map(function (CartLine $line) use ($cart) {
+            $line->setRelation('cart', $cart);
+            $line->cart()->associate($cart);
+
+            return CartLineUpdatePipeline::make()->run(
                 resolve_dto('cart_line')::fromArray([
                     'cart' => $cart,
                     'cart_line' => $line,
                     'product_id' => $line['product_id'] ?? null,
                     'qty' => $line['qty'],
                 ])
-            )
-        ));
+            );
+        });
 
         $cart->setAttribute('lines_to_delete', []);
-        $cart->setRelation('lines', $existingLines);
+        $cart->setRelation('lines', $updatedLines);
 
         return $next($cart);
     }

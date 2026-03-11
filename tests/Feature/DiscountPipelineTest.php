@@ -75,6 +75,18 @@ function createProduct(float $price, TaxClass $taxClass, bool $priceIncludesTax 
     return $product->refresh();
 }
 
+function taxAddresses(int $billingCountryId, ?int $shippingCountryId = null): array
+{
+    return [
+        'billing' => [
+            'country_id' => $billingCountryId,
+        ],
+        'shipping' => [
+            'country_id' => $shippingCountryId ?? $billingCountryId,
+        ],
+    ];
+}
+
 function createCartForUser(User $user, int $productId, int $qty = 1)
 {
     return CartCreationPipeline::make()->run(
@@ -605,4 +617,61 @@ it('preserves VAT-inclusive totals when converting cart to order', function () {
         ->and((float) $orderLine->unit_final_price_taxable)->toBe(91.8)
         ->and((float) $orderLine->unit_final_price_tax)->toBe(20.2)
         ->and((float) $orderLine->total_final_price)->toBe(112.0);
+});
+
+it('uses the billing address country tax rate when converting cart to order', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupTaxEnvironment($taxClass);
+
+    $currencyId = Currency::query()->firstOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
+    $germany = Country::query()->create([
+        'name' => 'Germany',
+        'iso_2' => 'DE',
+        'iso_3' => 'DEU',
+        'phone_code' => '+49',
+        'currency_id' => $currencyId,
+        'flag_emoji' => 'de',
+        'capital' => 'Berlin',
+        'native' => 'Deutschland',
+    ]);
+
+    CountryTaxClass::query()->create([
+        'country_id' => $germany->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'rate' => 10,
+    ]);
+
+    $italyId = Country::query()->where('iso_2', 'IT')->value('id');
+    $product = createProduct(100, $taxClass);
+
+    $cart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'addresses' => taxAddresses($italyId, $italyId),
+            'lines' => [
+                [
+                    'product_id' => $product->getKey(),
+                    'qty' => 1,
+                ],
+            ],
+        ])
+    )->load('lines');
+
+    expect((float) $cart->lines->first()->tax_rate)->toBe(22.0);
+
+    $cart->update([
+        'addresses' => taxAddresses($germany->getKey(), $italyId),
+    ]);
+
+    $order = OrderCreationPipeline::make()->run(OrderDto::fromCart($cart->fresh('lines')))->load('lines');
+    $orderLine = $order->lines->first();
+
+    expect((float) $orderLine->tax_rate)->toBe(10.0)
+        ->and((float) $orderLine->unit_final_price_taxable)->toBe(100.0)
+        ->and((float) $orderLine->unit_final_price_tax)->toBe(10.0)
+        ->and((float) $orderLine->total_final_price)->toBe(110.0)
+        ->and((float) $order->total_final)->toBe(110.0);
 });

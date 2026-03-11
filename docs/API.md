@@ -227,6 +227,7 @@ Discount columns are first-level fields on `discounts`:
 - `GET /country_tax_classes`
 - `GET /country_tax_classes/{country_tax_class}`
 - `POST /country_tax_classes`
+- `POST /country_tax_classes/bulk/upsert`
 - `PATCH /country_tax_classes/{country_tax_class}`
 - `DELETE /country_tax_classes/{country_tax_class}`
 - `GET /tax_classes`

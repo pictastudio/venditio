@@ -152,7 +152,7 @@ it('copies inventory currency_id into cart lines', function () {
         ->toBe($lineCurrencyId);
 });
 
-it('uses the shipping address country tax rate when calculating cart line VAT', function () {
+it('uses the billing address country tax rate when calculating cart line VAT', function () {
     $taxClass = TaxClass::factory()->create();
     setupCartTaxEnvironment($taxClass);
     $product = createCartProduct($taxClass);
@@ -188,14 +188,86 @@ it('uses the shipping address country tax rate when calculating cart line VAT', 
         'user_last_name' => $user->last_name,
         'user_email' => $user->email,
         'addresses' => [
-            'shipping' => [
+            'billing' => [
                 'country_id' => $otherCountry->getKey(),
+            ],
+            'shipping' => [
+                'country_id' => Country::query()->where('iso_2', 'IT')->value('id'),
             ],
         ],
         'lines' => [
             ['product_id' => $product->getKey(), 'qty' => 1],
         ],
     ])->assertCreated()->json('id');
+
+    getJson($prefix . '/carts/' . $cartId)
+        ->assertOk()
+        ->assertJsonPath('lines.0.tax_rate', 10)
+        ->assertJsonPath('lines.0.unit_final_price_tax', 10)
+        ->assertJsonPath('total_final', 110);
+});
+
+it('recalculates cart line VAT when the billing address country changes', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+    $product = createCartProduct($taxClass);
+    $user = createUserForCart('user-country-tax-update@example.test');
+
+    $currencyId = Currency::query()->firstOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
+    $otherCountry = Country::query()->create([
+        'name' => 'Germany',
+        'iso_2' => 'DE',
+        'iso_3' => 'DEU',
+        'phone_code' => '+49',
+        'currency_id' => $currencyId,
+        'flag_emoji' => 'de',
+        'capital' => 'Berlin',
+        'native' => 'Deutschland',
+    ]);
+
+    CountryTaxClass::query()->create([
+        'country_id' => $otherCountry->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'rate' => 10,
+    ]);
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+    $italyId = Country::query()->where('iso_2', 'IT')->value('id');
+
+    $cartId = postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'addresses' => [
+            'billing' => [
+                'country_id' => $italyId,
+            ],
+        ],
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 1],
+        ],
+    ])->assertCreated()
+        ->assertJsonPath('total_final', 122)
+        ->json('id');
+
+    getJson($prefix . '/carts/' . $cartId)
+        ->assertOk()
+        ->assertJsonPath('lines.0.tax_rate', 22)
+        ->assertJsonPath('lines.0.unit_final_price_tax', 22)
+        ->assertJsonPath('total_final', 122);
+
+    patchJson($prefix . '/carts/' . $cartId, [
+        'addresses' => [
+            'billing' => [
+                'country_id' => $otherCountry->getKey(),
+            ],
+        ],
+    ])->assertOk();
 
     getJson($prefix . '/carts/' . $cartId)
         ->assertOk()

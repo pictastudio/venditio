@@ -5,7 +5,7 @@ namespace PictaStudio\Venditio\Pipelines\CartLine\Pipes;
 use Closure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
-use PictaStudio\Venditio\Actions\Taxes\ExtractTaxFromGrossPrice;
+use PictaStudio\Venditio\Actions\Taxes\{ExtractTaxFromGrossPrice, ResolveTaxRate};
 
 use function PictaStudio\Venditio\Helpers\Functions\query;
 
@@ -13,6 +13,7 @@ class CalculateTaxes
 {
     public function __construct(
         private readonly ExtractTaxFromGrossPrice $extractTaxFromGrossPrice,
+        private readonly ResolveTaxRate $resolveTaxRate,
     ) {}
 
     public function __invoke(Model $cartLine, Closure $next): Model
@@ -45,22 +46,10 @@ class CalculateTaxes
 
     private function getTaxRate(array $product, ?int $countryId): float
     {
-        $taxClassId = Arr::get($product, 'tax_class_id');
-
-        $query = query('country_tax_class')
-            ->where('tax_class_id', $taxClassId);
-
-        if (filled($countryId)) {
-            $countryRate = (clone $query)
-                ->where('country_id', $countryId)
-                ->value('rate');
-
-            if ($countryRate !== null) {
-                return (float) $countryRate;
-            }
-        }
-
-        return (float) $query->value('rate');
+        return $this->resolveTaxRate->handle(
+            Arr::get($product, 'tax_class_id'),
+            $countryId,
+        );
     }
 
     private function isPriceTaxInclusive(array $product): bool
@@ -79,9 +68,9 @@ class CalculateTaxes
         }
 
         $addresses = $cart->getAttribute('addresses');
-        $shippingCountryId = Arr::get($addresses, 'shipping.country_id');
         $billingCountryId = Arr::get($addresses, 'billing.country_id');
-        $countryId = $shippingCountryId ?? $billingCountryId;
+        $shippingCountryId = Arr::get($addresses, 'shipping.country_id');
+        $countryId = $billingCountryId ?? $shippingCountryId;
 
         return is_numeric($countryId) ? (int) $countryId : null;
     }

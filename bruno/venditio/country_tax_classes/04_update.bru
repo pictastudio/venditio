@@ -21,7 +21,9 @@ headers {
 
 body:json {
   {
-    "name": "Updated example"
+    "country_id": 1,
+    "tax_class_id": 2,
+    "rate": 10
   }
 }
 
@@ -41,7 +43,7 @@ docs {
 
   body:
   - JSON payload.
-  - Available fields:
+  - Optional fields:
   - country_id
   - tax_class_id
   - rate
