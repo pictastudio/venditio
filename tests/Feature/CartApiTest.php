@@ -3,8 +3,10 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use PictaStudio\Venditio\Dto\CartDto;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
 use PictaStudio\Venditio\Models\{Cart, Country, CountryTaxClass, Currency, Product, TaxClass, User};
+use PictaStudio\Venditio\Pipelines\Cart\CartCreationPipeline;
 
 use function Pest\Laravel\{assertSoftDeleted, deleteJson, getJson, patchJson, postJson};
 
@@ -270,6 +272,65 @@ it('recalculates cart line VAT when the billing address country changes', functi
     ])->assertOk();
 
     getJson($prefix . '/carts/' . $cartId)
+        ->assertOk()
+        ->assertJsonPath('lines.0.tax_rate', 10)
+        ->assertJsonPath('lines.0.unit_final_price_tax', 10)
+        ->assertJsonPath('total_final', 110);
+});
+
+it('recalculates cart line VAT when checkout sets billing and shipping addresses on the cart', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+    $product = createCartProduct($taxClass);
+
+    $currencyId = Currency::query()->firstOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
+
+    $otherCountry = Country::query()->create([
+        'name' => 'Germany',
+        'iso_2' => 'DE',
+        'iso_3' => 'DEU',
+        'phone_code' => '+49',
+        'currency_id' => $currencyId,
+        'flag_emoji' => 'de',
+        'capital' => 'Berlin',
+        'native' => 'Deutschland',
+    ]);
+
+    CountryTaxClass::query()->create([
+        'country_id' => $otherCountry->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'rate' => 10,
+    ]);
+
+    $cart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'lines' => [
+                ['product_id' => $product->getKey(), 'qty' => 1],
+            ],
+        ])
+    )->load('lines');
+
+    expect((float) $cart->lines->first()->tax_rate)->toBe(22.0)
+        ->and((float) $cart->total_final)->toBe(122.0);
+
+    $italyId = Country::query()->where('iso_2', 'IT')->value('id');
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    patchJson($prefix . '/carts/' . $cart->getKey(), [
+        'addresses' => [
+            'billing' => [
+                'country_id' => $otherCountry->getKey(),
+            ],
+            'shipping' => [
+                'country_id' => $italyId,
+            ],
+        ],
+    ])->assertOk();
+
+    getJson($prefix . '/carts/' . $cart->getKey())
         ->assertOk()
         ->assertJsonPath('lines.0.tax_rate', 10)
         ->assertJsonPath('lines.0.unit_final_price_tax', 10)
