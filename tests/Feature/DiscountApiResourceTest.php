@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\Product;
+use PictaStudio\Venditio\Models\{Discount, Product};
 
 use function Pest\Laravel\{assertDatabaseHas, getJson, postJson};
 
@@ -87,4 +87,119 @@ it('requires code when creating a discount not scoped to a discountable resource
         'ends_at' => now()->addDay()->toDateTimeString(),
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['code']);
+});
+
+it('bulk upserts discounts by updating existing discounts and creating new ones', function () {
+    $product = Product::factory()->create([
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => now()->subDay(),
+        'visible_until' => now()->addDay(),
+    ]);
+
+    $existingDiscount = Discount::factory()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'GLOBAL10',
+        'name' => 'Global 10',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+    ]);
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $response = postJson($prefix . '/discounts/bulk/upsert', [
+        'discounts' => [
+            [
+                'id' => $existingDiscount->getKey(),
+                'value' => 15,
+                'active' => false,
+            ],
+            [
+                'discountable_type' => 'product',
+                'discountable_id' => $product->getKey(),
+                'type' => DiscountType::Fixed->value,
+                'value' => 7.5,
+                'name' => 'Product Fixed Discount',
+                'starts_at' => now()->subHour()->toDateTimeString(),
+                'ends_at' => now()->addDay()->toDateTimeString(),
+                'apply_once_per_cart' => true,
+            ],
+        ],
+    ])->assertOk()
+        ->assertJsonCount(2)
+        ->assertJsonFragment([
+            'id' => $existingDiscount->getKey(),
+            'value' => 15,
+            'active' => false,
+            'code' => 'GLOBAL10',
+        ])
+        ->assertJsonFragment([
+            'discountable_type' => 'product',
+            'discountable_id' => $product->getKey(),
+            'type' => DiscountType::Fixed->value,
+            'value' => 7.5,
+            'apply_once_per_cart' => true,
+        ]);
+
+    $createdDiscountId = collect($response->json())
+        ->firstWhere('discountable_id', $product->getKey())['id'];
+    $createdCode = collect($response->json())
+        ->firstWhere('discountable_id', $product->getKey())['code'];
+
+    expect($createdCode)->not->toBe('')
+        ->and(str_starts_with($createdCode, 'AUTO-'))->toBeTrue();
+
+    assertDatabaseHas('discounts', [
+        'id' => $existingDiscount->getKey(),
+        'value' => 15,
+        'active' => false,
+        'code' => 'GLOBAL10',
+    ]);
+
+    assertDatabaseHas('discounts', [
+        'id' => $createdDiscountId,
+        'discountable_type' => 'product',
+        'discountable_id' => $product->getKey(),
+        'type' => DiscountType::Fixed->value,
+        'value' => 7.50,
+        'code' => $createdCode,
+        'apply_once_per_cart' => true,
+    ]);
+});
+
+it('validates duplicate ids and duplicate codes in bulk discount upserts', function () {
+    $firstDiscount = Discount::factory()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'code' => 'DISC-ONE',
+    ]);
+    $secondDiscount = Discount::factory()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'code' => 'DISC-TWO',
+    ]);
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    postJson($prefix . '/discounts/bulk/upsert', [
+        'discounts' => [
+            [
+                'id' => $firstDiscount->getKey(),
+                'code' => 'SHARED-CODE',
+            ],
+            [
+                'id' => $firstDiscount->getKey(),
+                'code' => 'SHARED-CODE',
+            ],
+            [
+                'id' => $secondDiscount->getKey(),
+                'code' => 'SHARED-CODE',
+            ],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['discounts.1.id', 'discounts.1.code', 'discounts.2.code']);
 });

@@ -35,7 +35,7 @@ class UpdateDiscountRequest extends FormRequest
             'type' => ['sometimes', Rule::enum(DiscountType::class)],
             'value' => ['sometimes', 'numeric', 'min:0'],
             'name' => ['nullable', 'string', 'max:255'],
-            'code' => ['sometimes', 'string', 'max:50', Rule::unique('discounts', 'code')->ignore($discountId)],
+            'code' => ['sometimes', 'string', 'max:50', Rule::unique($this->discountsTable(), 'code')->ignore($discountId)],
             'active' => ['sometimes', 'boolean'],
             'starts_at' => ['sometimes', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
@@ -57,5 +57,10 @@ class UpdateDiscountRequest extends FormRequest
         $resolvedModel = filled($model) ? $model : 'product';
 
         return (new (resolve_model($resolvedModel)))->getTable();
+    }
+
+    private function discountsTable(): string
+    {
+        return (new (resolve_model('discount')))->getTable();
     }
 }

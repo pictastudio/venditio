@@ -48,6 +48,7 @@ Route::apiResource('country_tax_classes', CountryTaxClassController::class);
 Route::apiResource('currencies', CurrencyController::class);
 Route::apiResource('tax_classes', TaxClassController::class);
 Route::apiResource('shipping_statuses', ShippingStatusController::class);
+Route::post('discounts/bulk/upsert', [DiscountController::class, 'upsertMultiple'])->name('discounts.upsertMultiple');
 Route::apiResource('discounts', DiscountController::class);
 Route::apiResource('discount_applications', DiscountApplicationController::class);
 Route::apiResource('product_custom_fields', ProductCustomFieldController::class);

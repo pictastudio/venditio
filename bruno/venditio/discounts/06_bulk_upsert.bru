@@ -1,0 +1,60 @@
+meta {
+  name: Bulk upsert discounts
+  type: http
+  seq: 96
+}
+
+post {
+  url: {{baseUrl}}/discounts/bulk/upsert
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "discounts": [
+      {
+        "id": 1,
+        "value": 15,
+        "active": false
+      },
+      {
+        "discountable_type": "product",
+        "discountable_id": 1,
+        "type": "fixed",
+        "value": 7.5,
+        "name": "Bulk product discount",
+        "starts_at": "2026-03-12 10:00:00",
+        "ends_at": "2026-03-20 23:59:59",
+        "apply_once_per_cart": true
+      }
+    ]
+  }
+}
+
+docs {
+  summary:
+  - Upsert multiple discounts in a single request
+
+  endpoint:
+  - method: POST
+  - path: /discounts/bulk/upsert
+
+  query params:
+  - none
+
+  path params:
+  - none
+
+  body:
+  - JSON payload with discounts array.
+  - Include id to update an existing discount; omit id to create a new one.
+  - Create items require: type, value, starts_at, and either code or a discountable target.
+  - Product-scoped and other discountable-scoped creates auto-generate a code when code is omitted.
+  - Duplicate ids and duplicate effective codes inside the same request are rejected.
+}

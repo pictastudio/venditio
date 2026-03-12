@@ -2,6 +2,24 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.6.1 - 2026-03-12
+
+### What's Changed
+
+#### Features
+
+- **Discounts bulk upsert** - Added `POST /discounts/bulk/upsert` so host apps can update existing discounts by `id` and create new discounts in the same request, with automatic code generation for discountable-scoped creates when no code is supplied.
+
+#### API & Tooling
+
+- **Bruno** - Added the bulk discount upsert request example for admin and QA workflows.
+
+#### Tests
+
+- Extended discount API coverage for mixed create/update bulk upserts and payload validation around duplicate ids and duplicate codes.
+
+**Full Changelog**: https://github.com/pictastudio/venditio-core/compare/v1.6.0...v1.6.1
+
 ## v1.6.0 - 2026-03-12
 
 ### What's Changed
