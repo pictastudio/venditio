@@ -162,6 +162,7 @@ class ProductController extends Controller
         $allowedIncludes = [
             'brand',
             'categories',
+            'discounts',
             'price_breakdown',
             'tags',
             'product_type',
@@ -204,6 +205,10 @@ class ProductController extends Controller
             $relations[] = 'categories';
         }
 
+        if ($includesCollection->contains('discounts')) {
+            $relations[] = 'discounts';
+        }
+
         if ($includesCollection->contains('tags')) {
             $relations[] = 'tags';
         }
@@ -226,6 +231,10 @@ class ProductController extends Controller
 
             if ($includesCollection->contains('categories')) {
                 $relations[] = 'variants.categories';
+            }
+
+            if ($includesCollection->contains('discounts')) {
+                $relations[] = 'variants.discounts';
             }
 
             if ($includesCollection->contains('tags')) {

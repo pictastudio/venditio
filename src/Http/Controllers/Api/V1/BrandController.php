@@ -33,6 +33,7 @@ class BrandController extends Controller
     public function store(StoreBrandRequest $request): JsonResource
     {
         $this->authorizeIfConfigured('create', resolve_model('brand'));
+        $includes = $this->resolveBrandIncludes();
 
         $payload = $request->validated();
         $tagIds = Arr::pull($payload, 'tag_ids', []);
@@ -40,19 +41,21 @@ class BrandController extends Controller
         $brand = query('brand')->create($payload);
         $brand->tags()->sync($tagIds);
 
-        return BrandResource::make($brand->refresh()->load('tags'));
+        return BrandResource::make($brand->refresh()->load($this->brandRelationsForIncludes($includes, true)));
     }
 
     public function show(Brand $brand): JsonResource
     {
         $this->authorizeIfConfigured('view', $brand);
+        $includes = $this->resolveBrandIncludes();
 
-        return BrandResource::make($brand->loadMissing('tags'));
+        return BrandResource::make($brand->loadMissing($this->brandRelationsForIncludes($includes, true)));
     }
 
     public function update(UpdateBrandRequest $request, Brand $brand): JsonResource
     {
         $this->authorizeIfConfigured('update', $brand);
+        $includes = $this->resolveBrandIncludes();
 
         $payload = $request->validated();
         $tagIdsProvided = array_key_exists('tag_ids', $payload);
@@ -65,7 +68,7 @@ class BrandController extends Controller
             $brand->tags()->sync($tagIds);
         }
 
-        return BrandResource::make($brand->refresh()->load('tags'));
+        return BrandResource::make($brand->refresh()->load($this->brandRelationsForIncludes($includes, true)));
     }
 
     public function destroy(Brand $brand)
@@ -95,19 +98,23 @@ class BrandController extends Controller
             'include' => ['array'],
             'include.*' => [
                 'string',
-                Rule::in(['tags']),
+                Rule::in(['discounts', 'tags']),
             ],
         ]);
 
         return $includes;
     }
 
-    protected function brandRelationsForIncludes(array $includes): array
+    protected function brandRelationsForIncludes(array $includes, bool $includeTagsByDefault = false): array
     {
         $relations = [];
 
-        if (in_array('tags', $includes, true)) {
+        if ($includeTagsByDefault || in_array('tags', $includes, true)) {
             $relations[] = 'tags';
+        }
+
+        if (in_array('discounts', $includes, true)) {
+            $relations[] = 'discounts';
         }
 
         return $relations;

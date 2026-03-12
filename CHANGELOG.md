@@ -2,6 +2,20 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.6.2 - 2026-03-12
+
+### What's Changed
+
+#### Features
+
+- **Discount includes on discountable resources** - Added `include=discounts` support to the product, brand, product category, and product type APIs so headless admin clients can fetch scoped discounts alongside those resources on both show and index responses.
+
+#### Tests
+
+- Added feature coverage for `include=discounts` across the supported discountable resource endpoints.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.6.1...v1.6.2
+
 ## v1.6.1 - 2026-03-12
 
 ### What's Changed

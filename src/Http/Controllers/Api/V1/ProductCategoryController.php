@@ -150,7 +150,7 @@ class ProductCategoryController extends Controller
             'include' => ['array'],
             'include.*' => [
                 'string',
-                Rule::in(['tags']),
+                Rule::in(['discounts', 'tags']),
             ],
         ]);
 
@@ -163,6 +163,10 @@ class ProductCategoryController extends Controller
 
         if (in_array('tags', $includes, true)) {
             $relations[] = 'tags';
+        }
+
+        if (in_array('discounts', $includes, true)) {
+            $relations[] = 'discounts';
         }
 
         return $relations;
