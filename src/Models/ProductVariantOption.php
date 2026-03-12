@@ -43,4 +43,9 @@ class ProductVariantOption extends Model implements TranslatableContract
         return $this->belongsToMany(resolve_model('product'), 'product_configuration')
             ->withTimestamps();
     }
+
+    public function getOrderingGroupKeyNames(): array
+    {
+        return ['product_variant_id'];
+    }
 }

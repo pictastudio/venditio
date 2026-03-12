@@ -866,7 +866,9 @@ it('always exposes price_calculated on product payloads', function () {
         ->assertJsonPath('price_calculated.price', 42.5)
         ->assertJsonPath('price_calculated.price_final', 42.5)
         ->assertJsonPath('price_calculated.purchase_price', 20)
-        ->assertJsonPath('price_calculated.price_includes_tax', false);
+        ->assertJsonPath('price_calculated.price_includes_tax', false)
+        ->assertJsonMissingPath('price_calculated.price_source')
+        ->assertJsonMissingPath('price_calculated.discounts_applied');
 });
 
 // it('uses the country-iso-2 header when calculating product tax', function () {
@@ -971,7 +973,95 @@ it('calculates product price_calculated by applying automatic discounts', functi
         ->assertJsonPath('price_calculated.price', 100)
         ->assertJsonPath('price_calculated.price_final', 90)
         ->assertJsonPath('price_calculated.purchase_price', 55)
-        ->assertJsonPath('price_calculated.price_includes_tax', false);
+        ->assertJsonPath('price_calculated.price_includes_tax', false)
+        ->assertJsonMissingPath('price_calculated.discounts_applied');
+});
+
+it('includes pricing source and ordered applied discounts when price_breakdown is requested', function () {
+    config()->set('venditio.price_lists.enabled', true);
+
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->inventory()->updateOrCreate([], [
+        'price' => 140,
+        'purchase_price' => 60,
+        'price_includes_tax' => false,
+    ]);
+
+    $retail = PriceList::factory()->create(['name' => 'Retail', 'code' => 'RTL']);
+    $wholesale = PriceList::factory()->create(['name' => 'Wholesale', 'code' => 'WHL']);
+
+    $retailPrice = PriceListPrice::factory()->create([
+        'product_id' => $product->getKey(),
+        'price_list_id' => $retail->getKey(),
+        'price' => 130,
+        'purchase_price' => 58,
+        'is_default' => false,
+    ]);
+
+    $wholesalePrice = PriceListPrice::factory()->create([
+        'product_id' => $product->getKey(),
+        'price_list_id' => $wholesale->getKey(),
+        'price' => 100,
+        'purchase_price' => 50,
+        'is_default' => true,
+    ]);
+
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+    ]);
+    $product->categories()->sync([$category->getKey()]);
+
+    $category->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'name' => 'Category 10%',
+        'code' => 'CAT10-BREAKDOWN',
+        'active' => true,
+        'starts_at' => now()->subMinute(),
+        'ends_at' => now()->addDay(),
+        'priority' => 20,
+        'stop_after_propagation' => false,
+    ]);
+    $product->discounts()->create([
+        'type' => DiscountType::Fixed,
+        'value' => 5,
+        'name' => 'Product 5 EUR',
+        'code' => 'PRD5-BREAKDOWN',
+        'active' => true,
+        'starts_at' => now()->subMinute(),
+        'ends_at' => now()->addDay(),
+        'priority' => 10,
+        'stop_after_propagation' => false,
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=price_breakdown")
+        ->assertOk()
+        ->assertJsonPath('price_calculated.price', 100)
+        ->assertJsonPath('price_calculated.price_final', 85)
+        ->assertJsonPath('price_calculated.price_list.name', 'Wholesale')
+        ->assertJsonPath('price_calculated.price_source.type', 'price_list')
+        ->assertJsonPath('price_calculated.price_source.price_list_price_id', $wholesalePrice->getKey())
+        ->assertJsonPath('price_calculated.price_source.price_list.id', $wholesale->getKey())
+        ->assertJsonPath('price_calculated.price_source.price_list.code', 'WHL')
+        ->assertJsonPath('price_calculated.discounts_applied.0.position', 1)
+        ->assertJsonPath('price_calculated.discounts_applied.0.code', 'CAT10-BREAKDOWN')
+        ->assertJsonPath('price_calculated.discounts_applied.0.name', 'Category 10%')
+        ->assertJsonPath('price_calculated.discounts_applied.0.unit_amount', 10)
+        ->assertJsonPath('price_calculated.discounts_applied.0.unit_price_before', 100)
+        ->assertJsonPath('price_calculated.discounts_applied.0.unit_price_after', 90)
+        ->assertJsonPath('price_calculated.discounts_applied.1.position', 2)
+        ->assertJsonPath('price_calculated.discounts_applied.1.code', 'PRD5-BREAKDOWN')
+        ->assertJsonPath('price_calculated.discounts_applied.1.type', 'fixed')
+        ->assertJsonPath('price_calculated.discounts_applied.1.unit_amount', 5)
+        ->assertJsonPath('price_calculated.discounts_applied.1.unit_price_before', 90)
+        ->assertJsonPath('price_calculated.discounts_applied.1.unit_price_after', 85);
+
+    expect($retailPrice->getKey())->not->toBe($wholesalePrice->getKey());
 });
 
 it('applies multiple propagated discounts to product price_final', function () {

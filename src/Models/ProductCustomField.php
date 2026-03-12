@@ -25,6 +25,7 @@ class ProductCustomField extends Model
 
     protected $casts = [
         'required' => 'boolean',
+        'options' => 'json',
     ];
 
     protected static function booted(): void
@@ -35,5 +36,10 @@ class ProductCustomField extends Model
     public function productType(): BelongsTo
     {
         return $this->belongsTo(resolve_model('product_type'));
+    }
+
+    public function getOrderingGroupKeyNames(): array
+    {
+        return ['product_type_id'];
     }
 }

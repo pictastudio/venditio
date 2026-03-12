@@ -15,12 +15,29 @@ class Ordered implements Scope
             return;
         }
 
+        $groupingColumns = [];
+
         if (method_exists($model, 'getParentKeyName')) {
-            $builder->orderBy($model->getParentKeyName(), 'asc');
+            $groupingColumns[] = $model->getParentKeyName();
+        }
+
+        if (method_exists($model, 'getOrderingGroupKeyNames')) {
+            $groupingColumns = [
+                ...$groupingColumns,
+                ...$model->getOrderingGroupKeyNames(),
+            ];
+        }
+
+        foreach (array_values(array_unique($groupingColumns)) as $column) {
+            if (!is_string($column) || $column === '') {
+                continue;
+            }
+
+            $builder->orderBy($model->qualifyColumn($column), 'asc');
         }
 
         $builder
-            ->orderBy('sort_order', 'asc')
+            ->orderBy($model->qualifyColumn('sort_order'), 'asc')
             ->orderBy($model->getQualifiedKeyName(), 'asc');
     }
 }

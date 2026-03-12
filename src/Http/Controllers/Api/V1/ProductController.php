@@ -162,6 +162,7 @@ class ProductController extends Controller
         $allowedIncludes = [
             'brand',
             'categories',
+            'price_breakdown',
             'tags',
             'product_type',
             'tax_class',

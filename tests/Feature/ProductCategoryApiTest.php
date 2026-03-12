@@ -317,6 +317,46 @@ it('updates multiple product categories in one request', function () {
     ]);
 });
 
+it('applies bulk-updated category sort_order when rebuilding the tree', function () {
+    $root = ProductCategory::factory()->create([
+        'name' => 'Root',
+        'sort_order' => 1,
+    ]);
+
+    $firstChild = ProductCategory::factory()->create([
+        'name' => 'First Child',
+        'parent_id' => $root->getKey(),
+        'sort_order' => 10,
+    ]);
+
+    $secondChild = ProductCategory::factory()->create([
+        'name' => 'Second Child',
+        'parent_id' => $root->getKey(),
+        'sort_order' => 20,
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/product_categories/bulk/update', [
+        'categories' => [
+            [
+                'id' => $firstChild->getKey(),
+                'parent_id' => $root->getKey(),
+                'sort_order' => 30,
+            ],
+            [
+                'id' => $secondChild->getKey(),
+                'parent_id' => $root->getKey(),
+                'sort_order' => 5,
+            ],
+        ],
+    ])->assertOk();
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/product_categories?as_tree=1')
+        ->assertOk()
+        ->assertJsonPath('0.name', 'Root')
+        ->assertJsonPath('0.children.0.name', 'Second Child')
+        ->assertJsonPath('0.children.1.name', 'First Child');
+});
+
 it('validates parent_id in bulk product category updates', function () {
     $category = ProductCategory::factory()->create([
         'sort_order' => 1,

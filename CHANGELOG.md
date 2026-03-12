@@ -2,6 +2,31 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.5.0 - 2026-03-12
+
+### What's Changed
+
+#### Features
+
+- **Product price breakdown preview** - Added `include=price_breakdown` on product payloads so admin and headless clients can inspect the resolved base price source together with the ordered list of automatic discounts applied to the product preview.
+
+#### Fixes
+
+- **Grouped ordering for catalog definitions** - The shared `Ordered` scope now respects grouping keys before `sort_order`, keeping product custom fields ordered within each product type, variants within each product type, and variant options within each variant.
+- **Category tree rebuild ordering** - Bulk category updates now preserve the expected `sort_order` when rebuilding tree responses.
+- **Product custom field options casting** - Product custom field `options` are now consistently serialized as JSON in the public API.
+
+#### API & Tooling
+
+- **Bruno** - Updated the product show request example to document the new `price_breakdown` include.
+- **Docs** - Documented `price_breakdown` in the API reference.
+
+#### Tests
+
+- Extended feature coverage for product pricing breakdown previews, grouped ordering of product custom fields / variants / variant options, category tree rebuild ordering, and cart tax calculation when a billing address is added before checkout.
+
+**Full Changelog**: https://github.com/pictastudio/venditio-core/compare/v1.4.0...v1.5.0
+
 ## v1.4.0 - 2026-03-11
 
 ### What's Changed

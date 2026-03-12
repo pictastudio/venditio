@@ -32,7 +32,7 @@ class DiscountCalculator implements DiscountCalculatorInterface
             'unit_discount' => $totalUnitDiscount,
             'unit_final_price' => $unitFinalPrice,
         ]);
-        $this->syncCalculatedPriceSnapshot($line, $unitFinalPrice, $appliedDiscounts, $qty);
+        $this->syncCalculatedPriceSnapshot($line, $unitFinalPrice, $appliedDiscounts, $qty, $unitPrice);
 
         return $line;
     }
@@ -42,6 +42,7 @@ class DiscountCalculator implements DiscountCalculatorInterface
         float $unitFinalPrice,
         Collection $appliedDiscounts,
         int $qty,
+        float $unitPrice,
     ): void {
         $productData = $line->getAttribute('product_data');
 
@@ -53,24 +54,40 @@ class DiscountCalculator implements DiscountCalculatorInterface
             data_set($productData, 'price_calculated.price', (float) $line->getAttribute('unit_price'));
         }
 
-        data_set($productData, 'price_calculated.discounts_applied', $this->toDiscountSnapshot($appliedDiscounts, $qty));
+        data_set($productData, 'price_calculated.discounts_applied', $this->toDiscountSnapshot($appliedDiscounts, $qty, $unitPrice));
         data_set($productData, 'price_calculated.price_final', $unitFinalPrice);
         $line->setAttribute('product_data', $productData);
     }
 
-    private function toDiscountSnapshot(Collection $appliedDiscounts, int $qty): array
+    private function toDiscountSnapshot(Collection $appliedDiscounts, int $qty, float $startingUnitPrice): array
     {
+        $currentUnitPrice = round(max(0, $startingUnitPrice), 2);
+
         return $appliedDiscounts
-            ->map(function (array $evaluation) use ($qty): array {
+            ->values()
+            ->map(function (array $evaluation, int $index) use ($qty, &$currentUnitPrice): array {
                 /** @var Discount $discount */
                 $discount = $evaluation['discount'];
                 $unitAmount = round((float) ($evaluation['amount'] ?? 0), 2);
+                $unitPriceBefore = $currentUnitPrice;
+                $unitPriceAfter = round(max(0, $unitPriceBefore - $unitAmount), 2);
+                $currentUnitPrice = $unitPriceAfter;
 
                 return [
+                    'position' => $index + 1,
                     'id' => $discount->getKey(),
+                    'name' => $discount->name,
                     'code' => $discount->code,
+                    'type' => is_object($discount->type) && isset($discount->type->value)
+                        ? $discount->type->value
+                        : $discount->type,
+                    'value' => round((float) ($discount->value ?? 0), 2),
+                    'priority' => (int) ($discount->priority ?? 0),
+                    'stop_after_propagation' => (bool) ($discount->stop_after_propagation ?? false),
                     'amount' => round($unitAmount * $qty, 2),
                     'unit_amount' => $unitAmount,
+                    'unit_price_before' => $unitPriceBefore,
+                    'unit_price_after' => $unitPriceAfter,
                 ];
             })
             ->values()

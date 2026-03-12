@@ -76,6 +76,44 @@ it('filters variants by product type', function () {
     expect($response->json('data'))->toHaveCount(1);
 });
 
+it('orders variants by sort_order within each product type', function () {
+    $firstType = ProductType::factory()->create();
+    $secondType = ProductType::factory()->create();
+
+    ProductVariant::factory()->create([
+        'product_type_id' => $firstType->getKey(),
+        'name' => 'First Type Late',
+        'sort_order' => 20,
+    ]);
+    ProductVariant::factory()->create([
+        'product_type_id' => $firstType->getKey(),
+        'name' => 'First Type Early',
+        'sort_order' => 10,
+    ]);
+    ProductVariant::factory()->create([
+        'product_type_id' => $secondType->getKey(),
+        'name' => 'Second Type Late',
+        'sort_order' => 30,
+    ]);
+    ProductVariant::factory()->create([
+        'product_type_id' => $secondType->getKey(),
+        'name' => 'Second Type Early',
+        'sort_order' => 5,
+    ]);
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . '/product_variants?all=1')
+        ->assertOk();
+
+    expect(collect($response->json())
+        ->map(fn (array $variant): string => $variant['product_type_id'] . ':' . $variant['name'])
+        ->all())->toBe([
+            $firstType->getKey() . ':First Type Early',
+            $firstType->getKey() . ':First Type Late',
+            $secondType->getKey() . ':Second Type Early',
+            $secondType->getKey() . ':Second Type Late',
+        ]);
+});
+
 it('filters variant options by variant', function () {
     $variant = ProductVariant::factory()->create();
     $otherVariant = ProductVariant::factory()->create();
@@ -93,6 +131,44 @@ it('filters variant options by variant', function () {
         ->assertOk();
 
     expect($response->json('data'))->toHaveCount(1);
+});
+
+it('orders variant options by sort_order within each variant', function () {
+    $firstVariant = ProductVariant::factory()->create();
+    $secondVariant = ProductVariant::factory()->create();
+
+    ProductVariantOption::factory()->create([
+        'product_variant_id' => $firstVariant->getKey(),
+        'name' => 'First Variant Late',
+        'sort_order' => 20,
+    ]);
+    ProductVariantOption::factory()->create([
+        'product_variant_id' => $firstVariant->getKey(),
+        'name' => 'First Variant Early',
+        'sort_order' => 10,
+    ]);
+    ProductVariantOption::factory()->create([
+        'product_variant_id' => $secondVariant->getKey(),
+        'name' => 'Second Variant Late',
+        'sort_order' => 30,
+    ]);
+    ProductVariantOption::factory()->create([
+        'product_variant_id' => $secondVariant->getKey(),
+        'name' => 'Second Variant Early',
+        'sort_order' => 5,
+    ]);
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . '/product_variant_options?all=1')
+        ->assertOk();
+
+    expect(collect($response->json())
+        ->map(fn (array $option): string => $option['product_variant_id'] . ':' . $option['name'])
+        ->all())->toBe([
+            $firstVariant->getKey() . ':First Variant Early',
+            $firstVariant->getKey() . ':First Variant Late',
+            $secondVariant->getKey() . ':Second Variant Early',
+            $secondVariant->getKey() . ':Second Variant Late',
+        ]);
 });
 
 it('rejects duplicate product variant option names for the same variant', function () {

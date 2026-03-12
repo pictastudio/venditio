@@ -90,9 +90,11 @@ class ProductResource extends JsonResource
 
     protected function resolveCalculatedPrice(Request $request): array
     {
+        $includes = $this->resolveRequestedIncludes($request);
+        $shouldIncludePriceBreakdown = in_array('price_breakdown', $includes, true);
         $resolved = app(ProductPriceResolverInterface::class)->resolve($this->resource);
         $baseUnitPrice = (float) ($resolved['unit_price'] ?? 0);
-        $calculatedPriceFinal = $this->resolveAutomaticDiscountedPrice($baseUnitPrice, $request);
+        $pricingPreview = $this->resolvePricingPreview($resolved, $request);
         $priceIncludesTax = (bool) ($resolved['price_includes_tax'] ?? false);
         // $taxRate = app(ResolveTaxRate::class)->handle(
         //     $this->resource->getAttribute('tax_class_id'),
@@ -101,9 +103,9 @@ class ProductResource extends JsonResource
         // $baseTaxBreakdown = $this->resolveTaxBreakdown($baseUnitPrice, $taxRate, $priceIncludesTax);
         // $finalTaxBreakdown = $this->resolveTaxBreakdown($calculatedPriceFinal, $taxRate, $priceIncludesTax);
 
-        return [
+        $priceCalculated = [
             'price' => $baseUnitPrice,
-            'price_final' => $calculatedPriceFinal,
+            'price_final' => $pricingPreview['price_final'],
             'purchase_price' => isset($resolved['purchase_price']) ? (float) $resolved['purchase_price'] : null,
             'price_includes_tax' => $priceIncludesTax,
             // 'tax_rate' => $taxRate,
@@ -115,10 +117,18 @@ class ProductResource extends JsonResource
             // 'price_final_total' => $finalTaxBreakdown['total'],
             'price_list' => $resolved['price_list'] ?? null,
         ];
+
+        if ($shouldIncludePriceBreakdown) {
+            $priceCalculated['price_source'] = $this->resolvePriceSource($resolved);
+            $priceCalculated['discounts_applied'] = $pricingPreview['discounts_applied'];
+        }
+
+        return $priceCalculated;
     }
 
-    protected function resolveAutomaticDiscountedPrice(float $unitPrice, Request $request): float
+    protected function resolvePricingPreview(array $resolved, Request $request): array
     {
+        $unitPrice = (float) ($resolved['unit_price'] ?? 0);
         $cartLineModelClass = resolve_model('cart_line');
         /** @var Model $previewLine */
         $previewLine = new $cartLineModelClass;
@@ -127,13 +137,41 @@ class ProductResource extends JsonResource
             'product_id' => $this->resource->getKey(),
             'qty' => 1,
             'unit_price' => $unitPrice,
+            'purchase_price' => $resolved['purchase_price'] ?? null,
+            'product_data' => [
+                'pricing' => [
+                    'price_list' => $resolved['price_list'] ?? null,
+                    'price_source' => $this->resolvePriceSource($resolved),
+                ],
+                'price_calculated' => [
+                    'price' => $unitPrice,
+                    'price_final' => $unitPrice,
+                    'purchase_price' => isset($resolved['purchase_price']) ? (float) $resolved['purchase_price'] : null,
+                    'price_includes_tax' => (bool) ($resolved['price_includes_tax'] ?? false),
+                    'price_list' => $resolved['price_list'] ?? null,
+                    'price_source' => $this->resolvePriceSource($resolved),
+                ],
+            ],
         ]);
+
+        if ($this->resource instanceof Model) {
+            $this->resource->loadMissing(['categories', 'brand', 'productType', 'parent']);
+            $previewLine->setRelation('product', $this->resource);
+        }
 
         $user = $request->user();
         $context = DiscountContext::make(user: $user instanceof Model ? $user : null);
         $calculatedLine = app(DiscountCalculatorInterface::class)->apply($previewLine, $context);
 
-        return (float) ($calculatedLine->getAttribute('unit_final_price') ?? $unitPrice);
+        return [
+            'price_final' => (float) ($calculatedLine->getAttribute('unit_final_price') ?? $unitPrice),
+            'discounts_applied' => collect(
+                data_get($calculatedLine->getAttribute('product_data'), 'price_calculated.discounts_applied', [])
+            )
+                ->filter(fn (mixed $entry) => is_array($entry))
+                ->values()
+                ->all(),
+        ];
     }
 
     protected function transformAttributes(): array
@@ -199,6 +237,25 @@ class ProductResource extends JsonResource
             ->values();
 
         return $table->toArray();
+    }
+
+    protected function resolvePriceSource(array $resolved): array
+    {
+        $providedPriceSource = $resolved['price_source'] ?? null;
+
+        if (is_array($providedPriceSource)) {
+            return $providedPriceSource;
+        }
+
+        $priceList = $resolved['price_list'] ?? null;
+
+        return [
+            'type' => is_array($priceList) ? 'price_list' : 'inventory',
+            'unit_price' => (float) ($resolved['unit_price'] ?? 0),
+            'purchase_price' => isset($resolved['purchase_price']) ? (float) $resolved['purchase_price'] : null,
+            'price_includes_tax' => (bool) ($resolved['price_includes_tax'] ?? false),
+            'price_list' => is_array($priceList) ? $priceList : null,
+        ];
     }
 
     private function resolveCountryIso2Header(Request $request): ?string

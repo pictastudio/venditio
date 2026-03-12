@@ -13,7 +13,8 @@ interface ProductPriceResolverInterface
      *     unit_price: float|int|string,
      *     purchase_price: float|int|string|null,
      *     price_includes_tax: bool,
-     *     price_list: array{id:int|string,name:string}|null
+     *     price_list: array{id:int|string,name:string}|null,
+     *     price_source?: array<string, mixed>
      * }
      */
     public function resolve(Model $product): array;

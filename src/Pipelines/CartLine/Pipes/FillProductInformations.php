@@ -28,12 +28,14 @@ class FillProductInformations
 
         data_set($productData, 'inventory.price_includes_tax', (bool) ($resolvedPricing['price_includes_tax'] ?? false));
         data_set($productData, 'pricing.price_list', $resolvedPricing['price_list'] ?? null);
+        data_set($productData, 'pricing.price_source', $resolvedPricing['price_source'] ?? null);
         data_set($productData, 'price_calculated', [
             'price' => (float) ($resolvedPricing['unit_price'] ?? 0),
             'price_final' => (float) ($resolvedPricing['unit_price'] ?? 0),
             'purchase_price' => isset($resolvedPricing['purchase_price']) ? (float) $resolvedPricing['purchase_price'] : null,
             'price_includes_tax' => (bool) ($resolvedPricing['price_includes_tax'] ?? false),
             'price_list' => $resolvedPricing['price_list'] ?? null,
+            'price_source' => $resolvedPricing['price_source'] ?? null,
         ]);
 
         $cartLine->product()->associate($product);

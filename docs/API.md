@@ -53,7 +53,8 @@ Additional supported filters:
 
 Include parameters:
 
-- `/products`: `include=brand,categories,product_type,tax_class,variants,variants_options_table` (and `price_lists` only when `venditio.price_lists.enabled=true`)
+- `/products`: `include=brand,categories,product_type,tax_class,variants,variants_options_table,price_breakdown` (and `price_lists` only when `venditio.price_lists.enabled=true`)
+  - `price_breakdown` adds `price_calculated.price_source` and `price_calculated.discounts_applied`, so admin UIs can show which base price source was selected and the ordered automatic discounts applied to the product preview
 - `/tax_classes`: `include[]=countries`
 
 Export-specific query parameters:

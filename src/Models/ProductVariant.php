@@ -49,4 +49,9 @@ class ProductVariant extends Model implements TranslatableContract
     {
         return $this->hasMany(resolve_model('product_variant_option'));
     }
+
+    public function getOrderingGroupKeyNames(): array
+    {
+        return ['product_type_id'];
+    }
 }
