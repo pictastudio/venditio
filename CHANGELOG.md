@@ -2,6 +2,20 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v1.6.0 - 2026-03-12
+
+### What's Changed
+
+#### Features
+
+- **Discount origin metadata in product price breakdowns** - `include=price_breakdown` product responses now expose `discountable_type` and `discountable_id` for each applied automatic discount, making it easier for admin UIs to show where every propagated discount comes from.
+
+#### Tests
+
+- Extended product pricing breakdown assertions and reran the discount pipeline coverage for the enriched applied-discount snapshot.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.5.0...v1.6.0
+
 ## v1.5.0 - 2026-03-12
 
 ### What's Changed

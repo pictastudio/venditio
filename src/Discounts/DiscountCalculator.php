@@ -78,6 +78,8 @@ class DiscountCalculator implements DiscountCalculatorInterface
                     'id' => $discount->getKey(),
                     'name' => $discount->name,
                     'code' => $discount->code,
+                    'discountable_type' => $discount->discountable_type,
+                    'discountable_id' => $discount->discountable_id,
                     'type' => is_object($discount->type) && isset($discount->type->value)
                         ? $discount->type->value
                         : $discount->type,
