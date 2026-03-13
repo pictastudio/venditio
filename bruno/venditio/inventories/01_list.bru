@@ -23,6 +23,8 @@ params:query {
   ~stock_reserved: 1
   ~stock_available: 1
   ~stock_min: 1
+  ~minimum_reorder_quantity: 6
+  ~reorder_lead_days: 14
   ~manage_stock: 1
   ~price: 10
   ~price_includes_tax: 0
@@ -66,6 +68,8 @@ docs {
   - stock_reserved (integer): Exact-match filter for stock_reserved.
   - stock_available (integer): Exact-match filter for stock_available.
   - stock_min (integer): Exact-match filter for stock_min.
+  - minimum_reorder_quantity (integer): Exact-match filter for minimum_reorder_quantity.
+  - reorder_lead_days (integer): Exact-match filter for reorder_lead_days.
   - manage_stock (boolean): Exact-match filter for manage_stock.
   - price (number): Exact-match filter for price.
   - price_includes_tax (boolean): Exact-match filter for price_includes_tax.

@@ -76,7 +76,7 @@ class ApplyDiscounts
         $taxRate = (float) ($line->getAttribute('tax_rate') ?? 0);
         $qty = max(1, (int) ($line->getAttribute('qty') ?? 1));
         $productData = $line->getAttribute('product_data') ?? [];
-        $priceIncludesTax = (bool) data_get($productData, 'inventory.price_includes_tax', false);
+        $priceIncludesTax = (bool) data_get($productData, 'inventory.price_includes_tax', true);
 
         if ($priceIncludesTax) {
             $taxBreakdown = $this->extractTaxFromGrossPrice->handle($unitFinalPrice, $taxRate);

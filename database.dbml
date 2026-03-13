@@ -45,8 +45,7 @@ Table brands {
   abstract text
   description text
   metadata json
-  img_thumb json
-  img_cover json
+  images json
   active boolean [not null, default: true]
   show_in_menu boolean [not null, default: false]
   in_evidence boolean [not null, default: false]
@@ -218,6 +217,8 @@ Table inventories {
   stock_reserved mediumint [not null, default: 0, note: 'reserved quantity']
   stock_available mediumint [not null, default: 0, note: 'available quantity']
   stock_min mediumint [note: 'minimum stock quantity']
+  minimum_reorder_quantity mediumint [note: 'minimum quantity to use when reordering stock']
+  reorder_lead_days mediumint [note: 'lead time in days required to replenish stock']
   manage_stock boolean [not null, default: true, note: 'disable automatic stock checks and movements']
   price decimal(10,2) [not null, default: 0]
   price_includes_tax boolean [not null, default: false]

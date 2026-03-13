@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignIdFor(PriceList::class)->index();
             $table->decimal('price', 10, 2);
             $table->decimal('purchase_price', 10, 2)->nullable();
-            $table->boolean('price_includes_tax')->default(false);
+            $table->boolean('price_includes_tax')->default(true);
             $table->boolean('is_default')->default(false);
             $table->json('metadata')->nullable();
             $table->datetimes();

@@ -22,9 +22,11 @@ body:json {
     "stock": 25,
     "stock_reserved": 0,
     "stock_min": 3,
+    "minimum_reorder_quantity": 6,
+    "reorder_lead_days": 14,
     "manage_stock": true,
     "price": 29.99,
-    "price_includes_tax": false,
+    "price_includes_tax": true,
     "purchase_price": 18.50
   }
 }
@@ -51,6 +53,8 @@ docs {
   - stock
   - stock_reserved
   - stock_min
+  - minimum_reorder_quantity
+  - reorder_lead_days
   - manage_stock
   - price
   - price_includes_tax

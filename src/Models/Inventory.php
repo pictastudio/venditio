@@ -32,6 +32,8 @@ class Inventory extends Model
             'stock_reserved' => 'integer',
             'stock_available' => 'integer',
             'stock_min' => 'integer',
+            'minimum_reorder_quantity' => 'integer',
+            'reorder_lead_days' => 'integer',
             'manage_stock' => 'boolean',
             'price' => 'decimal:2',
             'price_includes_tax' => 'boolean',

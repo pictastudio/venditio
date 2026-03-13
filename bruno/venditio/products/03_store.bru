@@ -34,6 +34,8 @@ body:json {
     "inventory": {
       "stock": 25,
       "stock_min": 3,
+      "minimum_reorder_quantity": 6,
+      "reorder_lead_days": 14,
       "manage_stock": true,
       "price": 29.99
     }
@@ -89,6 +91,8 @@ docs {
   - inventory.stock
   - inventory.stock_reserved
   - inventory.stock_min
+  - inventory.minimum_reorder_quantity
+  - inventory.reorder_lead_days
   - inventory.manage_stock
   - inventory.price
   - inventory.price_includes_tax

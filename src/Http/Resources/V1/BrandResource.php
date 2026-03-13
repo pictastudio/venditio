@@ -36,36 +36,7 @@ class BrandResource extends JsonResource
     protected function transformAttributes(): array
     {
         return [
-            'img_thumb' => function (mixed $image): ?array {
-                if (is_string($image)) {
-                    $image = json_decode($image, true);
-                }
-
-                if (!is_array($image)) {
-                    return null;
-                }
-
-                return [
-                    'name' => data_get($image, 'name'),
-                    'alt' => data_get($image, 'alt'),
-                    'src' => $this->getImageAssetUrl(data_get($image, 'src')),
-                ];
-            },
-            'img_cover' => function (mixed $image): ?array {
-                if (is_string($image)) {
-                    $image = json_decode($image, true);
-                }
-
-                if (!is_array($image)) {
-                    return null;
-                }
-
-                return [
-                    'name' => data_get($image, 'name'),
-                    'alt' => data_get($image, 'alt'),
-                    'src' => $this->getImageAssetUrl(data_get($image, 'src')),
-                ];
-            },
+            'images' => fn (mixed $images): array => $this->transformCatalogImageCollection($images),
         ];
     }
 }

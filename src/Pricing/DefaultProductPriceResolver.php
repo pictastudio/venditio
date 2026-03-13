@@ -81,13 +81,13 @@ class DefaultProductPriceResolver implements ProductPriceResolverInterface
             return [
                 'unit_price' => 0,
                 'purchase_price' => null,
-                'price_includes_tax' => false,
+                'price_includes_tax' => true,
                 'price_list' => null,
                 'price_source' => [
                     'type' => 'inventory',
                     'unit_price' => 0.0,
                     'purchase_price' => null,
-                    'price_includes_tax' => false,
+                    'price_includes_tax' => true,
                 ],
             ];
         }
@@ -101,7 +101,7 @@ class DefaultProductPriceResolver implements ProductPriceResolverInterface
             'purchase_price' => $inventory?->getAttribute('purchase_price') === null
                 ? null
                 : (float) $inventory?->getAttribute('purchase_price'),
-            'price_includes_tax' => (bool) ($inventory?->getAttribute('price_includes_tax') ?? false),
+            'price_includes_tax' => (bool) ($inventory?->getAttribute('price_includes_tax') ?? true),
             'price_list' => null,
             'price_source' => [
                 'type' => 'inventory',
@@ -110,7 +110,7 @@ class DefaultProductPriceResolver implements ProductPriceResolverInterface
                 'purchase_price' => $inventory?->getAttribute('purchase_price') === null
                     ? null
                     : (float) $inventory?->getAttribute('purchase_price'),
-                'price_includes_tax' => (bool) ($inventory?->getAttribute('price_includes_tax') ?? false),
+                'price_includes_tax' => (bool) ($inventory?->getAttribute('price_includes_tax') ?? true),
             ],
         ];
     }

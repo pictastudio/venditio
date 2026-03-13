@@ -44,8 +44,7 @@ class ProductCategory extends Model implements TranslatableContract
             'visible_from' => 'datetime:Y-m-d H:i:s',
             'visible_until' => 'datetime:Y-m-d H:i:s',
             'metadata' => 'json',
-            'img_thumb' => 'json',
-            'img_cover' => 'json',
+            'images' => 'json',
         ];
     }
 

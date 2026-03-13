@@ -54,7 +54,7 @@ class CalculateTaxes
 
     private function isPriceTaxInclusive(array $product): bool
     {
-        return (bool) Arr::get($product, 'inventory.price_includes_tax', false);
+        return (bool) Arr::get($product, 'inventory.price_includes_tax', true);
     }
 
     private function getCartCountryId(Model $cartLine): ?int

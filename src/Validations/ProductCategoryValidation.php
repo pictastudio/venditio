@@ -3,6 +3,7 @@
 namespace PictaStudio\Venditio\Validations;
 
 use Illuminate\Validation\Rule;
+use PictaStudio\Venditio\Support\CatalogImage;
 use PictaStudio\Venditio\Validations\Concerns\InteractsWithTranslatableRules;
 use PictaStudio\Venditio\Validations\Contracts\ProductCategoryValidationRules;
 
@@ -31,14 +32,13 @@ class ProductCategoryValidation implements ProductCategoryValidationRules
             'abstract' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
             'metadata' => ['nullable', 'array'],
-            'img_thumb' => ['sometimes', 'nullable', 'array'],
-            'img_thumb.file' => ['required_with:img_thumb', 'file', 'image'],
-            'img_thumb.alt' => ['nullable', 'string', 'max:255'],
-            'img_thumb.name' => ['nullable', 'string', 'max:255'],
-            'img_cover' => ['sometimes', 'nullable', 'array'],
-            'img_cover.file' => ['required_with:img_cover', 'file', 'image'],
-            'img_cover.alt' => ['nullable', 'string', 'max:255'],
-            'img_cover.name' => ['nullable', 'string', 'max:255'],
+            'images' => ['sometimes', 'nullable', 'array'],
+            'images.*.id' => ['nullable', 'string', 'max:255'],
+            'images.*.file' => ['sometimes', 'file', 'image'],
+            'images.*.alt' => ['nullable', 'string', 'max:255'],
+            'images.*.name' => ['nullable', 'string', 'max:255'],
+            'images.*.mimetype' => ['nullable', 'string', 'max:255'],
+            'images.*.type' => ['required', 'string', 'distinct', Rule::in(CatalogImage::TYPES)],
             'active' => ['sometimes', 'boolean'],
             'show_in_menu' => ['sometimes', 'boolean'],
             'in_evidence' => ['sometimes', 'boolean'],
@@ -74,14 +74,13 @@ class ProductCategoryValidation implements ProductCategoryValidationRules
             'abstract' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
             'metadata' => ['nullable', 'array'],
-            'img_thumb' => ['sometimes', 'nullable', 'array'],
-            'img_thumb.file' => ['required_with:img_thumb', 'file', 'image'],
-            'img_thumb.alt' => ['nullable', 'string', 'max:255'],
-            'img_thumb.name' => ['nullable', 'string', 'max:255'],
-            'img_cover' => ['sometimes', 'nullable', 'array'],
-            'img_cover.file' => ['required_with:img_cover', 'file', 'image'],
-            'img_cover.alt' => ['nullable', 'string', 'max:255'],
-            'img_cover.name' => ['nullable', 'string', 'max:255'],
+            'images' => ['sometimes', 'nullable', 'array'],
+            'images.*.id' => ['nullable', 'string', 'max:255'],
+            'images.*.file' => ['sometimes', 'file', 'image'],
+            'images.*.alt' => ['nullable', 'string', 'max:255'],
+            'images.*.name' => ['nullable', 'string', 'max:255'],
+            'images.*.mimetype' => ['nullable', 'string', 'max:255'],
+            'images.*.type' => ['required', 'string', 'distinct', Rule::in(CatalogImage::TYPES)],
             'active' => ['sometimes', 'boolean'],
             'show_in_menu' => ['sometimes', 'boolean'],
             'in_evidence' => ['sometimes', 'boolean'],

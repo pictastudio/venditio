@@ -35,16 +35,18 @@ it('exports products in excel with selected columns', function () {
         'stock_reserved' => 2,
         'stock_available' => 10,
         'stock_min' => 1,
+        'minimum_reorder_quantity' => 8,
+        'reorder_lead_days' => 21,
         'price' => 99.99,
         'price_includes_tax' => false,
         'currency_id' => $currency->getKey(),
     ]);
 
-    get(config('venditio.routes.api.v1.prefix') . '/exports/products?columns=id,name,brand_id,currency_id,stock_available&filename=products-selection')
+    get(config('venditio.routes.api.v1.prefix') . '/exports/products?columns=id,name,brand_id,currency_id,stock_available,minimum_reorder_quantity,reorder_lead_days&filename=products-selection')
         ->assertOk();
 
     Excel::assertDownloaded('products-selection.xlsx', function (ProductsExport $export) use ($product): bool {
-        expect($export->headings())->toBe(['id', 'name', 'brand_id', 'currency_id', 'stock_available']);
+        expect($export->headings())->toBe(['id', 'name', 'brand_id', 'currency_id', 'stock_available', 'minimum_reorder_quantity', 'reorder_lead_days']);
 
         $rows = $export->collection()->map(fn ($row): array => $export->map($row));
 
@@ -53,7 +55,9 @@ it('exports products in excel with selected columns', function () {
             ->and($rows->first()[1])->toBe('Export Product')
             ->and($rows->first()[2])->toBe((string) $product->brand?->name)
             ->and($rows->first()[3])->toBe('USD')
-            ->and((int) $rows->first()[4])->toBe(10);
+            ->and((int) $rows->first()[4])->toBe(10)
+            ->and((int) $rows->first()[5])->toBe(8)
+            ->and((int) $rows->first()[6])->toBe(21);
 
         return true;
     });

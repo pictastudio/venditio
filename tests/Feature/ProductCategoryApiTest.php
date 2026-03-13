@@ -423,7 +423,7 @@ it('stores and exposes additional catalog fields on product categories', functio
     ]);
 });
 
-it('uploads category thumb and cover images on update', function () {
+it('uploads category images as a typed images collection on update', function () {
     Storage::fake('public');
 
     $category = ProductCategory::factory()->create([
@@ -435,27 +435,39 @@ it('uploads category thumb and cover images on update', function () {
     patch(
         config('venditio.routes.api.v1.prefix') . '/product_categories/' . $category->getKey(),
         [
-            'img_thumb' => [
-                'file' => UploadedFile::fake()->image('thumb.jpg'),
-                'alt' => 'thumb',
-                'name' => 'Thumb',
-            ],
-            'img_cover' => [
-                'file' => UploadedFile::fake()->image('cover.jpg'),
-                'alt' => 'cover',
-                'name' => 'Cover',
+            'images' => [
+                [
+                    'file' => UploadedFile::fake()->image('thumb.jpg'),
+                    'alt' => 'thumb',
+                    'name' => 'Thumb',
+                    'type' => 'thumb',
+                ],
+                [
+                    'file' => UploadedFile::fake()->image('cover.jpg'),
+                    'alt' => 'cover',
+                    'name' => 'Cover',
+                    'type' => 'cover',
+                ],
             ],
         ],
         ['Accept' => 'application/json']
-    )->assertOk();
+    )->assertOk()
+        ->assertJsonPath('images.0.type', 'thumb')
+        ->assertJsonPath('images.1.type', 'cover');
 
     $category->refresh();
 
-    expect(str_starts_with((string) data_get($category->img_thumb, 'src'), 'product_categories/' . $category->getKey() . '/img_thumb/'))
+    $thumb = collect($category->images)->firstWhere('type', 'thumb');
+    $cover = collect($category->images)->firstWhere('type', 'cover');
+
+    expect($category->images)->toBeArray()->toHaveCount(2)
+        ->and(data_get($thumb, 'type'))->toBe('thumb')
+        ->and(data_get($cover, 'type'))->toBe('cover')
+        ->and(str_starts_with((string) data_get($thumb, 'src'), 'product_categories/' . $category->getKey() . '/thumb/'))
         ->toBeTrue()
-        ->and(str_starts_with((string) data_get($category->img_cover, 'src'), 'product_categories/' . $category->getKey() . '/img_cover/'))
+        ->and(str_starts_with((string) data_get($cover, 'src'), 'product_categories/' . $category->getKey() . '/cover/'))
         ->toBeTrue();
 
-    Storage::disk('public')->assertExists((string) data_get($category->img_thumb, 'src'));
-    Storage::disk('public')->assertExists((string) data_get($category->img_cover, 'src'));
+    Storage::disk('public')->assertExists((string) data_get($thumb, 'src'));
+    Storage::disk('public')->assertExists((string) data_get($cover, 'src'));
 });

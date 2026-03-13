@@ -33,6 +33,8 @@ body:json {
     "tag_ids": [1, 3],
     "inventory": {
       "stock": 0,
+      "minimum_reorder_quantity": 5,
+      "reorder_lead_days": 12,
       "manage_stock": false,
       "price": 34.99
     }
@@ -105,6 +107,8 @@ docs {
   - inventory.stock
   - inventory.stock_reserved
   - inventory.stock_min
+  - inventory.minimum_reorder_quantity
+  - inventory.reorder_lead_days
   - inventory.manage_stock
   - inventory.price
   - inventory.price_includes_tax

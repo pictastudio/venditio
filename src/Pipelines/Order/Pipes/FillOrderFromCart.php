@@ -44,7 +44,7 @@ class FillOrderFromCart
                 Arr::get($productData, 'tax_class_id'),
                 $billingCountryId,
             );
-            $priceIncludesTax = (bool) data_get($productData, 'inventory.price_includes_tax', false);
+            $priceIncludesTax = (bool) data_get($productData, 'inventory.price_includes_tax', true);
             $taxBreakdown = $this->resolveTaxBreakdown($unitFinalPrice, $taxRate, $priceIncludesTax);
 
             return $orderLine->fill([

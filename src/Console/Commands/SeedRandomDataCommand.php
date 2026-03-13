@@ -447,8 +447,10 @@ class SeedRandomDataCommand extends Command
                 'stock_reserved' => 0,
                 'stock_available' => 0,
                 'stock_min' => random_int(0, 30),
+                'minimum_reorder_quantity' => random_int(1, 60),
+                'reorder_lead_days' => random_int(1, 30),
                 'price' => $this->randomMoney(500, 50_000),
-                'price_includes_tax' => false,
+                'price_includes_tax' => true,
                 'purchase_price' => $this->randomMoney(300, 30_000),
             ]);
 
@@ -832,7 +834,7 @@ class SeedRandomDataCommand extends Command
                     [
                         'price' => $this->randomMoney(500, 40_000),
                         'purchase_price' => $this->randomMoney(300, 25_000),
-                        'price_includes_tax' => false,
+                        'price_includes_tax' => true,
                         'is_default' => false,
                         'metadata' => null,
                     ]

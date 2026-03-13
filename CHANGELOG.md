@@ -2,6 +2,34 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.0.0 - 2026-03-13
+
+### What's Changed
+
+#### Breaking Changes
+
+- **Catalog image payloads for brands and product categories** - Brand and product category APIs now use a typed `images` collection with `thumb` / `cover` items instead of separate `img_thumb` and `img_cover` fields. A dedicated migration converts legacy stored values to the new structure and keeps rollback support for the old columns.
+
+#### Features
+
+- **Brand catalog metadata and address PEC/SDI fields** - Brands now expose catalog-oriented fields such as abstract, description, metadata, visibility flags, and ordering, while addresses support `sdi` and `pec` fields across validation, filters, resources, and request examples.
+- **Inventory reorder metadata** - Inventories and nested product inventory payloads now support nullable `minimum_reorder_quantity` and `reorder_lead_days` fields, and product exports can include the same reorder planning columns.
+
+#### Fixes
+
+- **Tax-inclusive pricing defaults** - Inventory- and price-list-based pricing now default to tax-inclusive values consistently across migrations, factories, seeded data, pricing resolution, and cart/order tax pipelines when `price_includes_tax` is missing.
+- **Migration column ordering** - Follow-up migration updates keep `created_at`, `updated_at`, and `deleted_at` as the trailing columns after schema upgrades that add address, inventory, brand, or product-category fields.
+
+#### API & Tooling
+
+- **Bruno** - Updated the brand, product category, inventory, product, and price-list-price request examples to reflect the new public payload shapes and defaults.
+
+#### Tests
+
+- Added feature coverage for typed brand and product category image collections, inventory reorder fields on both inventory and product APIs, and product export columns for reorder metadata.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v1.6.2...v2.0.0
+
 ## v1.6.2 - 2026-03-12
 
 ### What's Changed

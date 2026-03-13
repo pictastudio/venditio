@@ -16,7 +16,7 @@ class PriceListPriceFactory extends Factory
             'price_list_id' => PriceList::factory(),
             'price' => fake()->randomFloat(2, 1, 1_000),
             'purchase_price' => fake()->optional()->randomFloat(2, 1, 500),
-            'price_includes_tax' => false,
+            'price_includes_tax' => true,
             'is_default' => false,
             'metadata' => null,
         ];

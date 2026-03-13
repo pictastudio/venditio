@@ -264,11 +264,15 @@ it('creates a product with nested inventory fields', function () {
             'stock' => 120,
             'stock_reserved' => 15,
             'stock_min' => 10,
+            'minimum_reorder_quantity' => 24,
+            'reorder_lead_days' => 7,
             'price' => 99.50,
             'price_includes_tax' => true,
             'purchase_price' => 65.10,
         ],
-    ])->assertCreated();
+    ])->assertCreated()
+        ->assertJsonPath('inventory.minimum_reorder_quantity', 24)
+        ->assertJsonPath('inventory.reorder_lead_days', 7);
 
     $productId = $response->json('id');
 
@@ -277,6 +281,8 @@ it('creates a product with nested inventory fields', function () {
         'stock' => 120,
         'stock_reserved' => 15,
         'stock_min' => 10,
+        'minimum_reorder_quantity' => 24,
+        'reorder_lead_days' => 7,
         'manage_stock' => true,
         'price' => 99.50,
         'price_includes_tax' => true,
@@ -299,6 +305,8 @@ it('defaults nested inventory price to zero when omitted on product creation', f
             'stock' => 12,
             'stock_reserved' => 2,
             'stock_min' => 1,
+            'minimum_reorder_quantity' => null,
+            'reorder_lead_days' => null,
         ],
     ])->assertCreated();
 
@@ -361,16 +369,22 @@ it('updates nested inventory fields via product api', function () {
             'stock' => 75,
             'stock_reserved' => 5,
             'stock_min' => 8,
+            'minimum_reorder_quantity' => 20,
+            'reorder_lead_days' => 9,
             'price' => 120.00,
             'purchase_price' => 70.00,
         ],
-    ])->assertOk();
+    ])->assertOk()
+        ->assertJsonPath('inventory.minimum_reorder_quantity', 20)
+        ->assertJsonPath('inventory.reorder_lead_days', 9);
 
     assertDatabaseHas('inventories', [
         'product_id' => $product->getKey(),
         'stock' => 75,
         'stock_reserved' => 5,
         'stock_min' => 8,
+        'minimum_reorder_quantity' => 20,
+        'reorder_lead_days' => 9,
         'manage_stock' => true,
         'price' => 120.00,
         'purchase_price' => 70.00,

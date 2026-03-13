@@ -6,7 +6,7 @@ use BackedEnum;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\URL;
 use JsonSerializable;
-use PictaStudio\Venditio\Support\ProductMedia;
+use PictaStudio\Venditio\Support\{CatalogImage, ProductMedia};
 use Stringable;
 use UnitEnum;
 
@@ -65,6 +65,21 @@ trait CanTransformAttributes
 
                 return $transformed;
             })
+            ->values()
+            ->all();
+    }
+
+    protected function transformCatalogImageCollection(mixed $items): array
+    {
+        return collect(CatalogImage::normalizeCollection($items))
+            ->map(fn (array $item): array => [
+                'id' => Arr::get($item, 'id'),
+                'type' => Arr::get($item, 'type'),
+                'name' => Arr::get($item, 'name'),
+                'alt' => Arr::get($item, 'alt'),
+                'mimetype' => Arr::get($item, 'mimetype'),
+                'src' => $this->getImageAssetUrl(Arr::get($item, 'src')),
+            ])
             ->values()
             ->all();
     }

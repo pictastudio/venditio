@@ -39,7 +39,7 @@ it('stores and exposes category-style catalog fields on brands', function () {
     ]);
 });
 
-it('uploads brand thumb and cover images on update', function () {
+it('uploads brand images as a typed images collection on update', function () {
     Storage::fake('public');
 
     $brand = Brand::factory()->create([
@@ -49,27 +49,39 @@ it('uploads brand thumb and cover images on update', function () {
     patch(
         config('venditio.routes.api.v1.prefix') . '/brands/' . $brand->getKey(),
         [
-            'img_thumb' => [
-                'file' => UploadedFile::fake()->image('thumb.jpg'),
-                'alt' => 'thumb',
-                'name' => 'Thumb',
-            ],
-            'img_cover' => [
-                'file' => UploadedFile::fake()->image('cover.jpg'),
-                'alt' => 'cover',
-                'name' => 'Cover',
+            'images' => [
+                [
+                    'file' => UploadedFile::fake()->image('thumb.jpg'),
+                    'alt' => 'thumb',
+                    'name' => 'Thumb',
+                    'type' => 'thumb',
+                ],
+                [
+                    'file' => UploadedFile::fake()->image('cover.jpg'),
+                    'alt' => 'cover',
+                    'name' => 'Cover',
+                    'type' => 'cover',
+                ],
             ],
         ],
         ['Accept' => 'application/json']
-    )->assertOk();
+    )->assertOk()
+        ->assertJsonPath('images.0.type', 'thumb')
+        ->assertJsonPath('images.1.type', 'cover');
 
     $brand->refresh();
 
-    expect(str_starts_with((string) data_get($brand->img_thumb, 'src'), 'brands/' . $brand->getKey() . '/img_thumb/'))
+    $thumb = collect($brand->images)->firstWhere('type', 'thumb');
+    $cover = collect($brand->images)->firstWhere('type', 'cover');
+
+    expect($brand->images)->toBeArray()->toHaveCount(2)
+        ->and(data_get($thumb, 'type'))->toBe('thumb')
+        ->and(data_get($cover, 'type'))->toBe('cover')
+        ->and(str_starts_with((string) data_get($thumb, 'src'), 'brands/' . $brand->getKey() . '/thumb/'))
         ->toBeTrue()
-        ->and(str_starts_with((string) data_get($brand->img_cover, 'src'), 'brands/' . $brand->getKey() . '/img_cover/'))
+        ->and(str_starts_with((string) data_get($cover, 'src'), 'brands/' . $brand->getKey() . '/cover/'))
         ->toBeTrue();
 
-    Storage::disk('public')->assertExists((string) data_get($brand->img_thumb, 'src'));
-    Storage::disk('public')->assertExists((string) data_get($brand->img_cover, 'src'));
+    Storage::disk('public')->assertExists((string) data_get($thumb, 'src'));
+    Storage::disk('public')->assertExists((string) data_get($cover, 'src'));
 });

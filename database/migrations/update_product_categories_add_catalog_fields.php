@@ -12,8 +12,7 @@ return new class extends Migration
             $table->text('abstract')->nullable()->after('slug');
             $table->text('description')->nullable()->after('abstract');
             $table->json('metadata')->nullable()->after('description');
-            $table->json('img_thumb')->nullable()->after('metadata');
-            $table->json('img_cover')->nullable()->after('img_thumb');
+            $table->json('images')->nullable()->after('metadata');
             $table->boolean('show_in_menu')->default(false)->after('active');
             $table->boolean('in_evidence')->default(false)->after('show_in_menu');
             $table->dateTime('visible_from')->nullable()->index()->after('sort_order');
@@ -23,21 +22,36 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('product_categories', function (Blueprint $table) {
-            $table->dropIndex(['visible_from']);
-            $table->dropIndex(['visible_until']);
+        $hasVisibleFrom = Schema::hasColumn('product_categories', 'visible_from');
+        $hasVisibleUntil = Schema::hasColumn('product_categories', 'visible_until');
+        $columns = collect([
+            'abstract',
+            'description',
+            'metadata',
+            'images',
+            'show_in_menu',
+            'in_evidence',
+            'visible_from',
+            'visible_until',
+        ])
+            ->filter(fn (string $column): bool => Schema::hasColumn('product_categories', $column))
+            ->values()
+            ->all();
 
-            $table->dropColumn([
-                'abstract',
-                'description',
-                'metadata',
-                'img_thumb',
-                'img_cover',
-                'show_in_menu',
-                'in_evidence',
-                'visible_from',
-                'visible_until',
-            ]);
+        if ($columns === []) {
+            return;
+        }
+
+        Schema::table('product_categories', function (Blueprint $table) use ($columns, $hasVisibleFrom, $hasVisibleUntil) {
+            if ($hasVisibleFrom) {
+                $table->dropIndex(['visible_from']);
+            }
+
+            if ($hasVisibleUntil) {
+                $table->dropIndex(['visible_until']);
+            }
+
+            $table->dropColumn($columns);
         });
     }
 };

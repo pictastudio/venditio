@@ -12,15 +12,19 @@ return new class extends Migration
             return;
         }
 
-        Schema::table('addresses', function (Blueprint $table) {
-            if (!Schema::hasColumn('addresses', 'sdi')) {
-                $table->string('sdi')->nullable();
-            }
+        if (!Schema::hasColumn('addresses', 'sdi')) {
+            Schema::table('addresses', function (Blueprint $table) {
+                $table->string('sdi')->nullable()->after('fiscal_code');
+            });
+        }
 
-            if (!Schema::hasColumn('addresses', 'pec')) {
-                $table->string('pec')->nullable();
-            }
-        });
+        if (!Schema::hasColumn('addresses', 'pec')) {
+            Schema::table('addresses', function (Blueprint $table) {
+                $table->string('pec')->nullable()->after(
+                    Schema::hasColumn('addresses', 'sdi') ? 'sdi' : 'fiscal_code'
+                );
+            });
+        }
     }
 
     public function down(): void

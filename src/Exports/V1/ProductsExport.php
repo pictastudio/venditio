@@ -38,6 +38,8 @@ class ProductsExport implements FromCollection, WithColumnFormatting, WithHeadin
         'stock_reserved',
         'stock_available',
         'stock_min',
+        'minimum_reorder_quantity',
+        'reorder_lead_days',
     ];
 
     private const BOOLEAN_COLUMNS = [
@@ -106,6 +108,8 @@ class ProductsExport implements FromCollection, WithColumnFormatting, WithHeadin
             'stock_reserved' => $product->inventory?->stock_reserved,
             'stock_available' => $product->inventory?->stock_available,
             'stock_min' => $product->inventory?->stock_min,
+            'minimum_reorder_quantity' => $product->inventory?->minimum_reorder_quantity,
+            'reorder_lead_days' => $product->inventory?->reorder_lead_days,
             'category_ids' => $product->relationLoaded('categories')
                 ? $product->categories
                     ->map(fn (Model $category): mixed => $this->relationDisplayValue($category, ['name', 'slug']))

@@ -70,6 +70,7 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_product_variant_options_table',
                 'create_product_configuration_table',
                 'create_inventories_table',
+                'update_inventories_add_reorder_fields',
                 'create_price_lists_table',
                 'create_price_list_prices_table',
                 'create_carts_table',

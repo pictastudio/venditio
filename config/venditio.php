@@ -341,6 +341,8 @@ return [
                 'stock_reserved',
                 'stock_available',
                 'stock_min',
+                'minimum_reorder_quantity',
+                'reorder_lead_days',
                 'category_ids',
                 'variant_option_ids',
                 'created_at',
