@@ -5,8 +5,8 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use PictaStudio\Venditio\Actions\Brands\{CreateBrand, UpdateBrand};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Brand\{StoreBrandRequest, UpdateBrandRequest};
 use PictaStudio\Venditio\Http\Resources\V1\BrandResource;
@@ -35,11 +35,8 @@ class BrandController extends Controller
         $this->authorizeIfConfigured('create', resolve_model('brand'));
         $includes = $this->resolveBrandIncludes();
 
-        $payload = $request->validated();
-        $tagIds = Arr::pull($payload, 'tag_ids', []);
-
-        $brand = query('brand')->create($payload);
-        $brand->tags()->sync($tagIds);
+        $brand = app(CreateBrand::class)
+            ->handle($request->validated());
 
         return BrandResource::make($brand->refresh()->load($this->brandRelationsForIncludes($includes, true)));
     }
@@ -57,16 +54,8 @@ class BrandController extends Controller
         $this->authorizeIfConfigured('update', $brand);
         $includes = $this->resolveBrandIncludes();
 
-        $payload = $request->validated();
-        $tagIdsProvided = array_key_exists('tag_ids', $payload);
-        $tagIds = Arr::pull($payload, 'tag_ids', []);
-
-        $brand->fill($payload);
-        $brand->save();
-
-        if ($tagIdsProvided) {
-            $brand->tags()->sync($tagIds);
-        }
+        $brand = app(UpdateBrand::class)
+            ->handle($brand, $request->validated());
 
         return BrandResource::make($brand->refresh()->load($this->brandRelationsForIncludes($includes, true)));
     }

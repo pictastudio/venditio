@@ -25,6 +25,8 @@ class AddressDto extends Dto implements AddressDtoContract
         private ?string $phone,
         private ?string $vatNumber,
         private ?string $fiscalCode,
+        private ?string $sdi,
+        private ?string $pec,
         private ?string $companyName,
         private ?string $addressLine1,
         private ?string $addressLine2,
@@ -110,6 +112,16 @@ class AddressDto extends Dto implements AddressDtoContract
         return $this->fiscalCode;
     }
 
+    public function getSdi(): ?string
+    {
+        return $this->sdi;
+    }
+
+    public function getPec(): ?string
+    {
+        return $this->pec;
+    }
+
     public function getCompanyName(): ?string
     {
         return $this->companyName;
@@ -173,6 +185,8 @@ class AddressDto extends Dto implements AddressDtoContract
             'phone' => $this->getPhone(),
             'vat_number' => $this->getVatNumber(),
             'fiscal_code' => $this->getFiscalCode(),
+            'sdi' => $this->getSdi(),
+            'pec' => $this->getPec(),
             'company_name' => $this->getCompanyName(),
             'address_line_1' => $this->getAddressLine1(),
             'address_line_2' => $this->getAddressLine2(),
@@ -204,6 +218,8 @@ class AddressDto extends Dto implements AddressDtoContract
             'phone' => $this->getPhone(),
             'vat_number' => $this->getVatNumber(),
             'fiscal_code' => $this->getFiscalCode(),
+            'sdi' => $this->getSdi(),
+            'pec' => $this->getPec(),
             'company_name' => $this->getCompanyName(),
             'address_line_1' => $this->getAddressLine1(),
             'address_line_2' => $this->getAddressLine2(),

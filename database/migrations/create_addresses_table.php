@@ -23,6 +23,8 @@ return new class extends Migration
             $table->string('phone', 50);
             $table->string('vat_number', 25)->nullable();
             $table->string('fiscal_code', 25);
+            $table->string('sdi')->nullable();
+            $table->string('pec')->nullable();
             $table->string('company_name')->nullable();
             $table->string('address_line_1')->comment('street address, including the house number and street name');
             $table->string('address_line_2')->nullable()->comment('apartment, suite, unit, building, floor, etc.');

@@ -170,6 +170,8 @@ it('allows connecting an address to a province', function () {
         'sex' => 'm',
         'phone' => '123456789',
         'fiscal_code' => 'RSSMRA80A01F205X',
+        'sdi' => 'ABC1234',
+        'pec' => 'mario.rossi@pec.example.test',
         'address_line_1' => 'Via Roma 1',
         'city' => 'Milano',
         'state' => 'MI',
@@ -179,5 +181,33 @@ it('allows connecting an address to a province', function () {
     postJson(config('venditio.routes.api.v1.prefix') . '/addresses', $payload)
         ->assertCreated()
         ->assertJsonPath('country_id', $country->getKey())
-        ->assertJsonPath('province_id', $province->getKey());
+        ->assertJsonPath('province_id', $province->getKey())
+        ->assertJsonPath('sdi', 'ABC1234')
+        ->assertJsonPath('pec', 'mario.rossi@pec.example.test');
+});
+
+it('rejects invalid pec when creating an address', function () {
+    $country = createCountryForMunicipality('IT', 'ITA', 'Italy');
+    $region = createRegionForMunicipality($country, 'Lombardia', 'LOM');
+    $province = createProvinceForMunicipality($region, 'Milano', 'MI');
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/addresses', [
+        'addressable_type' => 'user',
+        'addressable_id' => 1,
+        'country_id' => $country->getKey(),
+        'province_id' => $province->getKey(),
+        'type' => 'billing',
+        'first_name' => 'Mario',
+        'last_name' => 'Rossi',
+        'email' => 'mario.rossi@example.test',
+        'sex' => 'm',
+        'phone' => '123456789',
+        'fiscal_code' => 'RSSMRA80A01F205X',
+        'address_line_1' => 'Via Roma 1',
+        'city' => 'Milano',
+        'state' => 'MI',
+        'zip' => '20100',
+        'pec' => 'not-an-email',
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['pec']);
 });

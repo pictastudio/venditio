@@ -353,6 +353,8 @@ class SeedRandomDataCommand extends Command
         for ($i = 1; $i <= $count; $i++) {
             $brand = query('brand')->create([
                 'name' => "Brand {$i} " . mb_strtoupper(Str::random(4)),
+                'active' => true,
+                'sort_order' => $i,
             ]);
 
             $ids->push($brand->getKey());

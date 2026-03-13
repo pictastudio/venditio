@@ -337,6 +337,48 @@ it('recalculates cart line VAT when checkout sets billing and shipping addresses
         ->assertJsonPath('total_final', 110);
 });
 
+it('accepts sdi and pec in cart addresses', function () {
+    $user = createUserForCart('user-cart-address-fields@example.test');
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $cartId = postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'addresses' => [
+            'billing' => [
+                'sdi' => 'ABC1234',
+                'pec' => 'billing@pec.example.test',
+            ],
+        ],
+    ])->assertCreated()
+        ->json('id');
+
+    getJson($prefix . '/carts/' . $cartId)
+        ->assertOk()
+        ->assertJsonPath('addresses.billing.sdi', 'ABC1234')
+        ->assertJsonPath('addresses.billing.pec', 'billing@pec.example.test');
+});
+
+it('rejects invalid pec in cart addresses', function () {
+    $user = createUserForCart('user-cart-address-invalid-pec@example.test');
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'addresses' => [
+            'billing' => [
+                'pec' => 'invalid-pec',
+            ],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['addresses.billing.pec']);
+});
+
 it('filters carts by user_id', function () {
     $userA = createUserForCart('user-a@example.test');
     $userB = createUserForCart('user-b@example.test');

@@ -92,6 +92,8 @@ class OrderValidation implements OrderValidationRules
                 'integer',
                 Rule::exists($this->tableFor('province'), 'id'),
             ],
+            $key . '.sdi' => ['nullable', 'string', 'max:255'],
+            $key . '.pec' => ['nullable', 'email', 'max:255'],
         ];
     }
 

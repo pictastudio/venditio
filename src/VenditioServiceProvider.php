@@ -41,6 +41,7 @@ class VenditioServiceProvider extends PackageServiceProvider
             ->hasCommands([ReleaseStockForAbandonedCarts::class, SeedRandomDataCommand::class, InstallCommand::class])
             ->hasMigrations([
                 'create_addresses_table',
+                'update_addresses_add_sdi_pec',
                 'create_countries_table',
                 'create_regions_table',
                 'create_provinces_table',
@@ -52,6 +53,7 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_order_lines_table',
                 'create_shipping_statuses_table',
                 'create_brands_table',
+                'update_brands_add_catalog_fields',
                 'create_product_categories_table',
                 'update_product_categories_add_catalog_fields',
                 'create_discount_applications_table',

@@ -20,6 +20,8 @@ class AddressFactory extends Factory
             'phone' => fake()->phoneNumber(),
             'vat_number' => fake()->randomNumber(11),
             'fiscal_code' => fake()->randomNumber(16),
+            'sdi' => mb_strtoupper(fake()->bothify('???????')),
+            'pec' => fake()->safeEmail(),
             'company_name' => fake()->company(),
             'address_line_1' => fake()->streetAddress(),
             'address_line_2' => fake()->streetAddress(),

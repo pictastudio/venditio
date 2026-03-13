@@ -19,6 +19,15 @@ headers {
 body:json {
   {
     "name": "Brand 1",
+    "abstract": "Short abstract",
+    "description": "Long description",
+    "metadata": {
+      "icon": "star"
+    },
+    "active": true,
+    "show_in_menu": true,
+    "in_evidence": false,
+    "sort_order": 1,
     "tag_ids": [1, 2]
   }
 }
@@ -42,10 +51,28 @@ docs {
   - Available fields:
   - name
   - slug
+  - abstract
+  - description
+  - metadata (array)
+  - img_thumb (object|nullable)
+  - img_thumb.file (file|image, required_with:img_thumb)
+  - img_thumb.alt
+  - img_thumb.name
+  - img_cover (object|nullable)
+  - img_cover.file (file|image, required_with:img_cover)
+  - img_cover.alt
+  - img_cover.name
+  - active
+  - show_in_menu
+  - in_evidence
+  - sort_order
   - tag_ids (array)
   - tag_ids.*
   - {locale}.name (locale object notation)
   - {locale}.slug (locale object notation)
   - name:{locale} (locale suffix notation)
   - slug:{locale} (locale suffix notation)
+  - {locale}.abstract / abstract:{locale}
+  - {locale}.description / description:{locale}
+  - Note: for image upload use multipart/form-data.
 }

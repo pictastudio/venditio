@@ -17,6 +17,8 @@ Table addresses {
   phone varchar(50) [not null]
   vat_number varchar(25)
   fiscal_code varchar(25) [not null]
+  sdi varchar(255)
+  pec varchar(255)
   company_name varchar(255)
   address_line_1 varchar(255) [not null, note: 'street address, including the house number and street name']
   address_line_2 varchar(255) [note: 'apartment, suite, unit, building, floor, etc.']
@@ -39,6 +41,16 @@ Table addresses {
 Table brands {
   id bigint [pk, increment, not null]
   name varchar(255) [not null]
+  slug varchar(255) [not null, unique]
+  abstract text
+  description text
+  metadata json
+  img_thumb json
+  img_cover json
+  active boolean [not null, default: true]
+  show_in_menu boolean [not null, default: false]
+  in_evidence boolean [not null, default: false]
+  sort_order smallint [not null, default: 0]
   created_at datetime [not null]
   updated_at datetime [not null]
   deleted_at datetime

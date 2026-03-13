@@ -20,6 +20,7 @@ it('resolves slug-enabled catalog resources by slug', function () {
 
     $brandResponse = postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
         'name' => 'Nord Ridge',
+        'sort_order' => 1,
     ])->assertCreated();
 
     getJson(config('venditio.routes.api.v1.prefix') . '/brands/' . $brandResponse->json('slug'))
@@ -65,6 +66,7 @@ it('resolves slug-enabled catalog resources by translated slug in any locale', f
                 'name' => 'Fabbrica Scarpe',
             ],
         ],
+        'sort_order' => 1,
     ])->assertCreated();
 
     getJson(

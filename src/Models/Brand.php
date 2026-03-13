@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{HasMany, MorphToMany};
 use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
+use PictaStudio\Venditio\Models\Scopes\{Active, Ordered};
 use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods, LogsActivity, ResolvesRouteBindingByIdOrSlug};
 use Spatie\Sluggable\{HasSlug, SlugOptions};
 
@@ -23,7 +24,7 @@ class Brand extends Model implements TranslatableContract
     use SoftDeletes;
     use Translatable;
 
-    public array $translatedAttributes = ['name', 'slug'];
+    public array $translatedAttributes = ['name', 'slug', 'abstract', 'description'];
 
     protected $guarded = [
         'id',
@@ -31,6 +32,26 @@ class Brand extends Model implements TranslatableContract
         'updated_at',
         'deleted_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'active' => 'boolean',
+            'show_in_menu' => 'boolean',
+            'in_evidence' => 'boolean',
+            'metadata' => 'json',
+            'img_thumb' => 'json',
+            'img_cover' => 'json',
+        ];
+    }
+
+    protected static function booted(): void
+    {
+        static::addGlobalScopes([
+            Ordered::class,
+            Active::class,
+        ]);
+    }
 
     public function products(): HasMany
     {

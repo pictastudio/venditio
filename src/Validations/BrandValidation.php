@@ -17,6 +17,21 @@ class BrandValidation implements BrandValidationRules
         return [
             'name' => ['sometimes', 'filled', 'string', 'max:255'],
             'slug' => ['sometimes', 'filled', 'string', 'max:255'],
+            'abstract' => ['nullable', 'string'],
+            'description' => ['nullable', 'string'],
+            'metadata' => ['nullable', 'array'],
+            'img_thumb' => ['sometimes', 'nullable', 'array'],
+            'img_thumb.file' => ['required_with:img_thumb', 'file', 'image'],
+            'img_thumb.alt' => ['nullable', 'string', 'max:255'],
+            'img_thumb.name' => ['nullable', 'string', 'max:255'],
+            'img_cover' => ['sometimes', 'nullable', 'array'],
+            'img_cover.file' => ['required_with:img_cover', 'file', 'image'],
+            'img_cover.alt' => ['nullable', 'string', 'max:255'],
+            'img_cover.name' => ['nullable', 'string', 'max:255'],
+            'active' => ['sometimes', 'boolean'],
+            'show_in_menu' => ['sometimes', 'boolean'],
+            'in_evidence' => ['sometimes', 'boolean'],
+            'sort_order' => ['required', 'integer', 'min:0'],
             'tag_ids' => ['nullable', 'array'],
             'tag_ids.*' => [
                 'integer',
@@ -26,6 +41,8 @@ class BrandValidation implements BrandValidationRules
             ...$this->translatableLocaleRules([
                 'name' => ['sometimes', 'filled', 'string', 'max:255'],
                 'slug' => ['sometimes', 'filled', 'string', 'max:255'],
+                'abstract' => ['sometimes', 'nullable', 'string'],
+                'description' => ['sometimes', 'nullable', 'string'],
             ]),
         ];
     }
@@ -35,6 +52,21 @@ class BrandValidation implements BrandValidationRules
         return [
             'name' => ['sometimes', 'filled', 'string', 'max:255'],
             'slug' => ['sometimes', 'filled', 'string', 'max:255'],
+            'abstract' => ['nullable', 'string'],
+            'description' => ['nullable', 'string'],
+            'metadata' => ['nullable', 'array'],
+            'img_thumb' => ['sometimes', 'nullable', 'array'],
+            'img_thumb.file' => ['required_with:img_thumb', 'file', 'image'],
+            'img_thumb.alt' => ['nullable', 'string', 'max:255'],
+            'img_thumb.name' => ['nullable', 'string', 'max:255'],
+            'img_cover' => ['sometimes', 'nullable', 'array'],
+            'img_cover.file' => ['required_with:img_cover', 'file', 'image'],
+            'img_cover.alt' => ['nullable', 'string', 'max:255'],
+            'img_cover.name' => ['nullable', 'string', 'max:255'],
+            'active' => ['sometimes', 'boolean'],
+            'show_in_menu' => ['sometimes', 'boolean'],
+            'in_evidence' => ['sometimes', 'boolean'],
+            'sort_order' => ['sometimes', 'integer', 'min:0'],
             'tag_ids' => ['nullable', 'array'],
             'tag_ids.*' => [
                 'integer',
@@ -44,6 +76,8 @@ class BrandValidation implements BrandValidationRules
             ...$this->translatableLocaleRules([
                 'name' => ['sometimes', 'filled', 'string', 'max:255'],
                 'slug' => ['sometimes', 'filled', 'string', 'max:255'],
+                'abstract' => ['sometimes', 'nullable', 'string'],
+                'description' => ['sometimes', 'nullable', 'string'],
             ]),
         ];
     }

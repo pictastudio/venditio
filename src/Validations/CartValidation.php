@@ -77,6 +77,8 @@ class CartValidation implements CartValidationRules
             $key . '.phone' => ['nullable', 'string', 'max:50'],
             $key . '.vat_number' => ['nullable', 'string', 'max:25'],
             $key . '.fiscal_code' => ['nullable', 'string', 'max:25'],
+            $key . '.sdi' => ['nullable', 'string', 'max:255'],
+            $key . '.pec' => ['nullable', 'email', 'max:255'],
             $key . '.company_name' => ['nullable', 'string'],
             $key . '.address_line_1' => ['nullable', 'string'],
             $key . '.address_line_2' => ['nullable', 'string'],

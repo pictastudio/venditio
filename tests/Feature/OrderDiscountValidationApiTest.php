@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
 use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, TaxClass, User};
 
-use function Pest\Laravel\postJson;
+use function Pest\Laravel\{patchJson, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -167,4 +167,70 @@ it('copies inventory currency_id from cart lines to order lines', function () {
         ->where('order_id', (int) $response->json('id'))
         ->value('currency_id'))
         ->toBe($lineCurrencyId);
+});
+
+it('accepts sdi and pec when updating order addresses', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupOrderDiscountValidationTaxEnvironment($taxClass);
+    $user = createOrderDiscountValidationUser('user-order-address-fields@example.test');
+    $product = createOrderDiscountValidationProduct($taxClass);
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $cartId = postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 1],
+        ],
+    ])->assertCreated()->json('id');
+
+    $orderId = postJson($prefix . '/orders', [
+        'cart_id' => $cartId,
+    ])->assertOk()->json('id');
+
+    patchJson($prefix . '/orders/' . $orderId, [
+        'addresses' => [
+            'billing' => [
+                'sdi' => 'ABC1234',
+                'pec' => 'billing@pec.example.test',
+            ],
+        ],
+    ])->assertOk()
+        ->assertJsonPath('addresses.billing.sdi', 'ABC1234')
+        ->assertJsonPath('addresses.billing.pec', 'billing@pec.example.test');
+});
+
+it('rejects invalid pec when updating order addresses', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupOrderDiscountValidationTaxEnvironment($taxClass);
+    $user = createOrderDiscountValidationUser('user-order-address-invalid-pec@example.test');
+    $product = createOrderDiscountValidationProduct($taxClass);
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $cartId = postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 1],
+        ],
+    ])->assertCreated()->json('id');
+
+    $orderId = postJson($prefix . '/orders', [
+        'cart_id' => $cartId,
+    ])->assertOk()->json('id');
+
+    patchJson($prefix . '/orders/' . $orderId, [
+        'addresses' => [
+            'billing' => [
+                'pec' => 'invalid-pec',
+            ],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['addresses.billing.pec']);
 });

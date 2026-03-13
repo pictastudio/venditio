@@ -135,18 +135,25 @@ it('supports translated names for product variant options', function () {
 
 it('supports translations wrapper payloads for brands', function () {
     $response = postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+        'sort_order' => 1,
         'translations' => [
             'en' => [
                 'name' => 'Shoes Factory',
+                'abstract' => 'English abstract',
+                'description' => 'English description',
             ],
             'it' => [
                 'name' => 'Fabbrica Scarpe',
+                'abstract' => 'Abstract italiano',
+                'description' => 'Descrizione italiana',
             ],
         ],
     ])->assertCreated()
         ->assertJsonFragment([
             'name' => 'Shoes Factory',
             'slug' => 'shoes-factory',
+            'abstract' => 'English abstract',
+            'description' => 'English description',
         ]);
 
     $brandId = $response->json('id');
@@ -165,6 +172,20 @@ it('supports translations wrapper payloads for brands', function () {
         'attribute' => 'slug',
         'value' => 'fabbrica-scarpe',
     ]);
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new Brand)->getMorphClass(),
+        'translatable_id' => $brandId,
+        'locale' => 'it',
+        'attribute' => 'abstract',
+        'value' => 'Abstract italiano',
+    ]);
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new Brand)->getMorphClass(),
+        'translatable_id' => $brandId,
+        'locale' => 'it',
+        'attribute' => 'description',
+        'value' => 'Descrizione italiana',
+    ]);
 
     getJson(
         config('venditio.routes.api.v1.prefix') . "/brands/{$brandId}",
@@ -173,6 +194,8 @@ it('supports translations wrapper payloads for brands', function () {
         ->assertJsonFragment([
             'name' => 'Fabbrica Scarpe',
             'slug' => 'fabbrica-scarpe',
+            'abstract' => 'Abstract italiano',
+            'description' => 'Descrizione italiana',
         ]);
 });
 
@@ -411,6 +434,7 @@ it('keeps translated slugs in sync on update', function () {
     ]);
 
     $brandResponse = postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+        'sort_order' => 1,
         'en' => [
             'name' => 'Shoes Factory',
         ],
@@ -586,6 +610,7 @@ it('allows duplicate translated names for product types on update while keeping 
 
 it('allows duplicate translated names for brands while keeping base slug unique', function () {
     postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+        'sort_order' => 1,
         'en' => [
             'name' => 'Shoes Factory',
         ],
@@ -598,6 +623,7 @@ it('allows duplicate translated names for brands while keeping base slug unique'
         ]);
 
     $secondResponse = postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+        'sort_order' => 2,
         'en' => [
             'name' => 'Shoes Factory',
         ],
@@ -620,6 +646,7 @@ it('allows duplicate translated names for brands while keeping base slug unique'
 
 it('allows duplicate translated names for brands on update while keeping base slug unique', function () {
     postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+        'sort_order' => 1,
         'en' => [
             'name' => 'Shoes Factory',
         ],
@@ -629,6 +656,7 @@ it('allows duplicate translated names for brands on update while keeping base sl
     ])->assertCreated();
 
     $brandResponse = postJson(config('venditio.routes.api.v1.prefix') . '/brands', [
+        'sort_order' => 2,
         'en' => [
             'name' => 'Leather House',
         ],

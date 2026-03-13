@@ -30,6 +30,10 @@ interface AddressDtoContract extends Dto
 
     public function getFiscalCode(): ?string;
 
+    public function getSdi(): ?string;
+
+    public function getPec(): ?string;
+
     public function getCompanyName(): ?string;
 
     public function getAddressLine1(): ?string;

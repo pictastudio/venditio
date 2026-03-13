@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\ProductStatus;
-use PictaStudio\Venditio\Models\{Product, ProductCategory, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Product, ProductCategory, TaxClass};
 
 use function Pest\Laravel\getJson;
 
@@ -165,6 +165,30 @@ it('allows explicit active filters to override the active global scope', functio
     )->assertOk();
 
     expect(collect($response->json())->pluck('id')->all())->toBe([$inactiveCategory->getKey()]);
+});
+
+it('applies the active global scope to brands by default and allows excluding it', function () {
+    $inactiveBrand = Brand::factory()->create([
+        'active' => false,
+    ]);
+
+    $activeBrand = Brand::factory()->create([
+        'active' => true,
+    ]);
+
+    $defaultResponse = getJson(config('venditio.routes.api.v1.prefix') . '/brands?all=1')
+        ->assertOk();
+
+    expect(collect($defaultResponse->json())->pluck('id')->all())
+        ->toContain($activeBrand->getKey())
+        ->not->toContain($inactiveBrand->getKey());
+
+    $excludeScopeResponse = getJson(
+        config('venditio.routes.api.v1.prefix') . '/brands?all=1&exclude_active_scope=1'
+    )->assertOk();
+
+    expect(collect($excludeScopeResponse->json())->pluck('id')->all())
+        ->toContain($activeBrand->getKey(), $inactiveBrand->getKey());
 });
 
 it('allows explicit date filters to override the date range global scope', function () {

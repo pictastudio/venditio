@@ -63,7 +63,10 @@ it('supports deleting brands and orders through api resources', function () {
 it('supports creating brands through api resources', function () {
     $prefix = config('venditio.routes.api.v1.prefix');
 
-    postJson($prefix . '/brands', ['name' => 'Acme'])
+    postJson($prefix . '/brands', [
+        'name' => 'Acme',
+        'sort_order' => 1,
+    ])
         ->assertStatus(201)
         ->assertJsonFragment(['name' => 'Acme']);
 });

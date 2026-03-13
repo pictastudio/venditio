@@ -58,6 +58,30 @@ it('filters brands by related tag ids', function () {
         ->not->toContain($brandWithTagB->getKey());
 });
 
+it('filters brands by category-style catalog columns', function () {
+    $menuBrand = Brand::factory()->create([
+        'show_in_menu' => true,
+        'in_evidence' => false,
+        'sort_order' => 10,
+    ]);
+
+    Brand::factory()->create([
+        'show_in_menu' => false,
+        'in_evidence' => true,
+        'sort_order' => 20,
+    ]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix') . '/brands?all=1&show_in_menu=1&sort_order=10'
+    )->assertOk();
+
+    $ids = collect(apiListData($response->json()))
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toBe([$menuBrand->getKey()]);
+});
+
 it('supports pagination and sorting query params on list endpoints', function () {
     Brand::factory()->count(5)->create();
 
