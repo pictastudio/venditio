@@ -224,7 +224,7 @@ class ProductResource extends JsonResource
                         ->map(fn ($option): array => [
                             'id' => $option->getKey(),
                             'value' => $option->name,
-                            'image' => $this->getImageAssetUrl($option->image),
+                            'images' => ProductVariantOptionResource::make($option)->resolve()['images'] ?? [],
                             'hex_color' => $option->hex_color,
                         ])
                         ->all(),

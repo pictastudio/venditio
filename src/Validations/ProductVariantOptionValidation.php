@@ -31,7 +31,6 @@ class ProductVariantOptionValidation implements ProductVariantOptionValidationRu
                 'max:255',
                 $this->uniqueNameWithinProductVariantRule(),
             ],
-            'image' => ['sometimes', 'nullable', 'string'],
             'hex_color' => ['sometimes', 'nullable', 'string', 'max:20', $this->hexColorAllowedByVariantRule()],
             'sort_order' => ['required', 'integer', 'min:0'],
             ...$this->translatableLocaleRules([
@@ -56,7 +55,6 @@ class ProductVariantOptionValidation implements ProductVariantOptionValidationRu
                 'max:255',
                 $this->uniqueNameWithinProductVariantRule($this->routeModelKey('product_variant_option')),
             ],
-            'image' => ['sometimes', 'nullable', 'string'],
             'hex_color' => ['sometimes', 'nullable', 'string', 'max:20', $this->hexColorAllowedByVariantRule()],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
             ...$this->translatableLocaleRules([

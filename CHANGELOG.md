@@ -2,6 +2,28 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.0.1 - 2026-03-16
+
+### What's Changed
+
+#### Breaking Changes
+
+- **Variant option image field removal** - `product_variant_options.image` has been removed from the schema, validation rules, filters, factories, and request examples. A follow-up migration drops the legacy column for existing installs.
+
+#### Features
+
+- **Shared variant option images** - Product variant option responses and `variants_options_table` entries now expose an `images` collection derived from media uploaded through the shared variant-option upload endpoint for that specific option.
+
+#### API & Tooling
+
+- **Bruno and schema docs** - Updated variant option request examples and filter metadata to remove the legacy `image` field from the documented public surface.
+
+#### Tests
+
+- Added feature coverage for shared variant option images on both the variant option endpoint and the product `variants_options_table` response.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.0.0...v2.0.1
+
 ## v2.0.0 - 2026-03-13
 
 ### What's Changed

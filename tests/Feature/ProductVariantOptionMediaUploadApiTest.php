@@ -5,7 +5,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use PictaStudio\Venditio\Models\{Brand, Product, ProductType, ProductVariant, ProductVariantOption, TaxClass};
 
-use function Pest\Laravel\{deleteJson, post};
+use function Pest\Laravel\{deleteJson, getJson, post};
 
 uses(RefreshDatabase::class);
 
@@ -148,6 +148,16 @@ it('uploads shared media for a variant option and appends it to matching variant
         expect($variant->images)->toBeArray()->toHaveCount(0)
             ->and($variant->files)->toBeArray()->toHaveCount(0);
     }
+
+    $optionResponse = getJson(config('venditio.routes.api.v1.prefix') . "/product_variant_options/{$red->getKey()}")
+        ->assertOk()
+        ->assertJsonMissingPath('image')
+        ->assertJsonCount(1, 'images')
+        ->assertJsonPath('images.0.alt', 'Red front')
+        ->assertJsonPath('images.0.shared_from_variant_option', true);
+
+    expect((string) data_get($optionResponse->json(), 'images.0.src'))
+        ->toContain("/storage/products/{$product->getKey()}/variant_options/{$red->getKey()}/images/");
 });
 
 it('rejects shared variant option media upload when the option does not match the target product', function () {

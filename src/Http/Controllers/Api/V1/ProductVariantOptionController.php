@@ -30,6 +30,7 @@ class ProductVariantOptionController extends Controller
         ]);
 
         $query = query('product_variant_option')
+            ->with('variantProducts')
             ->when(
                 isset($filters['product_variant_id']),
                 fn ($query) => $query->where('product_variant_id', $filters['product_variant_id'])
@@ -47,14 +48,14 @@ class ProductVariantOptionController extends Controller
         $option = app(CreateProductVariantOption::class)
             ->handle($request->validated());
 
-        return ProductVariantOptionResource::make($option);
+        return ProductVariantOptionResource::make($option->load('variantProducts'));
     }
 
     public function show(ProductVariantOption $productVariantOption): JsonResource
     {
         $this->authorizeIfConfigured('view', $productVariantOption);
 
-        return ProductVariantOptionResource::make($productVariantOption);
+        return ProductVariantOptionResource::make($productVariantOption->load('variantProducts'));
     }
 
     public function update(UpdateProductVariantOptionRequest $request, ProductVariantOption $productVariantOption): JsonResource
@@ -64,7 +65,7 @@ class ProductVariantOptionController extends Controller
         $productVariantOption = app(UpdateProductVariantOption::class)
             ->handle($productVariantOption, $request->validated());
 
-        return ProductVariantOptionResource::make($productVariantOption);
+        return ProductVariantOptionResource::make($productVariantOption->load('variantProducts'));
     }
 
     public function destroy(ProductVariantOption $productVariantOption)

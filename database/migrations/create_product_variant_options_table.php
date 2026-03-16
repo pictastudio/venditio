@@ -13,7 +13,6 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(ProductVariant::class);
             $table->string('name');
-            $table->string('image')->nullable();
             $table->string('hex_color', 20)->nullable();
             $table->smallInteger('sort_order');
             $table->datetimes();

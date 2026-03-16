@@ -496,7 +496,6 @@ class SeedRandomDataCommand extends Command
                 query('product_variant_option')->create([
                     'product_variant_id' => $variant->getKey(),
                     'name' => "Option {$variantIndex}-{$optionIndex}",
-                    'image' => null,
                     'hex_color' => null,
                     'sort_order' => $optionIndex,
                 ]);

@@ -190,7 +190,7 @@ class ProductController extends Controller
 
     protected function productRelationsForIncludes(array $includes): array
     {
-        $relations = ['variantOptions.productVariant', 'inventory'];
+        $relations = ['variantOptions.productVariant', 'variantOptions.variantProducts', 'inventory'];
         $includesCollection = collect($includes);
 
         if (config('venditio.price_lists.enabled', false)) {
@@ -223,6 +223,7 @@ class ProductController extends Controller
 
         if (in_array('variants', $includes, true) || in_array('variants_options_table', $includes, true)) {
             $relations[] = 'variants.variantOptions.productVariant';
+            $relations[] = 'variants.variantOptions.variantProducts';
             $relations[] = 'variants.inventory';
 
             if ($includesCollection->contains('brand')) {

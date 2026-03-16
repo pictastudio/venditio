@@ -741,6 +741,18 @@ it('includes variants and variants options table when requested', function () {
         'visible_until' => null,
     ]);
     $variantA->variantOptions()->sync([$small->getKey(), $red->getKey()]);
+    $variantA->forceFill([
+        'images' => [[
+            'id' => 'shared-red-image',
+            'alt' => 'Shared red image',
+            'mimetype' => 'image/jpeg',
+            'sort_order' => 0,
+            'active' => true,
+            'thumbnail' => true,
+            'shared_from_variant_option' => true,
+            'src' => "products/{$product->getKey()}/variant_options/{$red->getKey()}/images/red-shared.jpg",
+        ]],
+    ])->save();
 
     $variantB = Product::factory()->create([
         'brand_id' => $brand->getKey(),
@@ -764,7 +776,9 @@ it('includes variants and variants options table when requested', function () {
         ->assertJsonPath('variants_options_table.1.id', $color->getKey())
         ->assertJsonPath('variants_options_table.1.name', 'Color')
         ->assertJsonPath('variants_options_table.1.values.0.value', 'red')
-        ->assertJsonPath('variants_options_table.1.values.1.value', 'blue');
+        ->assertJsonPath('variants_options_table.1.values.0.images.0.alt', 'Shared red image')
+        ->assertJsonPath('variants_options_table.1.values.1.value', 'blue')
+        ->assertJsonCount(0, 'variants_options_table.1.values.1.images');
 });
 
 it('includes requested product relations on show endpoint', function () {

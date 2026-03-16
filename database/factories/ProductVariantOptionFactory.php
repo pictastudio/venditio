@@ -14,7 +14,6 @@ class ProductVariantOptionFactory extends Factory
         return [
             'product_variant_id' => ProductVariant::factory(),
             'name' => fake()->randomElement(['option1', 'option2', 'option3']),
-            'image' => null,
             'hex_color' => null,
             'sort_order' => fake()->numberBetween(1, 100),
         ];

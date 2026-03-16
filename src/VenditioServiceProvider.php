@@ -68,6 +68,7 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'update_product_variants_add_accept_hex_color',
                 'create_product_custom_fields_table',
                 'create_product_variant_options_table',
+                'update_product_variant_options_remove_image_column',
                 'create_product_configuration_table',
                 'create_inventories_table',
                 'update_inventories_add_reorder_fields',

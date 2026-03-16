@@ -699,7 +699,6 @@ class Controller extends BaseController
             'product_variant_option' => [
                 'product_variant_id' => 'integer',
                 'name' => 'string',
-                'image' => 'string',
                 'hex_color' => 'string',
                 'sort_order' => 'integer',
                 'created_at' => 'date',

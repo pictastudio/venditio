@@ -2,6 +2,7 @@
 
 namespace PictaStudio\Venditio\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, BelongsToMany};
@@ -41,6 +42,14 @@ class ProductVariantOption extends Model implements TranslatableContract
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(resolve_model('product'), 'product_configuration')
+            ->withTimestamps();
+    }
+
+    public function variantProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(resolve_model('product'), 'product_configuration')
+            ->withoutGlobalScopes()
+            ->where(fn (Builder $query) => $query->whereNotNull('parent_id'))
             ->withTimestamps();
     }
 
