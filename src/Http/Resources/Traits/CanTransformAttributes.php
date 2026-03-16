@@ -78,6 +78,7 @@ trait CanTransformAttributes
                 'name' => Arr::get($item, 'name'),
                 'alt' => Arr::get($item, 'alt'),
                 'mimetype' => Arr::get($item, 'mimetype'),
+                'sort_order' => Arr::get($item, 'sort_order'),
                 'src' => $this->getImageAssetUrl(Arr::get($item, 'src')),
             ])
             ->values()

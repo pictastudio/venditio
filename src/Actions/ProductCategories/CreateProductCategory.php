@@ -48,7 +48,7 @@ class CreateProductCategory
             return null;
         }
 
-        $usedIds = CatalogImage::collectUsedIds($currentImages);
+        $usedIds = [];
         $imagesByType = collect(CatalogImage::normalizeCollection($currentImages, $usedIds))
             ->keyBy('type')
             ->all();
@@ -77,6 +77,12 @@ class CreateProductCategory
                     'alt' => Arr::get($item, 'alt'),
                     'name' => Arr::get($item, 'name'),
                     'mimetype' => Arr::get($item, 'mimetype', $item['file']->getMimeType()),
+                    'sort_order' => CatalogImage::resolveSortOrder(
+                        Arr::get($item, 'sort_order'),
+                        is_array($existingImage)
+                            ? (int) Arr::get($existingImage, 'sort_order', CatalogImage::sortWeight($type))
+                            : CatalogImage::sortWeight($type)
+                    ),
                 ];
 
                 continue;

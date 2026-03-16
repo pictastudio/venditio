@@ -10,6 +10,7 @@ use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
 use PictaStudio\Venditio\Models\Scopes\{Active, InDateRange, Ordered};
 use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods, LogsActivity, ResolvesRouteBindingByIdOrSlug};
+use PictaStudio\Venditio\Support\CatalogImage;
 use Spatie\Sluggable\{HasSlug, SlugOptions};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -55,6 +56,14 @@ class ProductCategory extends Model implements TranslatableContract
             Active::class,
             new InDateRange('visible_from', 'visible_until'),
         ]);
+
+        static::saving(function (self $category): void {
+            if ($category->getAttribute('images') === null) {
+                return;
+            }
+
+            $category->setAttribute('images', CatalogImage::normalizeCollection($category->getAttribute('images')));
+        });
     }
 
     public function products(): BelongsToMany

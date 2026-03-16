@@ -9,6 +9,7 @@ use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
 use PictaStudio\Venditio\Models\Scopes\{Active, Ordered};
 use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods, LogsActivity, ResolvesRouteBindingByIdOrSlug};
+use PictaStudio\Venditio\Support\CatalogImage;
 use Spatie\Sluggable\{HasSlug, SlugOptions};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -50,6 +51,14 @@ class Brand extends Model implements TranslatableContract
             Ordered::class,
             Active::class,
         ]);
+
+        static::saving(function (self $brand): void {
+            if ($brand->getAttribute('images') === null) {
+                return;
+            }
+
+            $brand->setAttribute('images', CatalogImage::normalizeCollection($brand->getAttribute('images')));
+        });
     }
 
     public function products(): HasMany

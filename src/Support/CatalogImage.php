@@ -20,6 +20,7 @@ class CatalogImage
 
         return collect($items)
             ->filter(fn (mixed $item) => is_array($item))
+            ->values()
             ->map(function (array $item) use (&$usedIds): ?array {
                 $type = self::resolveType(Arr::get($item, 'type'));
 
@@ -34,10 +35,20 @@ class CatalogImage
                     'alt' => Arr::get($item, 'alt'),
                     'mimetype' => Arr::get($item, 'mimetype'),
                     'src' => Arr::get($item, 'src'),
+                    'sort_order' => self::resolveSortOrder(
+                        Arr::get($item, 'sort_order'),
+                        self::sortWeight($type)
+                    ),
+                    '_type_weight' => self::sortWeight($type),
                 ];
             })
             ->filter()
-            ->sortBy(fn (array $item): int => self::sortWeight(Arr::get($item, 'type')))
+            ->sortBy([
+                ['sort_order', 'asc'],
+                ['_type_weight', 'asc'],
+                ['id', 'asc'],
+            ])
+            ->map(fn (array $item): array => Arr::except($item, '_type_weight'))
             ->values()
             ->all();
     }
@@ -55,6 +66,13 @@ class CatalogImage
             if (array_key_exists($attribute, $payload)) {
                 $updated[$attribute] = Arr::get($payload, $attribute);
             }
+        }
+
+        if (array_key_exists('sort_order', $payload)) {
+            $updated['sort_order'] = self::resolveSortOrder(
+                Arr::get($payload, 'sort_order'),
+                (int) Arr::get($existingItem, 'sort_order', self::sortWeight(Arr::get($existingItem, 'type')))
+            );
         }
 
         if (array_key_exists('type', $payload)) {
@@ -107,6 +125,15 @@ class CatalogImage
         $index = array_search(self::resolveType($type), self::TYPES, true);
 
         return is_int($index) ? $index : count(self::TYPES);
+    }
+
+    public static function resolveSortOrder(mixed $value, int $default): int
+    {
+        if (is_numeric($value) && (int) $value >= 0) {
+            return (int) $value;
+        }
+
+        return $default;
     }
 
     private static function resolveUniqueId(mixed $id, array &$usedIds): string

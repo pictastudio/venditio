@@ -5,7 +5,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use PictaStudio\Venditio\Models\{ProductCategory, Tag};
 
-use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patch, patchJson, postJson};
+use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patch, patchJson, post, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -266,6 +266,29 @@ it('orders product categories by sort_order within each tree branch', function (
         ->assertJsonPath('1.children.1.name', 'Root A Child Late');
 });
 
+it('returns root product categories ordered by sort_order on the index', function () {
+    ProductCategory::factory()->create([
+        'name' => 'Category Late',
+        'sort_order' => 30,
+    ]);
+
+    ProductCategory::factory()->create([
+        'name' => 'Category Early',
+        'sort_order' => 10,
+    ]);
+
+    ProductCategory::factory()->create([
+        'name' => 'Category Middle',
+        'sort_order' => 20,
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/product_categories?all=1')
+        ->assertOk()
+        ->assertJsonPath('0.name', 'Category Early')
+        ->assertJsonPath('1.name', 'Category Middle')
+        ->assertJsonPath('2.name', 'Category Late');
+});
+
 it('updates multiple product categories in one request', function () {
     $root = ProductCategory::factory()->create([
         'sort_order' => 1,
@@ -470,4 +493,97 @@ it('uploads category images as a typed images collection on update', function ()
 
     Storage::disk('public')->assertExists((string) data_get($thumb, 'src'));
     Storage::disk('public')->assertExists((string) data_get($cover, 'src'));
+});
+
+it('stores product category images with sort_order and returns them in the persisted order', function () {
+    Storage::fake('public');
+
+    $response = post(
+        config('venditio.routes.api.v1.prefix') . '/product_categories',
+        [
+            'name' => 'Ordered Category',
+            'active' => true,
+            'sort_order' => 1,
+            'images' => [
+                [
+                    'file' => UploadedFile::fake()->image('thumb.jpg'),
+                    'alt' => 'thumb',
+                    'name' => 'Thumb',
+                    'type' => 'thumb',
+                    'sort_order' => 20,
+                ],
+                [
+                    'file' => UploadedFile::fake()->image('cover.jpg'),
+                    'alt' => 'cover',
+                    'name' => 'Cover',
+                    'type' => 'cover',
+                    'sort_order' => 10,
+                ],
+            ],
+        ],
+        ['Accept' => 'application/json']
+    )->assertCreated()
+        ->assertJsonPath('images.0.type', 'cover')
+        ->assertJsonPath('images.0.sort_order', 10)
+        ->assertJsonPath('images.1.type', 'thumb')
+        ->assertJsonPath('images.1.sort_order', 20);
+
+    $category = ProductCategory::query()->findOrFail($response->json('id'));
+
+    expect(data_get($category->images, '0.type'))->toBe('cover')
+        ->and(data_get($category->images, '0.sort_order'))->toBe(10)
+        ->and(data_get($category->images, '1.type'))->toBe('thumb')
+        ->and(data_get($category->images, '1.sort_order'))->toBe(20);
+});
+
+it('updates product category image sort_order without requiring a new upload', function () {
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+        'images' => [
+            [
+                'id' => 'thumb-image',
+                'type' => 'thumb',
+                'alt' => 'Thumb',
+                'mimetype' => 'image/jpeg',
+                'sort_order' => 20,
+                'src' => 'product_categories/thumb.jpg',
+            ],
+            [
+                'id' => 'cover-image',
+                'type' => 'cover',
+                'alt' => 'Cover',
+                'mimetype' => 'image/jpeg',
+                'sort_order' => 10,
+                'src' => 'product_categories/cover.jpg',
+            ],
+        ],
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/product_categories/{$category->getKey()}", [
+        'images' => [
+            [
+                'id' => 'thumb-image',
+                'type' => 'thumb',
+                'sort_order' => 5,
+            ],
+            [
+                'id' => 'cover-image',
+                'type' => 'cover',
+                'sort_order' => 30,
+            ],
+        ],
+    ])->assertOk()
+        ->assertJsonPath('images.0.id', 'thumb-image')
+        ->assertJsonPath('images.0.sort_order', 5)
+        ->assertJsonPath('images.1.id', 'cover-image')
+        ->assertJsonPath('images.1.sort_order', 30);
+
+    $category->refresh();
+
+    expect(data_get($category->images, '0.id'))->toBe('thumb-image')
+        ->and(data_get($category->images, '0.sort_order'))->toBe(5)
+        ->and(data_get($category->images, '1.id'))->toBe('cover-image')
+        ->and(data_get($category->images, '1.sort_order'))->toBe(30);
 });

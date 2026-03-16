@@ -5,7 +5,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use PictaStudio\Venditio\Models\Brand;
 
-use function Pest\Laravel\{assertDatabaseHas, patch, postJson};
+use function Pest\Laravel\{assertDatabaseHas, patch, patchJson, post, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -84,4 +84,95 @@ it('uploads brand images as a typed images collection on update', function () {
 
     Storage::disk('public')->assertExists((string) data_get($thumb, 'src'));
     Storage::disk('public')->assertExists((string) data_get($cover, 'src'));
+});
+
+it('stores brand images with sort_order and returns them in the persisted order', function () {
+    Storage::fake('public');
+
+    $response = post(
+        config('venditio.routes.api.v1.prefix') . '/brands',
+        [
+            'name' => 'Ordered Brand',
+            'active' => true,
+            'sort_order' => 1,
+            'images' => [
+                [
+                    'file' => UploadedFile::fake()->image('thumb.jpg'),
+                    'alt' => 'thumb',
+                    'name' => 'Thumb',
+                    'type' => 'thumb',
+                    'sort_order' => 20,
+                ],
+                [
+                    'file' => UploadedFile::fake()->image('cover.jpg'),
+                    'alt' => 'cover',
+                    'name' => 'Cover',
+                    'type' => 'cover',
+                    'sort_order' => 10,
+                ],
+            ],
+        ],
+        ['Accept' => 'application/json']
+    )->assertCreated()
+        ->assertJsonPath('images.0.type', 'cover')
+        ->assertJsonPath('images.0.sort_order', 10)
+        ->assertJsonPath('images.1.type', 'thumb')
+        ->assertJsonPath('images.1.sort_order', 20);
+
+    $brand = Brand::query()->findOrFail($response->json('id'));
+
+    expect(data_get($brand->images, '0.type'))->toBe('cover')
+        ->and(data_get($brand->images, '0.sort_order'))->toBe(10)
+        ->and(data_get($brand->images, '1.type'))->toBe('thumb')
+        ->and(data_get($brand->images, '1.sort_order'))->toBe(20);
+});
+
+it('updates brand image sort_order without requiring a new upload', function () {
+    $brand = Brand::factory()->create([
+        'active' => true,
+        'images' => [
+            [
+                'id' => 'thumb-image',
+                'type' => 'thumb',
+                'alt' => 'Thumb',
+                'mimetype' => 'image/jpeg',
+                'sort_order' => 20,
+                'src' => 'brands/thumb.jpg',
+            ],
+            [
+                'id' => 'cover-image',
+                'type' => 'cover',
+                'alt' => 'Cover',
+                'mimetype' => 'image/jpeg',
+                'sort_order' => 10,
+                'src' => 'brands/cover.jpg',
+            ],
+        ],
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/brands/{$brand->getKey()}", [
+        'images' => [
+            [
+                'id' => 'thumb-image',
+                'type' => 'thumb',
+                'sort_order' => 5,
+            ],
+            [
+                'id' => 'cover-image',
+                'type' => 'cover',
+                'sort_order' => 30,
+            ],
+        ],
+    ])->assertOk()
+        ->assertJsonPath('images.0.id', 'thumb-image')
+        ->assertJsonPath('images.0.sort_order', 5)
+        ->assertJsonPath('images.1.id', 'cover-image')
+        ->assertJsonPath('images.1.sort_order', 30);
+
+    $brand->refresh();
+
+    expect(data_get($brand->images, '0.id'))->toBe('thumb-image')
+        ->and(data_get($brand->images, '0.sort_order'))->toBe(5)
+        ->and(data_get($brand->images, '1.id'))->toBe('cover-image')
+        ->and(data_get($brand->images, '1.sort_order'))->toBe(30);
 });

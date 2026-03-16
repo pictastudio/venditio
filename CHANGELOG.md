@@ -2,6 +2,21 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.0.2 - 2026-03-16
+
+### What's Changed
+
+#### Fixes
+
+- **Catalog image sort ordering** - Brand and product category `images` collections now validate, persist, and return `sort_order`, while updates keep existing image ids stable when metadata changes without a new upload.
+- **Product category ordering regression coverage** - Added regression coverage for root category index ordering by `sort_order`, alongside save/update coverage for ordered brand and category image collections.
+
+#### Tests
+
+- Added feature coverage for brand/category image `sort_order` persistence and metadata-only updates, plus root product category index ordering.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.0.1...v2.0.2
+
 ## v2.0.1 - 2026-03-16
 
 ### What's Changed
