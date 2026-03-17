@@ -151,9 +151,18 @@ class Controller extends BaseController
                 continue;
             }
 
+            $columnType = $columnTypes[$column] ?? null;
+            $value = $validatedFilters[$column];
+
+            if ($this->isStringDeclaredType($columnType)) {
+                $query->whereLike($column, $this->prepareStringFilterValue($value), caseSensitive: false);
+
+                continue;
+            }
+
             $query->where(
                 $column,
-                $this->castFilterValueForDeclaredType($validatedFilters[$column], $columnTypes[$column] ?? null)
+                $this->castFilterValueForDeclaredType($value, $columnType)
             );
         }
 
@@ -310,6 +319,16 @@ class Controller extends BaseController
         }
 
         return ['sometimes', 'string'];
+    }
+
+    protected function prepareStringFilterValue(mixed $value): string
+    {
+        return '%' . (string) $value . '%';
+    }
+
+    protected function isStringDeclaredType(?string $columnType): bool
+    {
+        return $columnType !== null && mb_strtolower($columnType) === 'string';
     }
 
     protected function isBooleanDeclaredType(string $columnType): bool

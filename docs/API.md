@@ -35,6 +35,8 @@ Most index endpoints support:
 - `all` boolean, returns full collection (no pagination)
 - `id[]` array of ids
 - `per_page` pagination size
+- string field filters use case-insensitive partial matching (`LIKE %value%`)
+- non-string field filters keep exact-match behavior
 
 Additional supported filters:
 

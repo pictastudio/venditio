@@ -2,6 +2,24 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.0.3 - 2026-03-17
+
+### What's Changed
+
+#### Fixes
+
+- **Case-insensitive text filters** - String query filters on list endpoints now use case-insensitive partial matching (`LIKE %value%`) instead of exact matches, while non-string filters keep their existing exact behavior.
+
+#### API & Tooling
+
+- **API filter docs** - Documented the updated string-filter behavior in the API reference so host apps can rely on the new list query semantics.
+
+#### Tests
+
+- Added regression coverage for case-insensitive partial matching on string list filters.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.0.2...v2.0.3
+
 ## v2.0.2 - 2026-03-16
 
 ### What's Changed

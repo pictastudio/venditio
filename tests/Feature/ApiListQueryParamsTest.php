@@ -82,6 +82,27 @@ it('filters brands by category-style catalog columns', function () {
     expect($ids)->toBe([$menuBrand->getKey()]);
 });
 
+it('filters string columns with case-insensitive partial matching', function () {
+    $matchingBrand = Brand::factory()->create([
+        'name' => 'Acme Premium Goods',
+    ]);
+
+    $nonMatchingBrand = Brand::factory()->create([
+        'name' => 'Northwind Supplies',
+    ]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix') . '/brands?all=1&name=' . urlencode('premium')
+    )->assertOk();
+
+    $ids = collect(apiListData($response->json()))
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toContain($matchingBrand->getKey())
+        ->not->toContain($nonMatchingBrand->getKey());
+});
+
 it('supports pagination and sorting query params on list endpoints', function () {
     Brand::factory()->count(5)->create();
 
