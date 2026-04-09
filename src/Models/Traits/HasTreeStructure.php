@@ -11,7 +11,7 @@ trait HasTreeStructure
 {
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(self::class);
+        return $this->belongsTo(static::class);
     }
 
     /**
@@ -32,7 +32,7 @@ trait HasTreeStructure
 
     public function children(): HasMany
     {
-        return $this->hasMany(self::class, 'parent_id');
+        return $this->hasMany(static::class, 'parent_id');
     }
 
     /**

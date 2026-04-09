@@ -764,15 +764,13 @@ class Controller extends BaseController
             return;
         }
 
-        if (!auth()->check()) {
-            return;
-        }
+        $arguments = $this->normalizeAuthorizationArguments($arguments);
 
         if (!$this->hasAuthorizationDefinition($ability, $arguments)) {
             return;
         }
 
-        Gate::forUser(auth()->user())->authorize($ability, $arguments);
+        Gate::authorize($ability, $arguments);
     }
 
     protected function hasAuthorizationDefinition(string $ability, mixed $arguments): bool
@@ -790,6 +788,54 @@ class Controller extends BaseController
         }
 
         return false;
+    }
+
+    protected function normalizeAuthorizationArguments(mixed $arguments): mixed
+    {
+        if (!is_string($arguments)) {
+            return $arguments;
+        }
+
+        $modelKey = array_search($arguments, $this->defaultAuthorizationModelMap(), true);
+
+        if (!is_string($modelKey)) {
+            return $arguments;
+        }
+
+        return config('venditio.models.' . $modelKey, $arguments);
+    }
+
+    protected function defaultAuthorizationModelMap(): array
+    {
+        return [
+            'address' => \PictaStudio\Venditio\Models\Address::class,
+            'brand' => \PictaStudio\Venditio\Models\Brand::class,
+            'cart' => \PictaStudio\Venditio\Models\Cart::class,
+            'cart_line' => \PictaStudio\Venditio\Models\CartLine::class,
+            'country' => \PictaStudio\Venditio\Models\Country::class,
+            'country_tax_class' => \PictaStudio\Venditio\Models\CountryTaxClass::class,
+            'currency' => \PictaStudio\Venditio\Models\Currency::class,
+            'discount' => \PictaStudio\Venditio\Models\Discount::class,
+            'discount_application' => \PictaStudio\Venditio\Models\DiscountApplication::class,
+            'inventory' => \PictaStudio\Venditio\Models\Inventory::class,
+            'municipality' => \PictaStudio\Venditio\Models\Municipality::class,
+            'order' => \PictaStudio\Venditio\Models\Order::class,
+            'order_line' => \PictaStudio\Venditio\Models\OrderLine::class,
+            'price_list' => \PictaStudio\Venditio\Models\PriceList::class,
+            'price_list_price' => \PictaStudio\Venditio\Models\PriceListPrice::class,
+            'product' => \PictaStudio\Venditio\Models\Product::class,
+            'product_category' => \PictaStudio\Venditio\Models\ProductCategory::class,
+            'product_custom_field' => \PictaStudio\Venditio\Models\ProductCustomField::class,
+            'product_type' => \PictaStudio\Venditio\Models\ProductType::class,
+            'product_variant' => \PictaStudio\Venditio\Models\ProductVariant::class,
+            'product_variant_option' => \PictaStudio\Venditio\Models\ProductVariantOption::class,
+            'province' => \PictaStudio\Venditio\Models\Province::class,
+            'region' => \PictaStudio\Venditio\Models\Region::class,
+            'shipping_status' => \PictaStudio\Venditio\Models\ShippingStatus::class,
+            'tag' => \PictaStudio\Venditio\Models\Tag::class,
+            'tax_class' => \PictaStudio\Venditio\Models\TaxClass::class,
+            'user' => \PictaStudio\Venditio\Models\User::class,
+        ];
     }
 
     protected function removeImplicitScopesOverriddenByExplicitFilters(Builder $query, string $model, array $validatedFilters): void

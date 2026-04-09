@@ -111,6 +111,12 @@ return [
         'type_enum' => Enums\AddressType::class,
 
         'dto' => Dto\AddressDto::class,
+
+        'allow_guest_addressable_assignment' => env('VENDITIO_ALLOW_GUEST_ADDRESSABLE_ASSIGNMENT', false),
+
+        'guest_addressable_models' => [
+            'user',
+        ],
     ],
 
     /*
@@ -443,6 +449,8 @@ return [
             'v1' => [
                 'prefix' => 'api/venditio/v1',
                 'name' => 'api.venditio.v1',
+                'rate_limiter' => env('VENDITIO_API_RATE_LIMITER'),
+                'rate_limit_per_minute' => 600,
                 'middleware' => [
                     'api',
                     // 'auth:sanctum',
@@ -453,7 +461,7 @@ return [
             ],
             'enable' => true, // enable api routes
             'include_timestamps' => false, // include updated_at and deleted_at timestamps in api responses
-            'json_resource_enable_wrapping' => false, // Illuminate\Http\Resources\Json\JsonResource::withoutWrapping();
+            'json_resource_enable_wrapping' => false, // wrap venditio API resources under a data key
         ],
     ],
 ];

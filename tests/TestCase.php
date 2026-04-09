@@ -3,6 +3,7 @@
 namespace PictaStudio\Venditio\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\{Artisan, Schema};
 use Orchestra\Testbench\TestCase as Orchestra;
 use PictaStudio\Translatable\TranslatableServiceProvider;
@@ -25,6 +26,17 @@ class TestCase extends Orchestra
 
         if (is_dir($translatableMigrationsPath)) {
             $this->loadMigrationsFrom($translatableMigrationsPath);
+        }
+
+        if (!Schema::hasTable('users')) {
+            Schema::create('users', function (Blueprint $table): void {
+                $table->id();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('email')->nullable()->unique();
+                $table->string('phone')->nullable();
+                $table->timestamps();
+            });
         }
 
         Factory::guessFactoryNamesUsing(

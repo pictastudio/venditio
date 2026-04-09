@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PictaStudio\Venditio\Models\{Country, Currency, Municipality, Province, Region};
+use PictaStudio\Venditio\Models\{Country, Currency, Municipality, Province, Region, User};
 
 use function Pest\Laravel\{deleteJson, getJson, patchJson, postJson};
 
@@ -148,9 +148,17 @@ it('lists provinces and filters by region_id', function () {
 });
 
 it('allows connecting an address to a province', function () {
+    config(['venditio.addresses.allow_guest_addressable_assignment' => true]);
+
     $country = createCountryForMunicipality('IT', 'ITA', 'Italy');
     $region = createRegionForMunicipality($country, 'Lombardia', 'LOM');
     $province = createProvinceForMunicipality($region, 'Milano', 'MI');
+    $user = User::query()->create([
+        'first_name' => 'Mario',
+        'last_name' => 'Rossi',
+        'email' => 'mario.address@example.test',
+        'phone' => '123456789',
+    ]);
 
     Municipality::query()->create([
         'province_id' => $province->getKey(),
@@ -159,7 +167,7 @@ it('allows connecting an address to a province', function () {
 
     $payload = [
         'addressable_type' => 'user',
-        'addressable_id' => 1,
+        'addressable_id' => $user->getKey(),
         'country_id' => $country->getKey(),
         'province_id' => $province->getKey(),
         'type' => 'shipping',
@@ -186,14 +194,53 @@ it('allows connecting an address to a province', function () {
         ->assertJsonPath('pec', 'mario.rossi@pec.example.test');
 });
 
-it('rejects invalid pec when creating an address', function () {
+it('rejects guest address creation when guest assignment is disabled', function () {
     $country = createCountryForMunicipality('IT', 'ITA', 'Italy');
     $region = createRegionForMunicipality($country, 'Lombardia', 'LOM');
     $province = createProvinceForMunicipality($region, 'Milano', 'MI');
+    $user = User::query()->create([
+        'first_name' => 'Mario',
+        'last_name' => 'Rossi',
+        'email' => 'mario.disabled@example.test',
+        'phone' => '123456789',
+    ]);
 
     postJson(config('venditio.routes.api.v1.prefix') . '/addresses', [
         'addressable_type' => 'user',
-        'addressable_id' => 1,
+        'addressable_id' => $user->getKey(),
+        'country_id' => $country->getKey(),
+        'province_id' => $province->getKey(),
+        'type' => 'billing',
+        'first_name' => 'Mario',
+        'last_name' => 'Rossi',
+        'email' => 'mario.rossi@example.test',
+        'sex' => 'm',
+        'phone' => '123456789',
+        'fiscal_code' => 'RSSMRA80A01F205X',
+        'address_line_1' => 'Via Roma 1',
+        'city' => 'Milano',
+        'state' => 'MI',
+        'zip' => '20100',
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['addressable']);
+});
+
+it('rejects invalid pec when creating an address', function () {
+    config(['venditio.addresses.allow_guest_addressable_assignment' => true]);
+
+    $country = createCountryForMunicipality('IT', 'ITA', 'Italy');
+    $region = createRegionForMunicipality($country, 'Lombardia', 'LOM');
+    $province = createProvinceForMunicipality($region, 'Milano', 'MI');
+    $user = User::query()->create([
+        'first_name' => 'Mario',
+        'last_name' => 'Rossi',
+        'email' => 'mario.pec@example.test',
+        'phone' => '123456789',
+    ]);
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/addresses', [
+        'addressable_type' => 'user',
+        'addressable_id' => $user->getKey(),
         'country_id' => $country->getKey(),
         'province_id' => $province->getKey(),
         'type' => 'billing',

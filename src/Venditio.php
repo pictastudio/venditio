@@ -14,10 +14,10 @@ class Venditio
         $callback(app('venditio'));
     }
 
-    public static function configureRateLimiting(string $prefix): void
+    public static function configureRateLimiting(string $limiter, int $maxAttempts = 600): void
     {
-        RateLimiter::for($prefix, fn (Request $request) => (
-            Limit::perMinute(60)->by($request->user()?->id ?: $request->ip())
+        RateLimiter::for($limiter, fn (Request $request) => (
+            Limit::perMinute($maxAttempts)->by($request->user()?->id ?: $request->ip())
         ));
     }
 }

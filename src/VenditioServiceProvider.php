@@ -6,7 +6,6 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Application;
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\ExcelServiceProvider;
 use PictaStudio\Venditio\Console\Commands\{InstallCommand, ReleaseStockForAbandonedCarts, SeedRandomDataCommand};
@@ -14,6 +13,7 @@ use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalD
 use PictaStudio\Venditio\Discounts\{CartTotalDiscountCalculator, DiscountCalculator, DiscountUsageRecorder, DiscountablesResolver};
 use PictaStudio\Venditio\Facades\Venditio as VenditioFacade;
 use PictaStudio\Venditio\Generators\{CartIdentifierGenerator, OrderIdentifierGenerator, ProductSkuGenerator};
+use PictaStudio\Venditio\Http\Middleware\ResolveVenditioRouteBindings;
 use PictaStudio\Venditio\Models\User;
 use PictaStudio\Venditio\Pricing\DefaultProductPriceResolver;
 use Spatie\LaravelPackageTools\{Package, PackageServiceProvider};
@@ -218,19 +218,37 @@ class VenditioServiceProvider extends PackageServiceProvider
             return;
         }
 
-        if (!config('venditio.routes.api.json_resource_enable_wrapping')) {
-            JsonResource::withoutWrapping();
+        $prefix = config('venditio.routes.api.v1.prefix');
+        $rateLimiter = config('venditio.routes.api.v1.rate_limiter');
+        $middleware = config('venditio.routes.api.v1.middleware', []);
+
+        if (filled($rateLimiter)) {
+            VenditioFacade::configureRateLimiting(
+                $rateLimiter,
+                (int) config('venditio.routes.api.v1.rate_limit_per_minute', 600)
+            );
         }
 
-        $prefix = config('venditio.routes.api.v1.prefix');
+        if (
+            filled($rateLimiter)
+            && !collect($middleware)->contains(fn (mixed $entry) => $entry === 'throttle:' . $rateLimiter)
+        ) {
+            $middleware[] = 'throttle:' . $rateLimiter;
+        }
 
-        VenditioFacade::configureRateLimiting($prefix);
+        array_unshift($middleware, ResolveVenditioRouteBindings::class);
 
-        Route::middleware(config('venditio.routes.api.v1.middleware'))
+        $routesPath = base_path('routes/vendor/venditio/api.php');
+
+        if (!is_file($routesPath)) {
+            $routesPath = $this->package->basePath('/../routes/v1/api.php');
+        }
+
+        Route::middleware($middleware)
             ->prefix($prefix)
             ->name(mb_rtrim(config('venditio.routes.api.v1.name'), '.') . '.')
             ->group(fn () => (
-                $this->loadRoutesFrom($this->package->basePath('/../routes/v1/api.php'))
+                $this->loadRoutesFrom($routesPath)
             ));
     }
 
@@ -266,6 +284,10 @@ class VenditioServiceProvider extends PackageServiceProvider
         $this->publishes([
             $this->package->basePath('/../bruno/venditio') => base_path('bruno/venditio'),
         ], 'venditio-bruno');
+
+        $this->publishes([
+            $this->package->basePath('/../routes/v1/api.php') => base_path('routes/vendor/venditio/api.php'),
+        ], 'venditio-routes');
 
         $this->publishes([
             __DIR__ . '/../database/seeders/data/countries.json' => database_path('seeders/data/countries.json'),

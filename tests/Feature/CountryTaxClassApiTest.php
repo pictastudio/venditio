@@ -37,29 +37,18 @@ it('bulk upserts country tax classes by updating existing rows and creating new 
         'rate' => 22,
     ]);
 
-    $this->call(
-        'POST',
-        $prefix . '/country_tax_classes/bulk/upsert',
-        [],
-        [],
-        [],
+    postJson($prefix . '/country_tax_classes/bulk/upsert', [
         [
-            'CONTENT_TYPE' => 'application/json',
-            'HTTP_ACCEPT' => 'application/json',
+            'country_id' => $firstCountry->getKey(),
+            'tax_class_id' => $firstTaxClass->getKey(),
+            'rate' => 10,
         ],
-        json_encode([
-            [
-                'country_id' => $firstCountry->getKey(),
-                'tax_class_id' => $firstTaxClass->getKey(),
-                'rate' => 10,
-            ],
-            [
-                'country_id' => $secondCountry->getKey(),
-                'tax_class_id' => $firstTaxClass->getKey(),
-                'rate' => 4,
-            ],
-        ], JSON_THROW_ON_ERROR)
-    )->assertOk()
+        [
+            'country_id' => $secondCountry->getKey(),
+            'tax_class_id' => $firstTaxClass->getKey(),
+            'rate' => 4,
+        ],
+    ])->assertOk()
         ->assertJsonCount(2)
         ->assertJsonFragment([
             'id' => $existingCountryTaxClass->getKey(),

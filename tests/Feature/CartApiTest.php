@@ -594,6 +594,56 @@ it('removes lines and recalculates cart totals through pipeline', function () {
         ->and($product->inventory->stock_reserved)->toBe(0);
 });
 
+it('returns 422 when updating lines with a line that belongs to another cart', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+    $firstProduct = createCartProduct($taxClass);
+    $secondProduct = createCartProduct($taxClass);
+    $user = createUserForCart('user-update-lines-foreign-line@example.test');
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $firstCartId = postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'lines' => [
+            ['product_id' => $firstProduct->getKey(), 'qty' => 2],
+        ],
+    ])->assertCreated()->json('id');
+
+    $secondCartId = postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'lines' => [
+            ['product_id' => $secondProduct->getKey(), 'qty' => 1],
+        ],
+    ])->assertCreated()->json('id');
+
+    $firstCartLineModel = config('venditio.models.cart_line');
+    $firstCartLineId = $firstCartLineModel::query()
+        ->where('cart_id', $firstCartId)
+        ->value('id');
+    $secondCartLineId = $firstCartLineModel::query()
+        ->where('cart_id', $secondCartId)
+        ->value('id');
+
+    patchJson($prefix . '/carts/' . $firstCartId . '/update_lines', [
+        'lines' => [
+            ['id' => $secondCartLineId, 'qty' => 5],
+        ],
+    ])->assertStatus(422)
+        ->assertJsonPath('status', false)
+        ->assertJsonPath('message', 'Some lines do not belong to the provided cart.')
+        ->assertJsonPath('data.line_ids.0', $secondCartLineId);
+
+    expect((int) $firstCartLineModel::query()->findOrFail($firstCartLineId)->qty)->toBe(2)
+        ->and((int) $firstCartLineModel::query()->findOrFail($secondCartLineId)->qty)->toBe(1);
+});
+
 it('adds a discount code to an existing cart through api and recalculates totals', function () {
     $taxClass = TaxClass::factory()->create();
     setupCartTaxEnvironment($taxClass);

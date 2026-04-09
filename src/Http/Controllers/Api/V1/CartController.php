@@ -107,6 +107,22 @@ class CartController extends Controller
         $this->authorizeIfConfigured('update', $cart);
 
         $validationResponse = $this->validateData(request()->all(), $cartLineValidationRules->getUpdateValidationRules());
+        $lineIds = collect($validationResponse['lines'])
+            ->pluck('id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->all();
+        $cartLineIds = $cart->lines()
+            ->pluck('id')
+            ->map(fn (mixed $id): int => (int) $id);
+        $lineIdsNotBelongingToCart = collect($lineIds)->diff($cartLineIds);
+
+        if ($lineIdsNotBelongingToCart->isNotEmpty()) {
+            return $this->errorJsonResponse(
+                data: ['line_ids' => $lineIdsNotBelongingToCart->values()->all()],
+                message: 'Some lines do not belong to the provided cart.',
+                status: 422,
+            );
+        }
 
         // pipeline per update cart lines
 

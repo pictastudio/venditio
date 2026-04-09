@@ -3,12 +3,13 @@
 namespace PictaStudio\Venditio\Models\Traits;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use PictaStudio\Venditio\Models\Address;
+
+use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
 trait HasAddresses
 {
     public function addresses(): MorphMany
     {
-        return $this->morphMany(Address::class, 'addressable');
+        return $this->morphMany(resolve_model('address'), 'addressable');
     }
 }

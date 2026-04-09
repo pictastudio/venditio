@@ -5,6 +5,7 @@ namespace PictaStudio\Venditio\Dto;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\{Collection, Fluent};
 use PictaStudio\Venditio\Dto\Contracts\OrderDtoContract;
+use ReflectionClass;
 
 use function PictaStudio\Venditio\Helpers\Functions\get_fresh_model_instance;
 
@@ -36,7 +37,8 @@ class OrderDto extends Dto implements OrderDtoContract
     {
         $addresses = $cart->addresses;
 
-        return new static(
+        /** @var static $dto */
+        $dto = (new ReflectionClass(static::class))->newInstanceArgs([
             static::getFreshInstance(),
             $cart,
             $cart->user_id,
@@ -51,15 +53,18 @@ class OrderDto extends Dto implements OrderDtoContract
             $cart->sub_total,
             $cart->shipping_fee,
             $cart->payment_fee,
-            discountCode: $cart->discount_code,
-            discountAmount: $cart->discount_amount,
-            totalFinal: $cart->total_final,
-        );
+            $cart->discount_code,
+            $cart->discount_amount,
+            $cart->total_final,
+        ]);
+
+        return $dto;
     }
 
     public static function fromArray(array $data): static
     {
-        return new static(
+        /** @var static $dto */
+        $dto = (new ReflectionClass(static::class))->newInstanceArgs([
             $data['order'] ?? static::getFreshInstance(),
             $data['cart'] ?? null,
             $data['user_id'] ?? null,
@@ -74,10 +79,12 @@ class OrderDto extends Dto implements OrderDtoContract
             $data['sub_total'] ?? null,
             $data['shipping_fee'] ?? null,
             $data['payment_fee'] ?? null,
-            discountCode: $data['discount_code'] ?? null,
-            discountAmount: $data['discount_amount'] ?? null,
-            totalFinal: $data['total_final'] ?? null,
-        );
+            $data['discount_code'] ?? null,
+            $data['discount_amount'] ?? null,
+            $data['total_final'] ?? null,
+        ]);
+
+        return $dto;
     }
 
     public static function getFreshInstance(): Model

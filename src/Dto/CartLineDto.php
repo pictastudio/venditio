@@ -5,6 +5,7 @@ namespace PictaStudio\Venditio\Dto;
 use Illuminate\Database\Eloquent\Model;
 use PictaStudio\Venditio\Dto\Contracts\CartLineDtoContract;
 use PictaStudio\Venditio\Models\CartLine;
+use ReflectionClass;
 
 use function PictaStudio\Venditio\Helpers\Functions\{get_fresh_model_instance, resolve_dto};
 
@@ -24,14 +25,17 @@ class CartLineDto extends Dto implements CartLineDtoContract
 
         // return parent::fromArray($data);
 
-        return new static(
+        /** @var static $dto */
+        $dto = (new ReflectionClass(static::class))->newInstanceArgs([
             // cart: resolve_dto('cart')::fromArray($data['cart']),
-            cartLine: $data['cart_line'] ?? static::getFreshInstance(),
-            purchasableModelId: $data['purchasable_model_id']
+            $data['cart_line'] ?? static::getFreshInstance(),
+            $data['purchasable_model_id']
                 ?? $data['product_id']
                 ?? null,
-            qty: $data['qty'] ?? 0,
-        );
+            $data['qty'] ?? 0,
+        ]);
+
+        return $dto;
     }
 
     public static function getFreshInstance(): Model

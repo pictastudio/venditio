@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\{Collection, Fluent};
 use PictaStudio\Venditio\Dto\Contracts\CartDtoContract;
 use PictaStudio\Venditio\Models\Cart;
+use ReflectionClass;
 
 use function PictaStudio\Venditio\Helpers\Functions\get_fresh_model_instance;
 
@@ -25,18 +26,21 @@ class CartDto extends Dto implements CartDtoContract
 
     public static function fromArray(array $data): static
     {
-        return new static(
-            cart: $data['cart'] ?? static::getFreshInstance(),
-            userId: $data['user_id'] ?? null,
-            userFirstName: $data['user_first_name'] ?? null,
-            userLastName: $data['user_last_name'] ?? null,
-            userEmail: $data['user_email'] ?? null,
-            discountRef: $data['discount_code'] ?? $data['discount_ref'] ?? null,
-            addresses: $data['addresses'] ?? null,
-            lines: collect($data['lines'] ?? [])
+        /** @var static $dto */
+        $dto = (new ReflectionClass(static::class))->newInstanceArgs([
+            $data['cart'] ?? static::getFreshInstance(),
+            $data['user_id'] ?? null,
+            $data['user_first_name'] ?? null,
+            $data['user_last_name'] ?? null,
+            $data['user_email'] ?? null,
+            $data['discount_code'] ?? $data['discount_ref'] ?? null,
+            $data['addresses'] ?? null,
+            collect($data['lines'] ?? [])
                 ->map(fn (array $line) => CartLineDto::fromArray($line)),
-            linesProvided: array_key_exists('lines', $data),
-        );
+            array_key_exists('lines', $data),
+        ]);
+
+        return $dto;
     }
 
     public static function getFreshInstance(): Model

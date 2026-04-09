@@ -14,7 +14,7 @@ class ProvinceResource extends JsonResource
     public function toArray(Request $request)
     {
         return $this->applyAttributesTransformation(
-            collect(parent::toArray($request))
+            collect($this->resolveResourceAttributes())
                 ->except($this->getAttributesToExclude())
                 ->map(fn (mixed $value, string $key) => (
                     $this->mutateAttributeBasedOnCast($key, $value)

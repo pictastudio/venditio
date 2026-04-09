@@ -20,8 +20,8 @@ class UpdateCountryRequest extends FormRequest
 
         return [
             'name' => ['sometimes', 'string', 'max:255'],
-            'iso_2' => ['sometimes', 'string', 'size:2', Rule::unique('countries', 'iso_2')->ignore($countryId)],
-            'iso_3' => ['sometimes', 'string', 'size:3', Rule::unique('countries', 'iso_3')->ignore($countryId)],
+            'iso_2' => ['sometimes', 'string', 'size:2', Rule::unique($this->tableFor('country'), 'iso_2')->ignore($countryId)],
+            'iso_3' => ['sometimes', 'string', 'size:3', Rule::unique($this->tableFor('country'), 'iso_3')->ignore($countryId)],
             'phone_code' => ['sometimes', 'string', 'max:20'],
             'currency_id' => ['sometimes', 'integer', Rule::exists($this->tableFor('currency'), 'id')],
             'flag_emoji' => ['sometimes', 'string', 'max:50'],

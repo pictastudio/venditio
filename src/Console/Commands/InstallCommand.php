@@ -20,6 +20,11 @@ class InstallCommand extends Command
         $this->components->info('Publishing venditio configuration...');
         $this->call('vendor:publish', ['--tag' => 'venditio-config']);
 
+        if (confirm('Do you want to publish venditio routes?', false)) {
+            $this->components->info('Publishing venditio routes...');
+            $this->call('vendor:publish', ['--tag' => 'venditio-routes']);
+        }
+
         if (!$this->hasTranslationsTableMigrationPublished()) {
             $this->components->info('Publishing translatable migrations required for venditio');
             $this->call('vendor:publish', ['--tag' => 'translatable-migrations']);

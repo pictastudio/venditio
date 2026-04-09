@@ -7,12 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\{Collection, Str};
 use JsonSerializable;
 use PictaStudio\Venditio\Dto\Contracts\Dto as DtoContract;
+use ReflectionClass;
 
 class Dto implements Arrayable, DtoContract, Jsonable, JsonSerializable
 {
     public static function fromArray(array $data): static
     {
-        return (new static)->fill($data);
+        /** @var static $dto */
+        $dto = (new ReflectionClass(static::class))->newInstanceWithoutConstructor();
+
+        return $dto->fill($data);
     }
 
     public function fill(array $data): static

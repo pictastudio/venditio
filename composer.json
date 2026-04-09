@@ -68,10 +68,10 @@
             "@composer run build",
             "@php vendor/bin/testbench serve"
         ],
-        "analyse": "vendor/bin/phpstan analyse",
-        "test": "vendor/bin/pest --no-coverage",
-        "test:parallel": "vendor/bin/pest --no-coverage --parallel",
-        "test-coverage": "vendor/bin/pest --coverage",
+        "analyse": "@php vendor/bin/phpstan analyse src tests --memory-limit=1G",
+        "test": "@php -d memory_limit=1G vendor/bin/pest --no-coverage",
+        "test:parallel": "@php -d memory_limit=1G vendor/bin/pest --no-coverage --parallel",
+        "test-coverage": "@php -d memory_limit=1G vendor/bin/pest --coverage",
         "format": "vendor/bin/pint"
     },
     "config": {

@@ -6,12 +6,14 @@ use BackedEnum;
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Validations\Contracts\CartValidationRules;
 
+use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
+
 class CartValidation implements CartValidationRules
 {
     public function getStoreValidationRules(): array
     {
         return [
-            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'user_id' => ['nullable', 'integer', Rule::exists($this->tableFor('user'), 'id')],
             'user_first_name' => ['nullable', 'string', 'max:255'],
             'user_last_name' => ['nullable', 'string', 'max:255'],
             'user_email' => ['nullable', 'email', 'max:255'],
@@ -19,7 +21,7 @@ class CartValidation implements CartValidationRules
             'addresses' => ['nullable', 'array'],
             ...$this->getAddressValidationRulesFromEnum(),
             'lines' => ['sometimes', 'array'],
-            'lines.*.product_id' => ['required_with:lines', 'integer', 'exists:products,id'],
+            'lines.*.product_id' => ['required_with:lines', 'integer', Rule::exists($this->tableFor('product'), 'id')],
             'lines.*.qty' => ['required_with:lines.*.product_id', 'integer', 'min:1'],
         ];
     }
@@ -35,7 +37,7 @@ class CartValidation implements CartValidationRules
             'addresses' => ['nullable', 'array'],
             ...$this->getAddressValidationRulesFromEnum(),
             'lines' => ['sometimes', 'array'],
-            'lines.*.product_id' => ['required_with:lines', 'integer', 'exists:products,id'],
+            'lines.*.product_id' => ['required_with:lines', 'integer', Rule::exists($this->tableFor('product'), 'id')],
             'lines.*.qty' => ['required_with:lines.*.product_id', 'integer', 'min:1'],
         ];
     }
@@ -93,6 +95,6 @@ class CartValidation implements CartValidationRules
 
     private function tableFor(string $model): string
     {
-        return (new (config('venditio.models.' . $model)))->getTable();
+        return (new (resolve_model($model)))->getTable();
     }
 }

@@ -5,40 +5,53 @@ namespace PictaStudio\Venditio\Http\Resources\Traits;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use PictaStudio\Venditio\Http\Resources\V1\{AddressResource, BrandResource, CartLineResource, CartResource, CountryResource, CountryTaxClassResource, CurrencyResource, DiscountApplicationResource, DiscountResource, InventoryResource, MunicipalityResource, OrderLineResource, OrderResource, PriceListPriceResource, PriceListResource, ProductCategoryResource, ProductCustomFieldResource, ProductResource, ProductTypeResource, ProductVariantOptionResource, ProductVariantResource, ProvinceResource, RegionResource, ShippingStatusResource, TaxClassResource, UserResource};
-use PictaStudio\Venditio\Models\{Address, Brand, Cart, CartLine, Country, CountryTaxClass, Currency, Discount, DiscountApplication, Inventory, Municipality, Order, OrderLine, PriceList, PriceListPrice, Product, ProductCategory, ProductCustomField, ProductType, ProductVariant, ProductVariantOption, Province, Region, ShippingStatus, TaxClass, User};
+
+use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
 trait ResolvesModelResource
 {
     protected function resolveResourceForModel(Model $model): JsonResource
     {
-        return match (true) {
-            $model instanceof Address => AddressResource::make($model),
-            $model instanceof Brand => BrandResource::make($model),
-            $model instanceof Cart => CartResource::make($model),
-            $model instanceof CartLine => CartLineResource::make($model),
-            $model instanceof Country => CountryResource::make($model),
-            $model instanceof CountryTaxClass => CountryTaxClassResource::make($model),
-            $model instanceof Currency => CurrencyResource::make($model),
-            $model instanceof Discount => DiscountResource::make($model),
-            $model instanceof DiscountApplication => DiscountApplicationResource::make($model),
-            $model instanceof Inventory => InventoryResource::make($model),
-            $model instanceof Municipality => MunicipalityResource::make($model),
-            $model instanceof Order => OrderResource::make($model),
-            $model instanceof OrderLine => OrderLineResource::make($model),
-            $model instanceof PriceList => PriceListResource::make($model),
-            $model instanceof PriceListPrice => PriceListPriceResource::make($model),
-            $model instanceof Product => ProductResource::make($model),
-            $model instanceof ProductCategory => ProductCategoryResource::make($model),
-            $model instanceof ProductCustomField => ProductCustomFieldResource::make($model),
-            $model instanceof ProductType => ProductTypeResource::make($model),
-            $model instanceof ProductVariant => ProductVariantResource::make($model),
-            $model instanceof ProductVariantOption => ProductVariantOptionResource::make($model),
-            $model instanceof Province => ProvinceResource::make($model),
-            $model instanceof Region => RegionResource::make($model),
-            $model instanceof ShippingStatus => ShippingStatusResource::make($model),
-            $model instanceof TaxClass => TaxClassResource::make($model),
-            $model instanceof User => UserResource::make($model),
-            default => JsonResource::make($model),
-        };
+        foreach ($this->resourceMap() as $modelKey => $resourceClass) {
+            $modelClass = resolve_model($modelKey);
+
+            if (is_string($modelClass) && is_a($model, $modelClass)) {
+                return $resourceClass::make($model);
+            }
+        }
+
+        return JsonResource::make($model);
+    }
+
+    protected function resourceMap(): array
+    {
+        return [
+            'address' => AddressResource::class,
+            'brand' => BrandResource::class,
+            'cart' => CartResource::class,
+            'cart_line' => CartLineResource::class,
+            'country' => CountryResource::class,
+            'country_tax_class' => CountryTaxClassResource::class,
+            'currency' => CurrencyResource::class,
+            'discount' => DiscountResource::class,
+            'discount_application' => DiscountApplicationResource::class,
+            'inventory' => InventoryResource::class,
+            'municipality' => MunicipalityResource::class,
+            'order' => OrderResource::class,
+            'order_line' => OrderLineResource::class,
+            'price_list' => PriceListResource::class,
+            'price_list_price' => PriceListPriceResource::class,
+            'product' => ProductResource::class,
+            'product_category' => ProductCategoryResource::class,
+            'product_custom_field' => ProductCustomFieldResource::class,
+            'product_type' => ProductTypeResource::class,
+            'product_variant' => ProductVariantResource::class,
+            'product_variant_option' => ProductVariantOptionResource::class,
+            'province' => ProvinceResource::class,
+            'region' => RegionResource::class,
+            'shipping_status' => ShippingStatusResource::class,
+            'tax_class' => TaxClassResource::class,
+            'user' => UserResource::class,
+        ];
     }
 }

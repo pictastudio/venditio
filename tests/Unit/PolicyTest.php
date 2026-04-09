@@ -44,6 +44,16 @@ it('does not throw when policy allows and authorize_using_policies is true', fun
     expect(true)->toBeTrue();
 })->group('policy');
 
+it('checks authorization for guests when authorize_using_policies is true', function () {
+    config(['venditio.authorize_using_policies' => true]);
+
+    Gate::policy(Brand::class, TestBrandPolicyDenyGuestViewAny::class);
+
+    $controller = controllerThatAuthorizes();
+
+    $controller->testAuthorize('viewAny', Brand::class);
+})->throws(AuthorizationException::class)->group('policy');
+
 it('does not check authorization when authorize_using_policies is false', function () {
     config(['venditio.authorize_using_policies' => false]);
 
@@ -103,5 +113,13 @@ class TestBrandPolicyAllowAll
     public function viewAny(?Authenticatable $user): bool
     {
         return true;
+    }
+}
+
+class TestBrandPolicyDenyGuestViewAny
+{
+    public function viewAny(?Authenticatable $user): bool
+    {
+        return false;
     }
 }
