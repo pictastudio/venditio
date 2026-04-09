@@ -1,0 +1,51 @@
+meta {
+  name: Store carts with zone shipping
+  type: http
+  seq: 30
+}
+
+post {
+  url: {{baseUrl}}/carts
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "shipping_method_id": 1,
+    "addresses": {
+      "billing": {
+        "country_id": 1
+      },
+      "shipping": {
+        "country_id": 1,
+        "province_id": 10
+      }
+    },
+    "lines": [
+      {
+        "product_id": 1,
+        "qty": 1
+      }
+    ]
+  }
+}
+
+docs {
+  summary:
+  - Create a cart that triggers zone-based shipping fee calculation.
+
+  endpoint:
+  - method: POST
+  - path: /carts
+
+  body:
+  - Requires venditio.shipping.strategy=zones.
+  - shipping_method_id selects the courier.
+  - shipping province drives the zone resolution.
+}

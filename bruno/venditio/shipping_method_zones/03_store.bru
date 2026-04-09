@@ -1,0 +1,35 @@
+meta {
+  name: Store shipping_method_zones
+  type: http
+  seq: 83
+}
+
+post {
+  url: {{baseUrl}}/shipping_method_zones
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "shipping_method_id": 1,
+    "shipping_zone_id": 1,
+    "active": true,
+    "rate_tiers": [
+      {
+        "max_weight": 10,
+        "fee": 7.5
+      },
+      {
+        "max_weight": 20,
+        "fee": 9
+      }
+    ],
+    "over_weight_price_per_kg": 1.8
+  }
+}

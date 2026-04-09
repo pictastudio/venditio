@@ -31,6 +31,8 @@ class CartResource extends JsonResource
         return [
             'user' => UserResource::make($this->whenLoaded('user')),
             'order' => OrderResource::make($this->whenLoaded('order')),
+            'shipping_method' => ShippingMethodResource::make($this->whenLoaded('shippingMethod')),
+            'shipping_zone' => ShippingZoneResource::make($this->whenLoaded('shippingZone')),
             'lines' => CartLineResource::collection($this->whenLoaded('lines')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
         ];

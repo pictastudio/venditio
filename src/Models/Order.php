@@ -35,10 +35,15 @@ class Order extends Model
             'sub_total_tax' => 'decimal:2',
             'sub_total' => 'decimal:2',
             'shipping_fee' => 'decimal:2',
+            'specific_weight' => 'decimal:2',
+            'volumetric_weight' => 'decimal:2',
+            'chargeable_weight' => 'decimal:2',
             'payment_fee' => 'decimal:2',
             'discount_amount' => 'decimal:2',
             'total_final' => 'decimal:2',
             'addresses' => 'json',
+            'shipping_method_data' => 'json',
+            'shipping_zone_data' => 'json',
             'approved_at' => 'datetime:Y-m-d H:i:s',
         ];
     }
@@ -51,6 +56,16 @@ class Order extends Model
     public function shippingStatus(): BelongsTo
     {
         return $this->belongsTo(resolve_model('shipping_status'));
+    }
+
+    public function shippingMethod(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('shipping_method'));
+    }
+
+    public function shippingZone(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('shipping_zone'));
     }
 
     public function lines(): HasMany

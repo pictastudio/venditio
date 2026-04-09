@@ -1,6 +1,6 @@
 <?php
 
-use PictaStudio\Venditio\{Discounts, Dto, Enums, Generators, Models, Pricing};
+use PictaStudio\Venditio\{Discounts, Dto, Enums, Generators, Models, Pricing, Shipping};
 use PictaStudio\Venditio\Pipelines\{Cart, CartLine, Order};
 use PictaStudio\Venditio\Validations;
 
@@ -72,6 +72,9 @@ return [
         'product_variant_option' => Models\ProductVariantOption::class,
         'price_list' => Models\PriceList::class,
         'price_list_price' => Models\PriceListPrice::class,
+        'shipping_method' => Models\ShippingMethod::class,
+        'shipping_method_zone' => Models\ShippingMethodZone::class,
+        'shipping_zone' => Models\ShippingZone::class,
     ],
 
     /*
@@ -158,6 +161,20 @@ return [
                 ],
             ],
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shipping
+    |--------------------------------------------------------------------------
+    |
+    */
+    'shipping' => [
+        'strategy' => env('VENDITIO_SHIPPING_STRATEGY', 'disabled'),
+        'default_volumetric_divisor' => (float) env('VENDITIO_SHIPPING_DEFAULT_VOLUMETRIC_DIVISOR', 5000),
+        'weights_resolver' => Shipping\DefaultShippingWeightsResolver::class,
+        'zone_resolver' => Shipping\DefaultShippingZoneResolver::class,
+        'fee_calculator' => Shipping\DefaultShippingFeeCalculator::class,
     ],
 
     /*

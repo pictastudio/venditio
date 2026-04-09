@@ -1,0 +1,28 @@
+meta {
+  name: Store shipping_zones
+  type: http
+  seq: 88
+}
+
+post {
+  url: {{baseUrl}}/shipping_zones
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "code": "IT-RM",
+    "name": "Rome province",
+    "active": true,
+    "priority": 10,
+    "country_ids": [1],
+    "region_ids": [1],
+    "province_ids": [10]
+  }
+}

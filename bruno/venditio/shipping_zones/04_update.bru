@@ -1,0 +1,27 @@
+meta {
+  name: Update shipping_zones
+  type: http
+  seq: 89
+}
+
+patch {
+  url: {{baseUrl}}/shipping_zones/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "priority": 20,
+    "province_ids": [11]
+  }
+}

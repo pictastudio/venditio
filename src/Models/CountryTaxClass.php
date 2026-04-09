@@ -10,6 +10,8 @@ class CountryTaxClass extends Pivot
 {
     public $incrementing = true;
 
+    protected $table = 'country_tax_class';
+
     protected $guarded = [
         'id',
         'created_at',

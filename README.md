@@ -51,6 +51,7 @@ All behavior is configured through `config/venditio.php`.
 - `authorize_using_policies`: optional policy/gate authorization
 - `price_lists`: optional multi-price feature
 - `discounts`: discount calculator/bindings/rules configuration
+- `shipping`: shipping strategy, default volumetric divisor, and resolver bindings
 - `product`: product enums, sku generator and product list variant visibility defaults
 - `product_variants`: variant naming/copy behavior
 
@@ -119,6 +120,162 @@ use PictaStudio\Venditio\Contracts\OrderIdentifierGeneratorInterface;
 $this->app->singleton(CartIdentifierGeneratorInterface::class, App\Generators\CartIdentifierGenerator::class);
 $this->app->singleton(OrderIdentifierGeneratorInterface::class, App\Generators\OrderIdentifierGenerator::class);
 ```
+
+## Shipping
+
+Venditio ships with an API-first shipping domain built around three resources:
+
+- `shipping_methods`: couriers or delivery methods, with `flat_fee` and `volumetric_divisor`
+- `shipping_zones`: geographic scopes, linked to countries, regions, and provinces
+- `shipping_method_zones`: the priced pivot between a method and a zone, with `rate_tiers` and `over_weight_price_per_kg`
+
+Shipping behavior is controlled by `venditio.shipping.strategy`:
+
+- `disabled`: shipping fee is always `0`, but weights are still calculated
+- `flat`: the cart uses `shipping_methods.flat_fee`
+- `zones`: the cart resolves the best matching zone for the selected method and calculates the fee from the pivot row
+
+The default volumetric divisor is `5000`, configurable through `venditio.shipping.default_volumetric_divisor`.
+Each shipping method can override it with its own `volumetric_divisor`, so different couriers can use different volumetric rules.
+
+### How shipping is calculated
+
+On cart create and update, Venditio calculates shipping after line totals and before cart-level discounts.
+
+1. The cart resolves the selected `shipping_method_id`.
+2. It calculates the line weights from `cart.lines[*].product_data`.
+3. It resolves the destination from `addresses.shipping`.
+4. If the strategy is `zones`, it finds the best active zone linked to the selected shipping method.
+5. It calculates the shipping fee.
+6. Discounts run after that, so `free_shipping` can still zero the final `shipping_fee`.
+7. When an order is created from a cart, Venditio snapshots `shipping_method_id`, `shipping_zone_id`, weights, fee, `shipping_method_data`, and `shipping_zone_data` on the order.
+
+Weight calculation uses these formulas:
+
+- `specific_weight = sum(product_data.weight * qty)`
+- `volumetric_weight = sum((length * width * height / divisor) * qty)`
+- `chargeable_weight = max(specific_weight, volumetric_weight)`
+
+Expected units in the default implementation:
+
+- `weight` in `kg`
+- `length`, `width`, `height` in `cm`
+
+Destination matching works by specificity:
+
+- province match wins over region match
+- region match wins over country match
+- if two zones have the same specificity, the highest `shipping_zones.priority` wins
+- if priority is also equal, the lowest id wins
+
+The destination is resolved in this order:
+
+- use `addresses.shipping.province_id` when present
+- otherwise try `addresses.shipping.state` as a province code
+- use `addresses.shipping.country_id` as the country-level fallback
+
+### Practical examples
+
+#### 1. Flat shipping
+
+If the host app sets:
+
+```php
+'shipping' => [
+    'strategy' => 'flat',
+],
+```
+
+and creates a method like:
+
+```json
+{
+  "code": "express",
+  "name": "Express Courier",
+  "active": true,
+  "flat_fee": 9.90,
+  "volumetric_divisor": 5000
+}
+```
+
+then a cart created with that method:
+
+```json
+{
+  "shipping_method_id": 1,
+  "addresses": {
+    "billing": { "country_id": 1 },
+    "shipping": { "country_id": 1 }
+  },
+  "lines": [
+    { "product_id": 10, "qty": 2 }
+  ]
+}
+```
+
+will use `shipping_fee = 9.90` regardless of zone matching.
+Weights are still calculated and exposed on the cart response.
+
+#### 2. Province overrides region and country
+
+Suppose one courier is linked to three active zones:
+
+- `Italy` zone with `country_ids` containing the Italy country id, priced at `7.00` up to `5kg`
+- `Lazio` zone with `region_ids` containing the Lazio region id, priced at `9.00` up to `5kg`
+- `Rome` zone with `province_ids` containing the Rome province id, priced at `12.00` up to `5kg`
+
+For a shipping address in Rome province, Venditio picks the province zone and charges `12.00`.
+For a shipping address in Viterbo province, Venditio falls back to the Lazio region zone and charges `9.00`.
+For a shipping address in Milan province, Venditio falls back to the Italy country zone and charges `7.00`.
+
+This is true even if all three zones are linked to the same method: the most specific destination always wins.
+
+#### 3. Different couriers can produce different volumetric fees
+
+Take the same parcel with:
+
+- actual weight `4kg`
+- dimensions `50 x 40 x 30 cm`
+
+Courier A has `volumetric_divisor = 5000`.
+Courier B has `volumetric_divisor = 4000`.
+
+That produces:
+
+- Courier A volumetric weight: `(50 * 40 * 30) / 5000 = 12kg`
+- Courier B volumetric weight: `(50 * 40 * 30) / 4000 = 15kg`
+
+So the chargeable weight becomes:
+
+- Courier A: `max(4, 12) = 12kg`
+- Courier B: `max(4, 15) = 15kg`
+
+If both couriers are linked to the same zone but with different pricing in `shipping_method_zones`, the final fee can differ twice:
+
+- because the chargeable weight is different
+- because each method-zone pivot can have different `rate_tiers` or `over_weight_price_per_kg`
+
+#### 4. Incomplete destination does not block the cart
+
+If the cart has lines but is missing `shipping_method_id`, or the shipping address is still incomplete, Venditio does not fail the request.
+It keeps:
+
+- `shipping_fee = 0`
+- `shipping_zone_id = null`
+
+This is useful for checkout flows where the customer adds products before choosing a courier or completing the address.
+
+#### 5. Complete destination with no valid shipping rate returns `422`
+
+In `zones` mode, if the cart has:
+
+- a valid `shipping_method_id`
+- a complete enough destination to resolve a province or country
+
+but the selected method is not linked to any matching active zone, Venditio returns a validation error.
+The same happens if a matching zone exists but its pivot has no applicable `rate_tiers` and no `over_weight_price_per_kg`.
+
+This makes the failure machine-readable for the host app while still allowing incomplete carts to remain valid during checkout.
 
 ## Commands
 

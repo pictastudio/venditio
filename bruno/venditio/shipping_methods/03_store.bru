@@ -1,0 +1,31 @@
+meta {
+  name: Store shipping_methods
+  type: http
+  seq: 78
+}
+
+post {
+  url: {{baseUrl}}/shipping_methods
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "code": "BRT",
+    "name": "BRT",
+    "active": true,
+    "flat_fee": 9.5,
+    "volumetric_divisor": 5000
+  }
+}
+
+docs {
+  summary:
+  - Store a shipping method / courier.
+}

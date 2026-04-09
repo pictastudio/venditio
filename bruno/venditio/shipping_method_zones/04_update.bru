@@ -1,0 +1,35 @@
+meta {
+  name: Update shipping_method_zones
+  type: http
+  seq: 84
+}
+
+patch {
+  url: {{baseUrl}}/shipping_method_zones/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "rate_tiers": [
+      {
+        "max_weight": 15,
+        "fee": 8
+      },
+      {
+        "max_weight": 30,
+        "fee": 11
+      }
+    ]
+  }
+}

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductCollectionController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ShippingStatusController, TagController, TaxClassController};
+use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductCollectionController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ShippingMethodController, ShippingMethodZoneController, ShippingStatusController, ShippingZoneController, TagController, TaxClassController};
 
 /*
 |--------------------------------------------------------------------------
@@ -48,7 +48,10 @@ Route::post('country_tax_classes/bulk/upsert', [CountryTaxClassController::class
 Route::apiResource('country_tax_classes', CountryTaxClassController::class);
 Route::apiResource('currencies', CurrencyController::class);
 Route::apiResource('tax_classes', TaxClassController::class);
+Route::apiResource('shipping_methods', ShippingMethodController::class);
+Route::apiResource('shipping_method_zones', ShippingMethodZoneController::class);
 Route::apiResource('shipping_statuses', ShippingStatusController::class);
+Route::apiResource('shipping_zones', ShippingZoneController::class);
 Route::post('discounts/bulk/upsert', [DiscountController::class, 'upsertMultiple'])->name('discounts.upsertMultiple');
 Route::apiResource('discounts', DiscountController::class);
 Route::apiResource('discount_applications', DiscountApplicationController::class);

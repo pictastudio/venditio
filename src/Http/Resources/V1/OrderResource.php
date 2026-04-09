@@ -28,7 +28,9 @@ class OrderResource extends JsonResource
     {
         return [
             'user' => UserResource::make($this->whenLoaded('user')),
+            'shipping_method' => ShippingMethodResource::make($this->whenLoaded('shippingMethod')),
             'shipping_status' => ShippingStatusResource::make($this->whenLoaded('shippingStatus')),
+            'shipping_zone' => ShippingZoneResource::make($this->whenLoaded('shippingZone')),
             'lines' => OrderLineResource::collection($this->whenLoaded('lines')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
         ];

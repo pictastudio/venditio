@@ -9,7 +9,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\ExcelServiceProvider;
 use PictaStudio\Venditio\Console\Commands\{InstallCommand, ReleaseStockForAbandonedCarts, SeedRandomDataCommand};
-use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface};
+use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface, ShippingFeeCalculatorInterface, ShippingWeightsResolverInterface, ShippingZoneResolverInterface};
 use PictaStudio\Venditio\Discounts\{CartTotalDiscountCalculator, DiscountCalculator, DiscountUsageRecorder, DiscountablesResolver};
 use PictaStudio\Venditio\Facades\Venditio as VenditioFacade;
 use PictaStudio\Venditio\Generators\{CartIdentifierGenerator, OrderIdentifierGenerator, ProductSkuGenerator};
@@ -52,6 +52,13 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_orders_table',
                 'create_order_lines_table',
                 'create_shipping_statuses_table',
+                'create_shipping_methods_table',
+                'create_shipping_zones_table',
+                'create_shipping_zone_country_table',
+                'create_shipping_zone_region_table',
+                'create_shipping_zone_province_table',
+                'create_shipping_method_zone_table',
+                'update_orders_add_shipping_fields',
                 'create_brands_table',
                 'update_brands_add_catalog_fields',
                 'create_product_categories_table',
@@ -77,6 +84,7 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_price_lists_table',
                 'create_price_list_prices_table',
                 'create_carts_table',
+                'update_carts_add_shipping_fields',
                 'create_cart_lines_table',
                 'seed_venditio_data',
             ]);
@@ -106,6 +114,7 @@ class VenditioServiceProvider extends PackageServiceProvider
         $this->registerMorphMap();
         $this->bindDiscountClasses();
         $this->bindPricingClasses();
+        $this->bindShippingClasses();
         $this->bindIdentifierGenerators();
     }
 
@@ -188,6 +197,22 @@ class VenditioServiceProvider extends PackageServiceProvider
         $this->app->singleton(
             ProductPriceResolverInterface::class,
             config('venditio.price_lists.resolver', DefaultProductPriceResolver::class)
+        );
+    }
+
+    private function bindShippingClasses(): void
+    {
+        $this->app->singleton(
+            ShippingWeightsResolverInterface::class,
+            config('venditio.shipping.weights_resolver')
+        );
+        $this->app->singleton(
+            ShippingZoneResolverInterface::class,
+            config('venditio.shipping.zone_resolver')
+        );
+        $this->app->singleton(
+            ShippingFeeCalculatorInterface::class,
+            config('venditio.shipping.fee_calculator')
         );
     }
 

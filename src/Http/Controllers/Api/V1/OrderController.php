@@ -50,14 +50,14 @@ class OrderController extends Controller
             )
         );
 
-        return OrderResource::make($order);
+        return OrderResource::make($order->load(['lines', 'shippingMethod', 'shippingZone']));
     }
 
     public function show(Order $order): JsonResource
     {
         $this->authorizeIfConfigured('view', $order);
 
-        return OrderResource::make($order->load('lines'));
+        return OrderResource::make($order->load(['lines', 'shippingMethod', 'shippingZone']));
     }
 
     public function update(UpdateOrderRequest $request, Order $order): JsonResource
@@ -67,7 +67,7 @@ class OrderController extends Controller
         $order->fill($request->validated());
         $order->save();
 
-        return OrderResource::make($order->refresh()->load('lines'));
+        return OrderResource::make($order->refresh()->load(['lines', 'shippingMethod', 'shippingZone']));
     }
 
     public function destroy(Order $order)

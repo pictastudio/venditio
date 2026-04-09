@@ -1,0 +1,30 @@
+meta {
+  name: List shipping_zones
+  type: http
+  seq: 86
+}
+
+get {
+  url: {{baseUrl}}/shipping_zones
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~all: 0
+  ~page: 1
+  ~per_page: 30
+  ~sort_by: priority
+  ~sort_dir: desc
+  ~code: IT-RM
+  ~name: Rome
+  ~active: 1
+  ~priority: 10
+  ~with_trashed: 0
+  ~only_trashed: 0
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}

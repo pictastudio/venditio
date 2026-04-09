@@ -17,6 +17,13 @@ headers {
 
 body:json {
   {
+    "shipping_method_id": 1,
+    "addresses": {
+      "shipping": {
+        "country_id": 1,
+        "province_id": 1
+      }
+    },
     "lines": [
       {
         "product_id": 1,
@@ -48,6 +55,7 @@ docs {
   - user_last_name
   - user_email
   - discount_code
+  - shipping_method_id
   - addresses (array)
   - addresses.billing (array)
   - addresses.shipping (array)

@@ -76,7 +76,10 @@ class ResolveVenditioRouteBindings
             'product_variant_option' => 'product_variant_option',
             'province' => 'province',
             'region' => 'region',
+            'shipping_method' => 'shipping_method',
+            'shipping_method_zone' => 'shipping_method_zone',
             'shipping_status' => 'shipping_status',
+            'shipping_zone' => 'shipping_zone',
             'tag' => 'tag',
             'tax_class' => 'tax_class',
         ];

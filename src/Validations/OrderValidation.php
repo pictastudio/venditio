@@ -34,6 +34,16 @@ class OrderValidation implements OrderValidationRules
                 'integer',
                 Rule::exists($this->tableFor('shipping_status'), 'id'),
             ],
+            'shipping_method_id' => [
+                'nullable',
+                'integer',
+                Rule::exists($this->tableFor('shipping_method'), 'id'),
+            ],
+            'shipping_zone_id' => [
+                'nullable',
+                'integer',
+                Rule::exists($this->tableFor('shipping_zone'), 'id'),
+            ],
             'status' => [
                 'sometimes',
                 'string',
@@ -47,6 +57,9 @@ class OrderValidation implements OrderValidationRules
             'sub_total_tax' => ['sometimes', 'numeric', 'min:0'],
             'sub_total' => ['sometimes', 'numeric', 'min:0'],
             'shipping_fee' => ['sometimes', 'numeric', 'min:0'],
+            'specific_weight' => ['sometimes', 'numeric', 'min:0'],
+            'volumetric_weight' => ['sometimes', 'numeric', 'min:0'],
+            'chargeable_weight' => ['sometimes', 'numeric', 'min:0'],
             'payment_fee' => ['sometimes', 'numeric', 'min:0'],
             'discount_code' => ['nullable', 'string', 'max:255'],
             'discount_amount' => ['sometimes', 'numeric', 'min:0'],

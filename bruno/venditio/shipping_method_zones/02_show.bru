@@ -1,0 +1,20 @@
+meta {
+  name: Show shipping_method_zones
+  type: http
+  seq: 82
+}
+
+get {
+  url: {{baseUrl}}/shipping_method_zones/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}

@@ -53,7 +53,7 @@ class CartController extends Controller
         return CartResource::make(
             $pipeline->run(
                 resolve_dto('cart')::fromArray($request->validated())
-            )
+            )->load(['lines', 'shippingMethod', 'shippingZone'])
         );
     }
 
@@ -61,7 +61,7 @@ class CartController extends Controller
     {
         $this->authorizeIfConfigured('view', $cart);
 
-        return CartResource::make($cart->load('lines'));
+        return CartResource::make($cart->load(['lines', 'shippingMethod', 'shippingZone']));
     }
 
     public function update(UpdateCartRequest $request, Cart $cart, CartUpdatePipeline $pipeline): JsonResource
@@ -76,7 +76,7 @@ class CartController extends Controller
                         ['cart' => $cart]
                     )
                 )
-            )
+            )->load(['lines', 'shippingMethod', 'shippingZone'])
         );
     }
 
@@ -97,7 +97,7 @@ class CartController extends Controller
 
         $validationResponse = $this->validateData(request()->all(), $cartLineValidationRules->getStoreValidationRules());
         $lines = $this->mergeExistingAndIncomingLines($cart, $validationResponse['lines']);
-        $updatedCart = $this->runCartUpdatePipeline($cart, ['lines' => $lines])->load('lines');
+        $updatedCart = $this->runCartUpdatePipeline($cart, ['lines' => $lines])->load(['lines', 'shippingMethod', 'shippingZone']);
 
         return response()->json(CartResource::make($updatedCart));
     }
@@ -143,7 +143,7 @@ class CartController extends Controller
                     ])
                     ->toArray(),
             ]
-        )->load('lines');
+        )->load(['lines', 'shippingMethod', 'shippingZone']);
 
         return response()->json(CartResource::make($updatedCart));
     }
@@ -182,7 +182,7 @@ class CartController extends Controller
             ->values()
             ->all();
 
-        $updatedCart = $this->runCartUpdatePipeline($cart, ['lines' => $remainingLines])->load('lines');
+        $updatedCart = $this->runCartUpdatePipeline($cart, ['lines' => $remainingLines])->load(['lines', 'shippingMethod', 'shippingZone']);
 
         return response()->json(CartResource::make($updatedCart));
     }
@@ -200,7 +200,7 @@ class CartController extends Controller
             [
                 'discount_code' => $validated['discount_code'],
             ]
-        )->load('lines');
+        )->load(['lines', 'shippingMethod', 'shippingZone']);
 
         return response()->json(CartResource::make($updatedCart));
     }

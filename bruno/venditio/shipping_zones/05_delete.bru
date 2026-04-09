@@ -1,0 +1,20 @@
+meta {
+  name: Delete shipping_zones
+  type: http
+  seq: 90
+}
+
+delete {
+  url: {{baseUrl}}/shipping_zones/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}

@@ -1,0 +1,28 @@
+meta {
+  name: List shipping_method_zones
+  type: http
+  seq: 81
+}
+
+get {
+  url: {{baseUrl}}/shipping_method_zones
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~all: 0
+  ~page: 1
+  ~per_page: 30
+  ~sort_by: shipping_method_id
+  ~sort_dir: asc
+  ~shipping_method_id: 1
+  ~shipping_zone_id: 1
+  ~active: 1
+  ~over_weight_price_per_kg: 2.5
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}

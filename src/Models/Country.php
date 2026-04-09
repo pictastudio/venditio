@@ -44,4 +44,10 @@ class Country extends Model
     {
         return $this->hasMany(resolve_model('region'));
     }
+
+    public function shippingZones(): BelongsToMany
+    {
+        return $this->belongsToMany(resolve_model('shipping_zone'), 'shipping_zone_country')
+            ->withTimestamps();
+    }
 }

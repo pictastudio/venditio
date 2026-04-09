@@ -1,0 +1,20 @@
+meta {
+  name: Delete shipping_methods
+  type: http
+  seq: 80
+}
+
+delete {
+  url: {{baseUrl}}/shipping_methods/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}

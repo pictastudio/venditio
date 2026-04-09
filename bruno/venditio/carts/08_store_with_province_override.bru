@@ -1,0 +1,50 @@
+meta {
+  name: Store carts with province override
+  type: http
+  seq: 31
+}
+
+post {
+  url: {{baseUrl}}/carts
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "shipping_method_id": 1,
+    "addresses": {
+      "billing": {
+        "country_id": 1
+      },
+      "shipping": {
+        "country_id": 1,
+        "province_id": 10
+      }
+    },
+    "lines": [
+      {
+        "product_id": 1,
+        "qty": 2
+      }
+    ]
+  }
+}
+
+docs {
+  summary:
+  - Use this request when a province-specific zone should win over region or country zones.
+
+  endpoint:
+  - method: POST
+  - path: /carts
+
+  body:
+  - Prepare one province-level zone and broader region/country zones for the same method.
+  - The response should resolve shipping_zone_id to the province-level zone.
+}

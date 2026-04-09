@@ -13,7 +13,8 @@ if (!function_exists('resolve_model')) {
      *                         'country_tax_class', 'currency', 'discount', 'discount_application', 'inventory',
      *                         'municipality', 'province', 'region',
      *                         'order', 'order_line', 'product', 'product_category', 'product_collection',
-     *                         'shipping_status', 'tax_class', 'user'.
+     *                         'shipping_method', 'shipping_method_zone', 'shipping_status', 'shipping_zone',
+     *                         'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
      *                         'product_variant', 'product_variant_option', 'tag',
      *                         'price_list', 'price_list_price'
@@ -33,7 +34,8 @@ if (!function_exists('query')) {
      *                         'country_tax_class', 'currency', 'discount', 'discount_application', 'inventory',
      *                         'municipality', 'province', 'region',
      *                         'order', 'order_line', 'product', 'product_category', 'product_collection',
-     *                         'shipping_status', 'tax_class', 'user'.
+     *                         'shipping_method', 'shipping_method_zone', 'shipping_status', 'shipping_zone',
+     *                         'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
      *                         'product_variant', 'product_variant_option', 'tag',
      *                         'price_list', 'price_list_price'
@@ -53,7 +55,8 @@ if (!function_exists('get_fresh_model_instance')) {
      *                         'country_tax_class', 'currency', 'discount', 'discount_application', 'inventory',
      *                         'municipality', 'province', 'region',
      *                         'order', 'order_line', 'product', 'product_category', 'product_collection',
-     *                         'shipping_status', 'tax_class', 'user'.
+     *                         'shipping_method', 'shipping_method_zone', 'shipping_status', 'shipping_zone',
+     *                         'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
      *                         'product_variant', 'product_variant_option', 'tag',
      *                         'price_list', 'price_list_price'

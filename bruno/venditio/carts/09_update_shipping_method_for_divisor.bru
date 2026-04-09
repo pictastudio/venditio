@@ -1,0 +1,38 @@
+meta {
+  name: Update carts shipping method
+  type: http
+  seq: 32
+}
+
+patch {
+  url: {{baseUrl}}/carts/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "shipping_method_id": 2
+  }
+}
+
+docs {
+  summary:
+  - Swap the courier on an existing cart to compare volumetric_divisor-driven fee changes.
+
+  endpoint:
+  - method: PATCH
+  - path: /carts/:id
+
+  body:
+  - shipping_method_id: select another courier with a different volumetric_divisor.
+}
