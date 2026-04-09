@@ -24,11 +24,11 @@ body:json {
         "active": false
       },
       {
-        "discountable_type": "product",
+        "discountable_type": "product_collection",
         "discountable_id": 1,
         "type": "fixed",
         "value": 7.5,
-        "name": "Bulk product discount",
+        "name": "Bulk collection discount",
         "starts_at": "2026-03-12 10:00:00",
         "ends_at": "2026-03-20 23:59:59",
         "apply_once_per_cart": true
@@ -55,6 +55,7 @@ docs {
   - JSON payload with discounts array.
   - Include id to update an existing discount; omit id to create a new one.
   - Create items require: type, value, starts_at, and either code or a discountable target.
-  - Product-scoped and other discountable-scoped creates auto-generate a code when code is omitted.
+  - Supported discountable types: product, product_category, product_collection, product_type, brand, user.
+  - Discountable-scoped creates auto-generate a code when code is omitted.
   - Duplicate ids and duplicate effective codes inside the same request are rejected.
 }

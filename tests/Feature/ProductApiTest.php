@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Brand, Country, CountryTaxClass, Currency, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductType, ProductVariant, ProductVariantOption, Tag, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Country, CountryTaxClass, Currency, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductCollection, ProductType, ProductVariant, ProductVariantOption, Tag, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patchJson, postJson};
 
@@ -43,6 +43,26 @@ it('creates a product with categories', function () {
     assertDatabaseHas('product_category_product', [
         'product_id' => $productId,
         'product_category_id' => $category->getKey(),
+    ]);
+});
+
+it('creates a product with collections', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $collection = ProductCollection::factory()->create();
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/products', [
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Collection Product',
+        'sku' => 'COLLECTION-PRODUCT-001',
+        'status' => ProductStatus::Published,
+        'collection_ids' => [$collection->getKey()],
+    ])->assertCreated();
+
+    assertDatabaseHas('product_collection_product', [
+        'product_id' => $response->json('id'),
+        'product_collection_id' => $collection->getKey(),
     ]);
 });
 
@@ -210,6 +230,36 @@ it('updates product categories when provided', function () {
     assertDatabaseHas('product_category_product', [
         'product_id' => $product->getKey(),
         'product_category_id' => $otherCategory->getKey(),
+    ]);
+});
+
+it('updates product collections when provided', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $collection = ProductCollection::factory()->create();
+    $otherCollection = ProductCollection::factory()->create();
+
+    $product = Product::factory()->create([
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->collections()->sync([$collection->getKey()]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}", [
+        'collection_ids' => [$otherCollection->getKey()],
+    ])->assertOk();
+
+    assertDatabaseMissing('product_collection_product', [
+        'product_id' => $product->getKey(),
+        'product_collection_id' => $collection->getKey(),
+    ]);
+    assertDatabaseHas('product_collection_product', [
+        'product_id' => $product->getKey(),
+        'product_collection_id' => $otherCollection->getKey(),
     ]);
 });
 
@@ -523,7 +573,7 @@ it('prioritizes exclude_variants over include_variants on products index', funct
         ->not->toContain($variantProduct->getKey());
 });
 
-it('filters products index by multiple brands and categories', function () {
+it('filters products index by multiple brands, categories, and collections', function () {
     $brandA = Brand::factory()->create();
     $brandB = Brand::factory()->create();
     $brandC = Brand::factory()->create();
@@ -532,6 +582,10 @@ it('filters products index by multiple brands and categories', function () {
     $categoryB = ProductCategory::factory()->create();
     $categoryC = ProductCategory::factory()->create();
 
+    $collectionA = ProductCollection::factory()->create();
+    $collectionB = ProductCollection::factory()->create();
+    $collectionC = ProductCollection::factory()->create();
+
     $matchingA = Product::factory()->create([
         'brand_id' => $brandA->getKey(),
         'active' => true,
@@ -539,6 +593,7 @@ it('filters products index by multiple brands and categories', function () {
         'visible_until' => null,
     ]);
     $matchingA->categories()->sync([$categoryA->getKey()]);
+    $matchingA->collections()->sync([$collectionA->getKey()]);
 
     $matchingB = Product::factory()->create([
         'brand_id' => $brandB->getKey(),
@@ -547,6 +602,7 @@ it('filters products index by multiple brands and categories', function () {
         'visible_until' => null,
     ]);
     $matchingB->categories()->sync([$categoryB->getKey()]);
+    $matchingB->collections()->sync([$collectionB->getKey()]);
 
     $notMatchingBrand = Product::factory()->create([
         'brand_id' => $brandC->getKey(),
@@ -555,6 +611,7 @@ it('filters products index by multiple brands and categories', function () {
         'visible_until' => null,
     ]);
     $notMatchingBrand->categories()->sync([$categoryA->getKey()]);
+    $notMatchingBrand->collections()->sync([$collectionA->getKey()]);
 
     $notMatchingCategory = Product::factory()->create([
         'brand_id' => $brandA->getKey(),
@@ -563,6 +620,16 @@ it('filters products index by multiple brands and categories', function () {
         'visible_until' => null,
     ]);
     $notMatchingCategory->categories()->sync([$categoryC->getKey()]);
+    $notMatchingCategory->collections()->sync([$collectionA->getKey()]);
+
+    $notMatchingCollection = Product::factory()->create([
+        'brand_id' => $brandA->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $notMatchingCollection->categories()->sync([$categoryA->getKey()]);
+    $notMatchingCollection->collections()->sync([$collectionC->getKey()]);
 
     $response = getJson(
         config('venditio.routes.api.v1.prefix')
@@ -571,6 +638,8 @@ it('filters products index by multiple brands and categories', function () {
         . '&brand_ids[]=' . $brandB->getKey()
         . '&category_ids[]=' . $categoryA->getKey()
         . '&category_ids[]=' . $categoryB->getKey()
+        . '&collection_ids[]=' . $collectionA->getKey()
+        . '&collection_ids[]=' . $collectionB->getKey()
     )->assertOk();
 
     $json = $response->json();
@@ -584,15 +653,15 @@ it('filters products index by multiple brands and categories', function () {
 
     expect($ids)
         ->toContain($matchingA->getKey(), $matchingB->getKey())
-        ->not->toContain($notMatchingBrand->getKey(), $notMatchingCategory->getKey());
+        ->not->toContain($notMatchingBrand->getKey(), $notMatchingCategory->getKey(), $notMatchingCollection->getKey());
 });
 
-it('validates products index brand_ids and category_ids filters', function () {
+it('validates products index brand_ids, category_ids, and collection_ids filters', function () {
     getJson(
         config('venditio.routes.api.v1.prefix')
-        . '/products?brand_ids[]=999999&category_ids[]=999999'
+        . '/products?brand_ids[]=999999&category_ids[]=999999&collection_ids[]=999999'
     )->assertUnprocessable()
-        ->assertJsonValidationErrors(['brand_ids.0', 'category_ids.0']);
+        ->assertJsonValidationErrors(['brand_ids.0', 'category_ids.0', 'collection_ids.0']);
 });
 
 it('filters products index by inventory price with operator', function () {
@@ -788,6 +857,7 @@ it('includes requested product relations on show endpoint', function () {
     $taxClass = TaxClass::factory()->create();
     $productType = ProductType::factory()->create(['active' => true]);
     $category = ProductCategory::factory()->create();
+    $collection = ProductCollection::factory()->create();
     $priceList = PriceList::factory()->create(['name' => 'Retail']);
 
     $product = Product::factory()->create([
@@ -799,6 +869,7 @@ it('includes requested product relations on show endpoint', function () {
         'visible_until' => null,
     ]);
     $product->categories()->sync([$category->getKey()]);
+    $product->collections()->sync([$collection->getKey()]);
 
     PriceListPrice::factory()->create([
         'product_id' => $product->getKey(),
@@ -807,10 +878,11 @@ it('includes requested product relations on show endpoint', function () {
         'is_default' => true,
     ]);
 
-    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=brand,categories,product_type,tax_class,price_lists")
+    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=brand,categories,collections,product_type,tax_class,price_lists")
         ->assertOk()
         ->assertJsonPath('brand.id', $brand->getKey())
         ->assertJsonPath('categories.0.id', $category->getKey())
+        ->assertJsonPath('collections.0.id', $collection->getKey())
         ->assertJsonPath('product_type.id', $productType->getKey())
         ->assertJsonPath('tax_class.id', $taxClass->getKey())
         ->assertJsonPath('price_lists.0.price_list.id', $priceList->getKey());
@@ -823,6 +895,7 @@ it('includes requested product relations on index endpoint', function () {
     $taxClass = TaxClass::factory()->create();
     $productType = ProductType::factory()->create(['active' => true]);
     $category = ProductCategory::factory()->create();
+    $collection = ProductCollection::factory()->create();
     $priceList = PriceList::factory()->create(['name' => 'Retail']);
 
     $product = Product::factory()->create([
@@ -834,6 +907,7 @@ it('includes requested product relations on index endpoint', function () {
         'visible_until' => null,
     ]);
     $product->categories()->sync([$category->getKey()]);
+    $product->collections()->sync([$collection->getKey()]);
 
     PriceListPrice::factory()->create([
         'product_id' => $product->getKey(),
@@ -845,7 +919,7 @@ it('includes requested product relations on index endpoint', function () {
     $response = getJson(
         config('venditio.routes.api.v1.prefix')
         . '/products?all=1&id[]=' . $product->getKey()
-        . '&include=brand,categories,product_type,tax_class,price_lists'
+        . '&include=brand,categories,collections,product_type,tax_class,price_lists'
     )->assertOk();
 
     $json = $response->json();
@@ -859,6 +933,7 @@ it('includes requested product relations on index endpoint', function () {
     expect($item)->not->toBeNull()
         ->and(data_get($item, 'brand.id'))->toBe($brand->getKey())
         ->and(data_get($item, 'categories.0.id'))->toBe($category->getKey())
+        ->and(data_get($item, 'collections.0.id'))->toBe($collection->getKey())
         ->and(data_get($item, 'product_type.id'))->toBe($productType->getKey())
         ->and(data_get($item, 'tax_class.id'))->toBe($taxClass->getKey())
         ->and(data_get($item, 'price_lists.0.price_list.id'))->toBe($priceList->getKey());
@@ -1094,6 +1169,48 @@ it('includes pricing source and ordered applied discounts when price_breakdown i
         ->assertJsonPath('price_calculated.discounts_applied.1.unit_price_after', 85);
 
     expect($retailPrice->getKey())->not->toBe($wholesalePrice->getKey());
+});
+
+it('includes collection scoped discounts in the product price breakdown', function () {
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->inventory()->updateOrCreate([], [
+        'price' => 100,
+        'purchase_price' => 55,
+        'price_includes_tax' => false,
+    ]);
+
+    $collection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => now()->subDay(),
+        'visible_until' => now()->addDay(),
+    ]);
+    $product->collections()->sync([$collection->getKey()]);
+
+    $collection->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 15,
+        'name' => 'Collection 15%',
+        'code' => 'COL15-BREAKDOWN',
+        'active' => true,
+        'starts_at' => now()->subMinute(),
+        'ends_at' => now()->addDay(),
+        'priority' => 30,
+        'stop_after_propagation' => false,
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=price_breakdown")
+        ->assertOk()
+        ->assertJsonPath('price_calculated.price', 100)
+        ->assertJsonPath('price_calculated.price_final', 85)
+        ->assertJsonPath('price_calculated.discounts_applied.0.code', 'COL15-BREAKDOWN')
+        ->assertJsonPath('price_calculated.discounts_applied.0.discountable_type', $collection->getMorphClass())
+        ->assertJsonPath('price_calculated.discounts_applied.0.discountable_id', $collection->getKey())
+        ->assertJsonPath('price_calculated.discounts_applied.0.unit_amount', 15);
 });
 
 it('applies multiple propagated discounts to product price_final', function () {

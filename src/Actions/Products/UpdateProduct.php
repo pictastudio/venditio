@@ -16,6 +16,8 @@ class UpdateProduct
     {
         $categoryIdsProvided = array_key_exists('category_ids', $payload);
         $categoryIds = Arr::pull($payload, 'category_ids', []);
+        $collectionIdsProvided = array_key_exists('collection_ids', $payload);
+        $collectionIds = Arr::pull($payload, 'collection_ids', []);
         $tagIdsProvided = array_key_exists('tag_ids', $payload);
         $tagIds = Arr::pull($payload, 'tag_ids', []);
         $inventoryProvided = array_key_exists('inventory', $payload);
@@ -37,6 +39,10 @@ class UpdateProduct
 
         if ($categoryIdsProvided) {
             $product->categories()->sync($categoryIds ?? []);
+        }
+
+        if ($collectionIdsProvided) {
+            $product->collections()->sync($collectionIds ?? []);
         }
 
         if ($tagIdsProvided) {

@@ -36,6 +36,15 @@ it('resolves slug-enabled catalog resources by slug', function () {
     getJson(config('venditio.routes.api.v1.prefix') . '/product_categories/' . $categoryResponse->json('slug'))
         ->assertOk()
         ->assertJsonPath('id', $categoryResponse->json('id'));
+
+    $collectionResponse = postJson(config('venditio.routes.api.v1.prefix') . '/product_collections', [
+        'name' => 'Spring Picks',
+        'active' => true,
+    ])->assertCreated();
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/product_collections/' . $collectionResponse->json('slug'))
+        ->assertOk()
+        ->assertJsonPath('id', $collectionResponse->json('id'));
 });
 
 it('resolves slug-enabled catalog resources by translated slug in any locale', function () {
@@ -90,6 +99,24 @@ it('resolves slug-enabled catalog resources by translated slug in any locale', f
         ['Locale' => 'it']
     )->assertOk()
         ->assertJsonPath('id', $categoryResponse->json('id'));
+
+    $collectionResponse = postJson(config('venditio.routes.api.v1.prefix') . '/product_collections', [
+        'translations' => [
+            'en' => [
+                'name' => 'Summer Picks',
+            ],
+            'it' => [
+                'name' => 'Selezione Estate',
+            ],
+        ],
+        'active' => true,
+    ])->assertCreated();
+
+    getJson(
+        config('venditio.routes.api.v1.prefix') . '/product_collections/selezione-estate',
+        ['Locale' => 'it']
+    )->assertOk()
+        ->assertJsonPath('id', $collectionResponse->json('id'));
 });
 
 it('resolves products by slug for show, update and variants routes', function () {

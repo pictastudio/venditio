@@ -25,7 +25,7 @@ class StoreDiscountRequest extends FormRequest
                 'string',
                 'max:255',
                 'required_with:discountable_id',
-                Rule::in(['product', 'product_category', 'product_type', 'brand', 'user']),
+                Rule::in(['product', 'product_category', 'product_collection', 'product_type', 'brand', 'user']),
             ],
             'discountable_id' => [
                 'nullable',

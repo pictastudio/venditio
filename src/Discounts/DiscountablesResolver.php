@@ -39,6 +39,12 @@ class DiscountablesResolver implements DiscountablesResolverInterface
                     $product->categories->filter(fn (mixed $category) => $category instanceof Model)
                 );
             }
+
+            if ($product->relationLoaded('collections')) {
+                $discountables = $discountables->merge(
+                    $product->collections->filter(fn (mixed $collection) => $collection instanceof Model)
+                );
+            }
         }
 
         $discountables = $discountables
@@ -65,7 +71,7 @@ class DiscountablesResolver implements DiscountablesResolverInterface
 
         return query('product')
             ->withoutGlobalScopes()
-            ->with(['categories', 'brand', 'productType', 'parent'])
+            ->with(['categories', 'collections', 'brand', 'productType', 'parent'])
             ->find($productId);
     }
 }

@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Discount, Product};
+use PictaStudio\Venditio\Models\{Discount, Product, ProductCollection};
 
 use function Pest\Laravel\{assertDatabaseHas, getJson, postJson};
 
@@ -42,6 +42,39 @@ it('serializes the polymorphic discountable relation using its dedicated resourc
         ->assertJsonPath('discountable.name', 'Test Polymorphic Product');
 });
 
+it('serializes a product collection discountable relation using its dedicated resource', function () {
+    $collection = ProductCollection::factory()->create([
+        'name' => 'Summer Collection',
+        'active' => true,
+        'visible_from' => now()->subDay(),
+        'visible_until' => now()->addDay(),
+    ]);
+
+    $discount = $collection->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'name' => 'Scoped Collection Discount',
+        'code' => 'POLY-COL10',
+        'active' => true,
+        'starts_at' => now()->subMinute(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => false,
+        'apply_once_per_cart' => false,
+        'max_uses_per_user' => null,
+        'one_per_user' => false,
+        'free_shipping' => false,
+        'minimum_order_total' => null,
+    ]);
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    getJson($prefix . '/discounts/' . $discount->getKey())
+        ->assertOk()
+        ->assertJsonPath('id', $discount->getKey())
+        ->assertJsonPath('discountable.id', $collection->getKey())
+        ->assertJsonPath('discountable.name', 'Summer Collection');
+});
+
 it('generates a discount code automatically when creating a discount scoped to a discountable resource', function () {
     $product = Product::factory()->create([
         'status' => ProductStatus::Published,
@@ -73,6 +106,32 @@ it('generates a discount code automatically when creating a discount scoped to a
         'discountable_type' => 'product',
         'discountable_id' => $product->getKey(),
         'code' => $code,
+    ]);
+});
+
+it('allows creating discounts scoped to product collections', function () {
+    $collection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => now()->subDay(),
+        'visible_until' => now()->addDay(),
+    ]);
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $response = postJson($prefix . '/discounts', [
+        'discountable_type' => 'product_collection',
+        'discountable_id' => $collection->getKey(),
+        'type' => DiscountType::Percentage->value,
+        'value' => 10,
+        'name' => 'Collection Discount',
+        'starts_at' => now()->subHour()->toDateTimeString(),
+        'ends_at' => now()->addDay()->toDateTimeString(),
+    ])->assertCreated();
+
+    assertDatabaseHas('discounts', [
+        'id' => $response->json('id'),
+        'discountable_type' => 'product_collection',
+        'discountable_id' => $collection->getKey(),
     ]);
 });
 

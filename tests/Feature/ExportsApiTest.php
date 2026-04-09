@@ -5,7 +5,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use PictaStudio\Venditio\Enums\DiscountType;
 use PictaStudio\Venditio\Enums\{OrderStatus, ProductStatus};
 use PictaStudio\Venditio\Exports\V1\{OrdersByLineExport, ProductsExport};
-use PictaStudio\Venditio\Models\{Brand, Currency, Order, Product, ProductCategory, ShippingStatus, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Currency, Order, Product, ProductCategory, ProductCollection, ShippingStatus, TaxClass};
 
 use function Pest\Laravel\{get, getJson};
 
@@ -130,6 +130,50 @@ it('filters product excel export by multiple brands and categories', function ()
         expect($ids)
             ->toContain($matchingA->getKey(), $matchingB->getKey())
             ->not->toContain($notMatchingBrand->getKey(), $notMatchingCategory->getKey());
+
+        return true;
+    });
+});
+
+it('exports and filters products by collections', function () {
+    Excel::fake();
+
+    $collectionA = ProductCollection::factory()->create(['name' => 'Spring Picks']);
+    $collectionB = ProductCollection::factory()->create(['name' => 'Winter Picks']);
+
+    $matching = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $matching->collections()->sync([$collectionA->getKey()]);
+
+    $notMatching = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $notMatching->collections()->sync([$collectionB->getKey()]);
+
+    get(
+        config('venditio.routes.api.v1.prefix')
+        . '/exports/products?columns=id,collection_ids'
+        . '&collection_ids[]=' . $collectionA->getKey()
+        . '&filename=products-by-collections'
+    )->assertOk();
+
+    Excel::assertDownloaded('products-by-collections.xlsx', function (ProductsExport $export) use ($matching, $notMatching): bool {
+        expect($export->headings())->toBe(['id', 'collection_ids']);
+
+        $rows = $export->collection()
+            ->map(fn ($row): array => $export->map($row))
+            ->values();
+
+        expect($rows)->toHaveCount(1)
+            ->and((int) $rows->first()[0])->toBe($matching->getKey())
+            ->and((string) $rows->first()[1])->toContain('Spring Picks')
+            ->and(collect($rows)->pluck(0)->map(fn (mixed $id): int => (int) $id)->all())
+            ->not->toContain($notMatching->getKey());
 
         return true;
     });

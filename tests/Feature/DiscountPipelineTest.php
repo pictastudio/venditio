@@ -5,7 +5,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use PictaStudio\Venditio\Dto\{CartDto, OrderDto};
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, DiscountApplication, Product, ProductCategory, TaxClass, User};
+use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, DiscountApplication, Product, ProductCategory, ProductCollection, TaxClass, User};
 use PictaStudio\Venditio\Pipelines\Cart\{CartCreationPipeline, CartUpdatePipeline};
 use PictaStudio\Venditio\Pipelines\Order\OrderCreationPipeline;
 
@@ -142,6 +142,45 @@ it('applies a category discount through polymorphic relations during cart calcul
         ->and((float) $line->discount_amount)->toBe(20.0)
         ->and($line->discount_code)->toBe('CAT10')
         ->and((float) $cart->discount_amount)->toBe(0.0);
+});
+
+it('applies a collection discount through polymorphic relations during cart calculation', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupTaxEnvironment($taxClass);
+
+    $product = createProduct(100, $taxClass);
+    $collection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => now()->subDay(),
+        'visible_until' => now()->addDay(),
+    ]);
+    $product->collections()->attach($collection->getKey());
+
+    $collection->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 15,
+        'code' => 'COL15',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+    ]);
+
+    $cart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'lines' => [
+                [
+                    'product_id' => $product->getKey(),
+                    'qty' => 2,
+                ],
+            ],
+        ])
+    )->load('lines');
+
+    $line = $cart->lines->first();
+
+    expect((float) $line->unit_discount)->toBe(15.0)
+        ->and((float) $line->discount_amount)->toBe(30.0)
+        ->and($line->discount_code)->toBe('COL15');
 });
 
 it('propagates multiple applicable discounts on the same cart line', function () {

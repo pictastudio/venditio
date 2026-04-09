@@ -31,6 +31,7 @@ class ExportController extends Controller
             'taxClass',
             'inventory.currency',
             'categories',
+            'collections',
             'variantOptions',
         ]);
         $this->applyProductIndexRelationFilters($query, $filters);
@@ -146,6 +147,12 @@ class ExportController extends Controller
             : $categoryModel->getTable();
         $categoryKeyName = $categoryModel->getKeyName();
 
+        $collectionModel = app(resolve_model('product_collection'));
+        $collectionTable = method_exists($collectionModel, 'getTableName')
+            ? $collectionModel->getTableName()
+            : $collectionModel->getTable();
+        $collectionKeyName = $collectionModel->getKeyName();
+
         return [
             'include_variants' => [
                 'sometimes',
@@ -172,6 +179,15 @@ class ExportController extends Controller
             'category_ids.*' => [
                 'integer',
                 Rule::exists($categoryTable, $categoryKeyName),
+            ],
+            'collection_ids' => [
+                'sometimes',
+                'array',
+                'min:1',
+            ],
+            'collection_ids.*' => [
+                'integer',
+                Rule::exists($collectionTable, $collectionKeyName),
             ],
             'price' => [
                 'sometimes',
@@ -209,6 +225,27 @@ class ExportController extends Controller
                     ->select($foreignPivotKey)
                     ->from($pivotTable)
                     ->whereIn($relatedPivotKey, $filters['category_ids'])
+            );
+        }
+
+        if (isset($filters['collection_ids']) && is_array($filters['collection_ids'])) {
+            $productModel = app(resolve_model('product'));
+            $productTable = method_exists($productModel, 'getTableName')
+                ? $productModel->getTableName()
+                : $productModel->getTable();
+            $productKey = $productModel->getKeyName();
+
+            $collectionsRelation = $productModel->collections();
+            $pivotTable = $collectionsRelation->getTable();
+            $foreignPivotKey = $collectionsRelation->getForeignPivotKeyName();
+            $relatedPivotKey = $collectionsRelation->getRelatedPivotKeyName();
+
+            $query->whereIn(
+                $productTable . '.' . $productKey,
+                fn ($subQuery) => $subQuery
+                    ->select($foreignPivotKey)
+                    ->from($pivotTable)
+                    ->whereIn($relatedPivotKey, $filters['collection_ids'])
             );
         }
 

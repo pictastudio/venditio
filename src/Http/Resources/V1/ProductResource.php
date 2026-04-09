@@ -45,6 +45,7 @@ class ProductResource extends JsonResource
             'tax_class' => TaxClassResource::make($this->whenLoaded('taxClass')),
             'parent' => self::make($this->whenLoaded('parent')),
             'categories' => ProductCategoryResource::collection($this->whenLoaded('categories')),
+            'collections' => ProductCollectionResource::collection($this->whenLoaded('collections')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
             'price_lists_relation' => PriceListResource::collection($this->whenLoaded('priceLists')),
             'price_list_prices' => PriceListPriceResource::collection($this->whenLoaded('priceListPrices')),
@@ -155,7 +156,7 @@ class ProductResource extends JsonResource
         ]);
 
         if ($this->resource instanceof Model) {
-            $this->resource->loadMissing(['categories', 'brand', 'productType', 'parent']);
+            $this->resource->loadMissing(['categories', 'collections', 'brand', 'productType', 'parent']);
             $previewLine->setRelation('product', $this->resource);
         }
 

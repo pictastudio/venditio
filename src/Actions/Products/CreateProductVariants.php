@@ -194,6 +194,11 @@ class CreateProductVariants
             $variant->categories()->sync($product->categories()->pluck("{$categoryTable}.id")->all());
         }
 
+        if (config('venditio.product_variants.copy_collections', true)) {
+            $collectionTable = $product->collections()->getRelated()->getTable();
+            $variant->collections()->sync($product->collections()->pluck("{$collectionTable}.id")->all());
+        }
+
         $variant->variantOptions()->sync(collect($options)->pluck('id')->all());
 
         return $variant->refresh();

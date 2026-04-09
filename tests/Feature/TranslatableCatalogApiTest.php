@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Enums\ProductStatus;
-use PictaStudio\Venditio\Models\{Brand, Product, ProductCategory, ProductType, ProductVariant, ProductVariantOption, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Product, ProductCategory, ProductCollection, ProductType, ProductVariant, ProductVariantOption, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, getJson, patchJson, postJson};
 
@@ -398,6 +398,61 @@ it('supports translated names for product categories', function () {
         ->assertJsonFragment([
             'name' => 'Abbigliamento',
             'slug' => 'abbigliamento',
+        ]);
+});
+
+it('supports translations wrapper payloads for product collections', function () {
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/product_collections', [
+        'translations' => [
+            'en' => [
+                'name' => 'Summer Picks',
+                'description' => 'English description',
+            ],
+            'it' => [
+                'name' => 'Selezione Estate',
+                'description' => 'Descrizione italiana',
+            ],
+        ],
+        'active' => true,
+    ])->assertCreated()
+        ->assertJsonFragment([
+            'name' => 'Summer Picks',
+            'slug' => 'summer-picks',
+            'description' => 'English description',
+        ]);
+
+    $collectionId = $response->json('id');
+
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new ProductCollection)->getMorphClass(),
+        'translatable_id' => $collectionId,
+        'locale' => 'it',
+        'attribute' => 'name',
+        'value' => 'Selezione Estate',
+    ]);
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new ProductCollection)->getMorphClass(),
+        'translatable_id' => $collectionId,
+        'locale' => 'it',
+        'attribute' => 'slug',
+        'value' => 'selezione-estate',
+    ]);
+    assertDatabaseHas('translations', [
+        'translatable_type' => (new ProductCollection)->getMorphClass(),
+        'translatable_id' => $collectionId,
+        'locale' => 'it',
+        'attribute' => 'description',
+        'value' => 'Descrizione italiana',
+    ]);
+
+    getJson(
+        config('venditio.routes.api.v1.prefix') . "/product_collections/{$collectionId}",
+        ['Locale' => 'it']
+    )->assertOk()
+        ->assertJsonFragment([
+            'name' => 'Selezione Estate',
+            'slug' => 'selezione-estate',
+            'description' => 'Descrizione italiana',
         ]);
 });
 

@@ -1,11 +1,11 @@
 meta {
-  name: List products
+  name: List product_collections
   type: http
-  seq: 1
+  seq: 12
 }
 
 get {
-  url: {{baseUrl}}/products
+  url: {{baseUrl}}/product_collections
   body: none
   auth: inherit
 }
@@ -14,42 +14,22 @@ params:query {
   ~all: 0
   ~page: 1
   ~per_page: 30
-  ~sort_by: parent_id
+  ~sort_by: id
   ~sort_dir: asc
   ~exclude_all_scopes: 0
   ~exclude_active_scope: 0
   ~exclude_date_range_scope: 0
   ~id[]: 1
-  ~parent_id: 1
-  ~brand_id: 1
-  ~brand_ids[]: 1
-  ~product_type_id: 1
-  ~tax_class_id: 1
-  ~category_ids[]: 1
-  ~collection_ids[]: 1
-  ~tag_ids[]: 1
   ~name: sample
   ~slug: sample
-  ~status: sample
+  ~description: sample
   ~active: 0
-  ~new: 0
-  ~in_evidence: 0
-  ~sku: sample
-  ~ean: sample
   ~visible_from: 2026-01-01
   ~visible_from_start: 2026-01-01
   ~visible_from_end: 2026-12-31
   ~visible_until: 2026-01-01
   ~visible_until_start: 2026-01-01
   ~visible_until_end: 2026-12-31
-  ~description: sample
-  ~description_short: sample
-  ~measuring_unit: sample
-  ~qty_for_unit: 1
-  ~length: 10
-  ~width: 10
-  ~height: 10
-  ~weight: 10
   ~created_at: 2026-01-01
   ~created_at_start: 2026-01-01
   ~created_at_end: 2026-12-31
@@ -62,27 +42,22 @@ params:query {
   ~with_trashed: 0
   ~only_trashed: 0
   ~is_active: 1
-  ~include_variants: 0
-  ~exclude_variants: 1
-  ~price: 10
-  ~price_operator: >=
-  ~include: variants,variants_options_table,brand,categories,collections,tags,product_type,tax_class,price_lists
+  ~include: products,discounts
 }
 
 headers {
   Accept: application/json
   Content-Type: application/json
   Locale: {{locale}}
-  Country-ISO-2: {{countryIso2}}
 }
 
 docs {
   summary:
-  - List products
+  - List product_collections
 
   endpoint:
   - method: GET
-  - path: /products
+  - path: /product_collections
 
   query params:
   - all (boolean): Return all records without pagination.
@@ -94,36 +69,16 @@ docs {
   - exclude_active_scope (boolean): Skip only the active global scope when available.
   - exclude_date_range_scope (boolean): Skip only the date range global scope when available.
   - id[] (integer[]): Filter by one or more resource IDs.
-  - parent_id (integer): Exact-match filter for parent_id.
-  - brand_id (integer): Exact-match filter for brand_id.
-  - brand_ids[] (integer[]): Match products whose brand_id is in this list.
-  - product_type_id (integer): Exact-match filter for product_type_id.
-  - tax_class_id (integer): Exact-match filter for tax_class_id.
-  - category_ids[] (integer[]): Match products assigned to at least one category in this list.
-  - collection_ids[] (integer[]): Match products assigned to at least one collection in this list.
-  - tag_ids[] (integer[]): Match products assigned to at least one tag in this list.
   - name (string): Exact-match filter for name.
   - slug (string): Exact-match filter for slug.
-  - status (string): Exact-match filter for status.
+  - description (string): Exact-match filter for description.
   - active (boolean): Exact-match filter for active.
-  - new (boolean): Exact-match filter for new.
-  - in_evidence (boolean): Exact-match filter for in_evidence.
-  - sku (string): Exact-match filter for sku.
-  - ean (string): Exact-match filter for ean.
   - visible_from (date): Exact-match filter for visible_from.
   - visible_from_start (date): Filter visible_from greater than or equal to this date.
   - visible_from_end (date): Filter visible_from less than or equal to this date.
   - visible_until (date): Exact-match filter for visible_until.
   - visible_until_start (date): Filter visible_until greater than or equal to this date.
   - visible_until_end (date): Filter visible_until less than or equal to this date.
-  - description (string): Exact-match filter for description.
-  - description_short (string): Exact-match filter for description_short.
-  - measuring_unit (string): Exact-match filter for measuring_unit.
-  - qty_for_unit (integer): Exact-match filter for qty_for_unit.
-  - length (number): Exact-match filter for length.
-  - width (number): Exact-match filter for width.
-  - height (number): Exact-match filter for height.
-  - weight (number): Exact-match filter for weight.
   - created_at (date): Exact-match filter for created_at.
   - created_at_start (date): Filter created_at greater than or equal to this date.
   - created_at_end (date): Filter created_at less than or equal to this date.
@@ -136,12 +91,7 @@ docs {
   - with_trashed (boolean): Include soft deleted records in results.
   - only_trashed (boolean): Return only soft deleted records.
   - is_active (boolean): Alias filter for active state.
-  - include_variants (boolean): When true, include variant products in results.
-  - exclude_variants (boolean): When true, exclude variant products from results.
-  - price (number): Filter products by inventory price value.
-  - price_operator (string): Operator used with price. Allowed: >, <, >=, <=, =.
-  - sort_by=price (string): Sort products by related inventory price.
-  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, collections, tags, product_type, tax_class, price_lists (if enabled).
+  - include (string|array): Optional includes: products, discounts.
 
   path params:
   - none

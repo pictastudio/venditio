@@ -24,7 +24,7 @@ class UpdateDiscountRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
-                Rule::in(['product', 'product_category', 'product_type', 'brand', 'user']),
+                Rule::in(['product', 'product_category', 'product_collection', 'product_type', 'brand', 'user']),
             ],
             'discountable_id' => [
                 'nullable',

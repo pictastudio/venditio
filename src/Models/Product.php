@@ -122,6 +122,12 @@ class Product extends Model implements TranslatableContract
             ->withTimestamps();
     }
 
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(resolve_model('product_collection'), 'product_collection_product')
+            ->withTimestamps();
+    }
+
     public function tags(): MorphToMany
     {
         return $this->morphToMany(resolve_model('tag'), 'taggable', 'taggables')

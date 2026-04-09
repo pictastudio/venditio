@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Http\Resources\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
-use PictaStudio\Venditio\Http\Resources\V1\{AddressResource, BrandResource, CartLineResource, CartResource, CountryResource, CountryTaxClassResource, CurrencyResource, DiscountApplicationResource, DiscountResource, InventoryResource, MunicipalityResource, OrderLineResource, OrderResource, PriceListPriceResource, PriceListResource, ProductCategoryResource, ProductCustomFieldResource, ProductResource, ProductTypeResource, ProductVariantOptionResource, ProductVariantResource, ProvinceResource, RegionResource, ShippingStatusResource, TaxClassResource, UserResource};
+use PictaStudio\Venditio\Http\Resources\V1\{AddressResource, BrandResource, CartLineResource, CartResource, CountryResource, CountryTaxClassResource, CurrencyResource, DiscountApplicationResource, DiscountResource, InventoryResource, MunicipalityResource, OrderLineResource, OrderResource, PriceListPriceResource, PriceListResource, ProductCategoryResource, ProductCollectionResource, ProductCustomFieldResource, ProductResource, ProductTypeResource, ProductVariantOptionResource, ProductVariantResource, ProvinceResource, RegionResource, ShippingStatusResource, TaxClassResource, UserResource};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
@@ -43,6 +43,7 @@ trait ResolvesModelResource
             'price_list_price' => PriceListPriceResource::class,
             'product' => ProductResource::class,
             'product_category' => ProductCategoryResource::class,
+            'product_collection' => ProductCollectionResource::class,
             'product_custom_field' => ProductCustomFieldResource::class,
             'product_type' => ProductTypeResource::class,
             'product_variant' => ProductVariantResource::class,

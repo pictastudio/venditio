@@ -252,7 +252,7 @@ class UpsertMultipleDiscountRequest extends FormRequest
 
     private function discountableTypes(): array
     {
-        return ['product', 'product_category', 'product_type', 'brand', 'user'];
+        return ['product', 'product_category', 'product_collection', 'product_type', 'brand', 'user'];
     }
 
     private function existingDiscounts(): Collection

@@ -2,7 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Contracts\ProductSkuGeneratorInterface;
-use PictaStudio\Venditio\Models\{Brand, Product, ProductType, ProductVariant, ProductVariantOption, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Product, ProductCollection, ProductType, ProductVariant, ProductVariantOption, TaxClass};
 
 use function Pest\Laravel\postJson;
 
@@ -207,6 +207,49 @@ it('creates only new combinations when adding options later', function () {
 
     expect($signatures->filter(fn (string $signature) => $signature === $expectedSignature))
         ->toHaveCount(1);
+});
+
+it('copies product collections to generated variants by default', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $productType = ProductType::factory()->create();
+    $collection = ProductCollection::factory()->create();
+
+    $colorVariant = ProductVariant::factory()->create([
+        'product_type_id' => $productType->getKey(),
+        'name' => 'Color',
+    ]);
+    $red = ProductVariantOption::factory()->create([
+        'product_variant_id' => $colorVariant->getKey(),
+        'name' => 'red',
+    ]);
+
+    $product = Product::factory()->create([
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'product_type_id' => $productType->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $product->collections()->sync([$collection->getKey()]);
+
+    postJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}/variants", [
+        'variants' => [
+            [
+                'variant_id' => $colorVariant->getKey(),
+                'option_ids' => [$red->getKey()],
+            ],
+        ],
+    ])->assertCreated();
+
+    $variant = Product::query()
+        ->withoutGlobalScopes()
+        ->where('parent_id', $product->getKey())
+        ->firstOrFail();
+
+    expect($variant->collections()->get()->pluck('id')->all())
+        ->toBe([$collection->getKey()]);
 });
 
 it('rejects variant generation when product has no type', function () {

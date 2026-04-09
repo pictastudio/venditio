@@ -19,6 +19,7 @@ class CreateProduct
     public function handle(array $payload): Product
     {
         $categoryIds = Arr::pull($payload, 'category_ids', []);
+        $collectionIds = Arr::pull($payload, 'collection_ids', []);
         $tagIds = Arr::pull($payload, 'tag_ids', []);
         $inventoryPayload = Arr::pull($payload, 'inventory');
 
@@ -55,6 +56,10 @@ class CreateProduct
 
         if (!empty($categoryIds)) {
             $product->categories()->sync($categoryIds);
+        }
+
+        if (!empty($collectionIds)) {
+            $product->collections()->sync($collectionIds);
         }
 
         if (!empty($tagIds)) {

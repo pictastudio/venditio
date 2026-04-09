@@ -11,7 +11,7 @@ patch {
 }
 
 params:query {
-  ~include: variants,variants_options_table,brand,categories,tags,product_type,tax_class,price_lists
+  ~include: variants,variants_options_table,brand,categories,collections,tags,product_type,tax_class,price_lists
 }
 
 params:path {
@@ -30,6 +30,7 @@ body:json {
     "name": "T-shirt v2",
     "status": "published",
     "category_ids": [1, 2],
+    "collection_ids": [1, 2],
     "tag_ids": [1, 3],
     "inventory": {
       "stock": 0,
@@ -50,7 +51,7 @@ docs {
   - path: /products/:id-or-slug
 
   query params:
-  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, tags, product_type, tax_class, price_lists (if enabled).
+  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, collections, tags, product_type, tax_class, price_lists (if enabled).
 
   path params:
   - id-or-slug: Replace with target resource identifier.
@@ -100,6 +101,8 @@ docs {
   - metadata (array)
   - category_ids (array)
   - category_ids.*
+  - collection_ids (array)
+  - collection_ids.*
   - tag_ids (array)
   - tag_ids.*
   - inventory (object)

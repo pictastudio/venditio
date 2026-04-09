@@ -48,15 +48,16 @@ Additional supported filters:
 - `product_variant_id` on `/product_variant_options`
 - `product_id` and `price_list_id` on `/price_list_prices`
 - `as_tree` boolean on `/product_categories`
-- `/products`: `include_variants` boolean, `exclude_variants` boolean, `brand_ids[]`, `category_ids[]`, `price`, `price_operator` (`>`, `<`, `>=`, `<=`, `=`)
+- `/products`: `include_variants` boolean, `exclude_variants` boolean, `brand_ids[]`, `category_ids[]`, `collection_ids[]`, `price`, `price_operator` (`>`, `<`, `>=`, `<=`, `=`)
   - supports `sort_by=price` with `sort_dir=asc|desc`
   - default behavior is controlled by `venditio.product.exclude_variants_from_index` (`true` by default)
   - when both are provided, `exclude_variants` takes precedence
 
 Include parameters:
 
-- `/products`: `include=brand,categories,product_type,tax_class,variants,variants_options_table,price_breakdown` (and `price_lists` only when `venditio.price_lists.enabled=true`)
+- `/products`: `include=brand,categories,collections,product_type,tax_class,variants,variants_options_table,price_breakdown` (and `price_lists` only when `venditio.price_lists.enabled=true`)
   - `price_breakdown` adds `price_calculated.price_source` and `price_calculated.discounts_applied`, so admin UIs can show which base price source was selected and the ordered automatic discounts applied to the product preview
+- `/product_collections`: `include=products,discounts`
 - `/tax_classes`: `include[]=countries`
 
 Export-specific query parameters:
@@ -85,6 +86,14 @@ Export-specific query parameters:
 - `PATCH /product_categories/{product_category}`
 - `PATCH /product_categories/bulk/update`
 - `DELETE /product_categories/{product_category}`
+
+### Product Collections
+
+- `GET /product_collections`
+- `GET /product_collections/{product_collection}`
+- `POST /product_collections`
+- `PATCH /product_collections/{product_collection}`
+- `DELETE /product_collections/{product_collection}`
 
 ### Product Types
 
@@ -197,6 +206,8 @@ Discount columns are first-level fields on `discounts`:
 - `uses`, `max_uses`, `max_uses_per_user`, `one_per_user`
 - `apply_to_cart_total`, `apply_once_per_cart`, `minimum_order_total`, `free_shipping`
 - `discountable_type`, `discountable_id`
+
+`discountable_type` accepts package morph aliases such as `product`, `product_category`, `product_collection`, `product_type`, `brand`, and `user`.
 
 ### Discount Applications
 

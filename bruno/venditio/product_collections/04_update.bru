@@ -1,0 +1,71 @@
+meta {
+  name: Update product_collections
+  type: http
+  seq: 15
+}
+
+patch {
+  url: {{baseUrl}}/product_collections/:id-or-slug
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~include: products,discounts
+}
+
+params:path {
+  id-or-slug: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Locale: {{locale}}
+}
+
+body:json {
+  {
+    "name": "Updated Summer Picks",
+    "description": "Updated editorial copy",
+    "active": false
+  }
+}
+
+docs {
+  summary:
+  - Update product_collections
+
+  endpoint:
+  - method: PATCH
+  - path: /product_collections/:id-or-slug
+
+  query params:
+  - include (string|array): Optional includes: products, discounts.
+
+  path params:
+  - id-or-slug: Replace with target resource identifier.
+
+  body:
+  - JSON payload.
+  - Available fields:
+  - name
+  - slug
+  - description
+  - images (array|nullable)
+  - images.*.id
+  - images.*.file (file|image)
+  - images.*.alt
+  - images.*.name
+  - images.*.mimetype
+  - images.*.sort_order
+  - images.*.type (required, thumb|cover, distinct)
+  - active
+  - visible_from
+  - visible_until
+  - {locale}.name / name:{locale}
+  - {locale}.slug / slug:{locale}
+  - {locale}.description / description:{locale}
+  - Note: for image upload use multipart/form-data with fields like `images[0][file]` and `images[0][type]=thumb`.
+  - Note: each image item must include a unique `type` of `thumb` or `cover`.
+}

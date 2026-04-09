@@ -68,6 +68,7 @@ class ResolveVenditioRouteBindings
             'price_list_price' => 'price_list_price',
             'product' => 'product',
             'product_category' => 'product_category',
+            'product_collection' => 'product_collection',
             'product_custom_field' => 'product_custom_field',
             'product_type' => 'product_type',
             'product_variant' => 'product_variant',

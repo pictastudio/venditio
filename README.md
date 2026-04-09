@@ -7,6 +7,7 @@
 
 Venditio is a headless ecommerce package for Laravel.
 It provides API-only ecommerce primitives while host applications own auth, frontend, and rendering.
+Products can be organized through brands, categories, tags, and flat product collections.
 
 ## Installation
 

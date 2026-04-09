@@ -17,10 +17,11 @@ headers {
 
 body:json {
   {
+    "discountable_type": "product_collection",
+    "discountable_id": 1,
     "name": "Discount 10%",
     "type": "percentage",
     "value": 10,
-    "code": "TEST10",
     "starts_at": "2026-02-11 17:00:00"
   }
 }
@@ -42,7 +43,7 @@ docs {
   body:
   - JSON payload.
   - Available fields:
-  - discountable_type
+  - discountable_type (allowed: product, product_category, product_collection, product_type, brand, user)
   - discountable_id
   - type
   - value
@@ -61,4 +62,5 @@ docs {
   - minimum_order_total
   - priority
   - stop_after_propagation
+  - Note: when a discountable target is provided, `code` can be omitted and the backend auto-generates it.
 }

@@ -1,0 +1,39 @@
+meta {
+  name: Delete product_collections
+  type: http
+  seq: 16
+}
+
+delete {
+  url: {{baseUrl}}/product_collections/:id-or-slug
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id-or-slug: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Locale: {{locale}}
+}
+
+docs {
+  summary:
+  - Delete product_collections
+
+  endpoint:
+  - method: DELETE
+  - path: /product_collections/:id-or-slug
+
+  query params:
+  - none
+
+  path params:
+  - id-or-slug: Replace with target resource identifier.
+
+  body:
+  - none
+}

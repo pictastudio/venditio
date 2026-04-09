@@ -12,7 +12,7 @@ if (!function_exists('resolve_model')) {
      *                         'address', 'brand', 'cart', 'cart_line', 'country',
      *                         'country_tax_class', 'currency', 'discount', 'discount_application', 'inventory',
      *                         'municipality', 'province', 'region',
-     *                         'order', 'order_line', 'product', 'product_category',
+     *                         'order', 'order_line', 'product', 'product_category', 'product_collection',
      *                         'shipping_status', 'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
      *                         'product_variant', 'product_variant_option', 'tag',
@@ -32,7 +32,7 @@ if (!function_exists('query')) {
      *                         'address', 'brand', 'cart', 'cart_line', 'country',
      *                         'country_tax_class', 'currency', 'discount', 'discount_application', 'inventory',
      *                         'municipality', 'province', 'region',
-     *                         'order', 'order_line', 'product', 'product_category',
+     *                         'order', 'order_line', 'product', 'product_category', 'product_collection',
      *                         'shipping_status', 'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
      *                         'product_variant', 'product_variant_option', 'tag',
@@ -52,7 +52,7 @@ if (!function_exists('get_fresh_model_instance')) {
      *                         'address', 'brand', 'cart', 'cart_line', 'country',
      *                         'country_tax_class', 'currency', 'discount', 'discount_application', 'inventory',
      *                         'municipality', 'province', 'region',
-     *                         'order', 'order_line', 'product', 'product_category',
+     *                         'order', 'order_line', 'product', 'product_category', 'product_collection',
      *                         'shipping_status', 'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
      *                         'product_variant', 'product_variant_option', 'tag',

@@ -669,6 +669,17 @@ class Controller extends BaseController
                 'updated_at' => 'date',
                 'deleted_at' => 'date',
             ],
+            'product_collection' => [
+                'name' => 'string',
+                'slug' => 'string',
+                'description' => 'string',
+                'active' => 'boolean',
+                'visible_from' => 'date',
+                'visible_until' => 'date',
+                'created_at' => 'date',
+                'updated_at' => 'date',
+                'deleted_at' => 'date',
+            ],
             'tag' => [
                 'parent_id' => 'integer',
                 'product_type_id' => 'integer',
@@ -825,6 +836,7 @@ class Controller extends BaseController
             'price_list_price' => \PictaStudio\Venditio\Models\PriceListPrice::class,
             'product' => \PictaStudio\Venditio\Models\Product::class,
             'product_category' => \PictaStudio\Venditio\Models\ProductCategory::class,
+            'product_collection' => \PictaStudio\Venditio\Models\ProductCollection::class,
             'product_custom_field' => \PictaStudio\Venditio\Models\ProductCustomField::class,
             'product_type' => \PictaStudio\Venditio\Models\ProductType::class,
             'product_variant' => \PictaStudio\Venditio\Models\ProductVariant::class,
@@ -876,6 +888,7 @@ class Controller extends BaseController
             'discount' => ['starts_at', 'ends_at'],
             'product' => ['visible_from', 'visible_until'],
             'product_category' => ['visible_from', 'visible_until'],
+            'product_collection' => ['visible_from', 'visible_until'],
             'tag' => ['visible_from', 'visible_until'],
         ];
     }

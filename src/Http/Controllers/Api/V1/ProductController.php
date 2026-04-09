@@ -162,6 +162,7 @@ class ProductController extends Controller
         $allowedIncludes = [
             'brand',
             'categories',
+            'collections',
             'discounts',
             'price_breakdown',
             'tags',
@@ -205,6 +206,10 @@ class ProductController extends Controller
             $relations[] = 'categories';
         }
 
+        if ($includesCollection->contains('collections')) {
+            $relations[] = 'collections';
+        }
+
         if ($includesCollection->contains('discounts')) {
             $relations[] = 'discounts';
         }
@@ -232,6 +237,10 @@ class ProductController extends Controller
 
             if ($includesCollection->contains('categories')) {
                 $relations[] = 'variants.categories';
+            }
+
+            if ($includesCollection->contains('collections')) {
+                $relations[] = 'variants.collections';
             }
 
             if ($includesCollection->contains('discounts')) {
@@ -275,6 +284,12 @@ class ProductController extends Controller
             : $categoryModel->getTable();
         $categoryKeyName = $categoryModel->getKeyName();
 
+        $collectionModel = app(resolve_model('product_collection'));
+        $collectionTable = method_exists($collectionModel, 'getTableName')
+            ? $collectionModel->getTableName()
+            : $collectionModel->getTable();
+        $collectionKeyName = $collectionModel->getKeyName();
+
         $tagModel = app(resolve_model('tag'));
         $tagTable = method_exists($tagModel, 'getTableName')
             ? $tagModel->getTableName()
@@ -307,6 +322,15 @@ class ProductController extends Controller
             'category_ids.*' => [
                 'integer',
                 Rule::exists($categoryTable, $categoryKeyName),
+            ],
+            'collection_ids' => [
+                'sometimes',
+                'array',
+                'min:1',
+            ],
+            'collection_ids.*' => [
+                'integer',
+                Rule::exists($collectionTable, $collectionKeyName),
             ],
             'tag_ids' => [
                 'sometimes',
@@ -353,6 +377,27 @@ class ProductController extends Controller
                     ->select($foreignPivotKey)
                     ->from($pivotTable)
                     ->whereIn($relatedPivotKey, $filters['category_ids'])
+            );
+        }
+
+        if (isset($filters['collection_ids']) && is_array($filters['collection_ids'])) {
+            $productModel = app(resolve_model('product'));
+            $productTable = method_exists($productModel, 'getTableName')
+                ? $productModel->getTableName()
+                : $productModel->getTable();
+            $productKey = $productModel->getKeyName();
+
+            $collectionsRelation = $productModel->collections();
+            $pivotTable = $collectionsRelation->getTable();
+            $foreignPivotKey = $collectionsRelation->getForeignPivotKeyName();
+            $relatedPivotKey = $collectionsRelation->getRelatedPivotKeyName();
+
+            $query->whereIn(
+                $productTable . '.' . $productKey,
+                fn ($subQuery) => $subQuery
+                    ->select($foreignPivotKey)
+                    ->from($pivotTable)
+                    ->whereIn($relatedPivotKey, $filters['collection_ids'])
             );
         }
 

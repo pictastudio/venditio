@@ -116,6 +116,12 @@ class ProductsExport implements FromCollection, WithColumnFormatting, WithHeadin
                     ->filter(fn (mixed $value) => filled($value))
                     ->implode(',')
                 : null,
+            'collection_ids' => $product->relationLoaded('collections')
+                ? $product->collections
+                    ->map(fn (Model $collection): mixed => $this->relationDisplayValue($collection, ['name', 'slug']))
+                    ->filter(fn (mixed $value) => filled($value))
+                    ->implode(',')
+                : null,
             'variant_option_ids' => $product->relationLoaded('variantOptions')
                 ? $product->variantOptions
                     ->map(fn (Model $option): mixed => $this->relationDisplayValue($option, ['name']))

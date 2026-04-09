@@ -62,6 +62,7 @@ class FillProductInformations
             ->with([
                 'inventory',
                 'categories',
+                'collections',
                 'brand',
                 'productType',
                 'variantOptions',

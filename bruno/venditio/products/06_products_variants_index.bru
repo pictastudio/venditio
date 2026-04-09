@@ -58,7 +58,7 @@ params:query {
   ~with_trashed: 0
   ~only_trashed: 0
   ~is_active: 1
-  ~include: variants,variants_options_table,brand,categories,tags,product_type,tax_class,price_lists
+  ~include: variants,variants_options_table,brand,categories,collections,tags,product_type,tax_class,price_lists
 }
 
 params:path {
@@ -128,7 +128,7 @@ docs {
   - with_trashed (boolean): Include soft deleted records in results.
   - only_trashed (boolean): Return only soft deleted records.
   - is_active (boolean): Alias filter for active state.
-  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, tags, product_type, tax_class, price_lists (if enabled).
+  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, collections, tags, product_type, tax_class, price_lists (if enabled).
 
   path params:
   - id-or-slug: Replace with target resource identifier.
