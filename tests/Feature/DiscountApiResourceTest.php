@@ -30,6 +30,7 @@ it('serializes the polymorphic discountable relation using its dedicated resourc
         'max_uses_per_user' => null,
         'one_per_user' => false,
         'free_shipping' => false,
+        'first_purchase_only' => false,
         'minimum_order_total' => null,
     ]);
 
@@ -38,6 +39,7 @@ it('serializes the polymorphic discountable relation using its dedicated resourc
     getJson($prefix . '/discounts/' . $discount->getKey())
         ->assertOk()
         ->assertJsonPath('id', $discount->getKey())
+        ->assertJsonPath('first_purchase_only', false)
         ->assertJsonPath('discountable.id', $product->getKey())
         ->assertJsonPath('discountable.name', 'Test Polymorphic Product');
 });
@@ -63,6 +65,7 @@ it('serializes a product collection discountable relation using its dedicated re
         'max_uses_per_user' => null,
         'one_per_user' => false,
         'free_shipping' => false,
+        'first_purchase_only' => false,
         'minimum_order_total' => null,
     ]);
 
@@ -93,6 +96,7 @@ it('generates a discount code automatically when creating a discount scoped to a
         'name' => 'Auto Code Discount',
         'starts_at' => now()->subHour()->toDateTimeString(),
         'ends_at' => now()->addDay()->toDateTimeString(),
+        'first_purchase_only' => true,
     ])->assertCreated();
 
     $discountId = $response->json('id');
@@ -100,6 +104,8 @@ it('generates a discount code automatically when creating a discount scoped to a
 
     expect($code)->not->toBe('')
         ->and(str_starts_with($code, 'AUTO-'))->toBeTrue();
+
+    expect($response->json('first_purchase_only'))->toBeTrue();
 
     assertDatabaseHas('discounts', [
         'id' => $discountId,

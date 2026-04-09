@@ -65,6 +65,7 @@ class UpsertMultipleDiscountRequest extends FormRequest
             $rules["discounts.{$index}.max_uses_per_user"] = ['nullable', 'integer', 'min:1'];
             $rules["discounts.{$index}.one_per_user"] = ['sometimes', 'boolean'];
             $rules["discounts.{$index}.free_shipping"] = ['sometimes', 'boolean'];
+            $rules["discounts.{$index}.first_purchase_only"] = ['sometimes', 'boolean'];
             $rules["discounts.{$index}.minimum_order_total"] = ['nullable', 'numeric', 'min:0'];
             $rules["discounts.{$index}.priority"] = ['sometimes', 'integer'];
             $rules["discounts.{$index}.stop_after_propagation"] = ['sometimes', 'boolean'];

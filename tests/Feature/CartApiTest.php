@@ -784,3 +784,186 @@ it('returns 422 when updating a cart with a non eligible cart total discount cod
     ])->assertUnprocessable()
         ->assertJsonPath('errors.discount_code.0', 'The discount code [TEST10] is invalid or not eligible for cart total discounts.');
 });
+
+it('returns 422 when creating a guest cart with a first-purchase-only discount code', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+    $product = createCartProduct($taxClass);
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $discountModel = config('venditio.models.discount');
+    $discountModel::query()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'FIRST10',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => true,
+        'first_purchase_only' => true,
+    ]);
+
+    postJson($prefix . '/carts', [
+        'discount_code' => 'FIRST10',
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 1],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonPath('errors.discount_code.0', 'The discount code [FIRST10] is invalid or not eligible for cart total discounts.');
+});
+
+it('applies a first-purchase-only discount code for a user without completed orders', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+    $product = createCartProduct($taxClass);
+    $user = createUserForCart('user-first-purchase@example.test');
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $discountModel = config('venditio.models.discount');
+    $discountModel::query()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'FIRST10',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => true,
+        'first_purchase_only' => true,
+    ]);
+
+    postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'discount_code' => 'FIRST10',
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 2],
+        ],
+    ])->assertCreated()
+        ->assertJsonPath('discount_code', 'FIRST10')
+        ->assertJsonPath('discount_amount', 24.4)
+        ->assertJsonPath('total_final', 219.6);
+});
+
+it('returns 422 when creating a cart with a first-purchase-only discount after a completed order exists', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+    $product = createCartProduct($taxClass);
+    $user = createUserForCart('user-first-purchase-blocked@example.test');
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $discountModel = config('venditio.models.discount');
+    $discountModel::query()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'FIRST10',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => true,
+        'first_purchase_only' => true,
+    ]);
+
+    $firstCartId = postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 1],
+        ],
+    ])->assertCreated()->json('id');
+
+    postJson($prefix . '/orders', [
+        'cart_id' => $firstCartId,
+    ])->assertOk();
+
+    postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'discount_code' => 'FIRST10',
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 1],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonPath('errors.discount_code.0', 'The discount code [FIRST10] is invalid or not eligible for cart total discounts.');
+});
+
+it('returns 422 when a cart total discount code does not meet the minimum order total', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+    $product = createCartProduct($taxClass);
+    $user = createUserForCart('user-min-total-low@example.test');
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $discountModel = config('venditio.models.discount');
+    $discountModel::query()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'MIN200',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => true,
+        'minimum_order_total' => 200,
+    ]);
+
+    postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'discount_code' => 'MIN200',
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 1],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonPath('errors.discount_code.0', 'The discount code [MIN200] is invalid or not eligible for cart total discounts.');
+});
+
+it('applies a cart total discount code when the minimum order total is met', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+    $product = createCartProduct($taxClass);
+    $user = createUserForCart('user-min-total-ok@example.test');
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $discountModel = config('venditio.models.discount');
+    $discountModel::query()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'MIN200',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => true,
+        'minimum_order_total' => 200,
+    ]);
+
+    postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'discount_code' => 'MIN200',
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 2],
+        ],
+    ])->assertCreated()
+        ->assertJsonPath('discount_code', 'MIN200')
+        ->assertJsonPath('discount_amount', 24.4)
+        ->assertJsonPath('total_final', 219.6);
+});

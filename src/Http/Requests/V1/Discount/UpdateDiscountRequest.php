@@ -46,6 +46,7 @@ class UpdateDiscountRequest extends FormRequest
             'max_uses_per_user' => ['nullable', 'integer', 'min:1'],
             'one_per_user' => ['sometimes', 'boolean'],
             'free_shipping' => ['sometimes', 'boolean'],
+            'first_purchase_only' => ['sometimes', 'boolean'],
             'minimum_order_total' => ['nullable', 'numeric', 'min:0'],
             'priority' => ['sometimes', 'integer'],
             'stop_after_propagation' => ['sometimes', 'boolean'],

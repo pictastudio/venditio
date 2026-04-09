@@ -19,8 +19,12 @@ class StoreOrderRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        if (!$this->user()) {
+            return;
+        }
+
         $this->merge([
-            'user_id' => $this->user()?->getKey(),
+            'user_id' => $this->user()->getKey(),
         ]);
     }
 }

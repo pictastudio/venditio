@@ -197,6 +197,7 @@ Table discounts {
   max_uses_per_user int
   one_per_user boolean [not null, default: false]
   free_shipping boolean [not null, default: false]
+  first_purchase_only boolean [not null, default: false]
   minimum_order_total decimal(10,2)
   priority int [not null, default: 0]
   stop_after_propagation boolean [not null, default: false]

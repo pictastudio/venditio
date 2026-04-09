@@ -27,6 +27,7 @@ class DiscountFactory extends Factory
             'max_uses_per_user' => null,
             'one_per_user' => false,
             'free_shipping' => false,
+            'first_purchase_only' => false,
             'minimum_order_total' => null,
         ];
     }

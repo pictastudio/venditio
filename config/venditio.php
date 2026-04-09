@@ -297,6 +297,7 @@ return [
                 Discounts\Rules\ActiveWindowRule::class,
                 Discounts\Rules\MaxUsesRule::class,
                 Discounts\Rules\MaxUsesPerUserRule::class,
+                Discounts\Rules\FirstPurchaseOnlyRule::class,
                 Discounts\Rules\OncePerCartRule::class,
             ],
         ],

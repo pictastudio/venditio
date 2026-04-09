@@ -171,7 +171,7 @@ class DiscountUsageRecorder implements DiscountUsageRecorderInterface
         $orderDiscountCode = $order->getAttribute('discount_code');
         $orderDiscountAmount = (float) ($order->getAttribute('discount_amount') ?? 0);
 
-        if (blank($orderDiscountCode) || $orderDiscountAmount <= 0) {
+        if (blank($orderDiscountCode)) {
             return;
         }
 
@@ -179,7 +179,10 @@ class DiscountUsageRecorder implements DiscountUsageRecorderInterface
         $discount = $discounts->get($orderDiscountCode)
             ?? $this->loadDiscountsByCode(collect([$orderDiscountCode]))->get($orderDiscountCode);
 
-        if (!$discount instanceof Discount) {
+        if (
+            !$discount instanceof Discount
+            || ($orderDiscountAmount <= 0 && !$discount->free_shipping)
+        ) {
             return;
         }
 
@@ -197,7 +200,7 @@ class DiscountUsageRecorder implements DiscountUsageRecorderInterface
                 'user_id' => $order->getAttribute('user_id'),
                 'cart_id' => $order->getRelation('sourceCart')?->getKey(),
                 'qty' => 1,
-                'amount' => $orderDiscountAmount,
+                'amount' => round($orderDiscountAmount, 2),
             ]
         );
 

@@ -509,6 +509,7 @@ class Controller extends BaseController
                 'max_uses_per_user' => 'integer',
                 'one_per_user' => 'boolean',
                 'free_shipping' => 'boolean',
+                'first_purchase_only' => 'boolean',
                 'minimum_order_total' => 'numeric',
                 'priority' => 'integer',
                 'stop_after_propagation' => 'boolean',

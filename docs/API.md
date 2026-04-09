@@ -204,7 +204,7 @@ Discount columns are first-level fields on `discounts`:
 
 - `type`, `value`, `code`, `name`, `active`, `starts_at`, `ends_at`
 - `uses`, `max_uses`, `max_uses_per_user`, `one_per_user`
-- `apply_to_cart_total`, `apply_once_per_cart`, `minimum_order_total`, `free_shipping`
+- `apply_to_cart_total`, `apply_once_per_cart`, `minimum_order_total`, `free_shipping`, `first_purchase_only`
 - `discountable_type`, `discountable_id`
 
 `discountable_type` accepts package morph aliases such as `product`, `product_category`, `product_collection`, `product_type`, `brand`, and `user`.

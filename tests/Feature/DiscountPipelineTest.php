@@ -3,6 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use PictaStudio\Venditio\Dto\{CartDto, OrderDto};
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
 use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, DiscountApplication, Product, ProductCategory, ProductCollection, TaxClass, User};
@@ -713,4 +714,89 @@ it('uses the billing address country tax rate when converting cart to order', fu
         ->and((float) $orderLine->unit_final_price_tax)->toBe(10.0)
         ->and((float) $orderLine->total_final_price)->toBe(110.0)
         ->and((float) $order->total_final)->toBe(110.0);
+});
+
+it('records free shipping only coupon usages and blocks one-per-user reuse on subsequent orders', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupTaxEnvironment($taxClass);
+
+    $user = User::query()->create([
+        'first_name' => 'Free',
+        'last_name' => 'Shipping',
+        'email' => 'free-shipping-once@example.test',
+        'phone' => '123456789',
+    ]);
+    $product = createProduct(100, $taxClass);
+
+    $discountModel = config('venditio.models.discount');
+    $discount = $discountModel::query()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'type' => DiscountType::Fixed,
+        'value' => 0,
+        'code' => 'SHIPONCE',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => true,
+        'one_per_user' => true,
+        'free_shipping' => true,
+    ]);
+
+    $firstCart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'user_id' => $user->getKey(),
+            'user_first_name' => $user->first_name,
+            'user_last_name' => $user->last_name,
+            'user_email' => $user->email,
+            'discount_code' => 'SHIPONCE',
+            'lines' => [
+                [
+                    'product_id' => $product->getKey(),
+                    'qty' => 1,
+                ],
+            ],
+        ])
+    )->load('lines');
+
+    expect($firstCart->discount_code)->toBe('SHIPONCE')
+        ->and((float) $firstCart->discount_amount)->toBe(0.0);
+
+    $order = OrderCreationPipeline::make()->run(OrderDto::fromCart($firstCart))->load('lines');
+
+    $usage = DiscountApplication::query()
+        ->where('discount_id', $discount->getKey())
+        ->where('order_id', $order->getKey())
+        ->whereNull('order_line_id')
+        ->first();
+
+    expect($usage)->not->toBeNull()
+        ->and((float) $usage->amount)->toBe(0.0)
+        ->and((int) $discount->fresh()->uses)->toBe(1);
+
+    $exception = null;
+
+    try {
+        CartCreationPipeline::make()->run(
+            CartDto::fromArray([
+                'user_id' => $user->getKey(),
+                'user_first_name' => $user->first_name,
+                'user_last_name' => $user->last_name,
+                'user_email' => $user->email,
+                'discount_code' => 'SHIPONCE',
+                'lines' => [
+                    [
+                        'product_id' => $product->getKey(),
+                        'qty' => 1,
+                    ],
+                ],
+            ])
+        );
+    } catch (ValidationException $thrownException) {
+        $exception = $thrownException;
+    }
+
+    expect($exception)->toBeInstanceOf(ValidationException::class)
+        ->and($exception?->errors()['discount_code'][0] ?? null)
+        ->toBe('The discount code [SHIPONCE] is invalid or not eligible for cart total discounts.');
 });

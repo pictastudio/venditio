@@ -67,6 +67,7 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_discount_applications_table',
                 'update_discount_applications_order_line_constraint',
                 'create_discounts_table',
+                'update_discounts_add_first_purchase_only',
                 'create_products_table',
                 'create_product_types_table',
                 'create_tags_table',
