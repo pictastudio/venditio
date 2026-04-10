@@ -73,6 +73,11 @@ class Order extends Model
         return $this->hasMany(resolve_model('order_line'));
     }
 
+    public function returnRequests(): HasMany
+    {
+        return $this->hasMany(resolve_model('return_request'));
+    }
+
     protected function addresses(): Attribute
     {
         return Attribute::make(

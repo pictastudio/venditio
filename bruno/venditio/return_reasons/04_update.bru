@@ -1,0 +1,28 @@
+meta {
+  name: Update return_reasons
+  type: http
+  seq: 116
+}
+
+patch {
+  url: {{baseUrl}}/return_reasons/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id:
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Size mismatch",
+    "active": true,
+    "sort_order": 10
+  }
+}

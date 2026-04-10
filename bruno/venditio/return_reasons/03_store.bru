@@ -1,0 +1,26 @@
+meta {
+  name: Store return_reasons
+  type: http
+  seq: 115
+}
+
+post {
+  url: {{baseUrl}}/return_reasons
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "code": "size-issue",
+    "name": "Wrong size",
+    "description": "The size does not fit.",
+    "active": true,
+    "sort_order": 0
+  }
+}

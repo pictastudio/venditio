@@ -40,6 +40,8 @@ it('registers index endpoints for all exposed models', function () {
         '/discounts',
         '/discount_applications',
         '/product_custom_fields',
+        '/return_reasons',
+        '/return_requests',
         '/cart_lines',
         '/order_lines',
     ];

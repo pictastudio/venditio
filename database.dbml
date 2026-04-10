@@ -75,6 +75,11 @@ Table cart_lines {
   total_final_price decimal(10,2) [not null]
   tax_rate decimal(10,2) [not null]
   product_data json [not null]
+  requested_return_qty int [not null, default: 0]
+  returned_qty int [not null, default: 0]
+  has_return_requests boolean [not null, default: false]
+  is_returned boolean [not null, default: false]
+  is_fully_returned boolean [not null, default: false]
   created_at datetime [not null]
   updated_at datetime [not null]
   deleted_at datetime
@@ -309,6 +314,51 @@ Table orders {
 
   Indexes {
     status
+  }
+}
+
+Table return_reasons {
+  id bigint [pk, increment, not null]
+  code varchar(100) [not null, unique]
+  name varchar(255) [not null]
+  description text
+  active boolean [not null, default: true]
+  sort_order int [not null, default: 0]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  deleted_at datetime
+
+  Indexes {
+    active
+  }
+}
+
+Table return_requests {
+  id bigint [pk, increment, not null]
+  order_id bigint [not null, ref: > orders.id]
+  user_id bigint [ref: > users.id]
+  return_reason_id bigint [not null, ref: > return_reasons.id]
+  billing_address json [not null, note: 'snapshot of orders.addresses.billing at creation time']
+  description text
+  notes text
+  is_accepted boolean [not null, default: false]
+  is_verified boolean [not null, default: false]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  deleted_at datetime
+}
+
+Table return_request_lines {
+  id bigint [pk, increment, not null]
+  return_request_id bigint [not null, ref: > return_requests.id]
+  order_line_id bigint [not null, ref: > order_lines.id]
+  qty mediumint [not null]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  deleted_at datetime
+
+  Indexes {
+    (return_request_id, order_line_id) [unique]
   }
 }
 

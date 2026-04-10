@@ -47,6 +47,8 @@ Additional supported filters:
 - `product_type_id` on `/product_variants`
 - `product_variant_id` on `/product_variant_options`
 - `product_id` and `price_list_id` on `/price_list_prices`
+- `/return_reasons`: `code`, `name`, `description`, `is_active`
+- `/return_requests`: `order_id`, `user_id`, `return_reason_id`, `is_accepted`, `is_verified`
 - `as_tree` boolean on `/product_categories`
 - `/products`: `include_variants` boolean, `exclude_variants` boolean, `brand_ids[]`, `category_ids[]`, `collection_ids[]`, `price`, `price_operator` (`>`, `<`, `>=`, `<=`, `=`)
   - supports `sort_by=price` with `sort_dir=asc|desc`
@@ -191,6 +193,37 @@ Notes:
 - `POST /order_lines`
 - `PATCH /order_lines/{order_line}`
 - `DELETE /order_lines/{order_line}`
+
+Returned order lines expose these additive public fields:
+
+- `requested_return_qty`
+- `returned_qty`
+- `has_return_requests`
+- `is_returned`
+- `is_fully_returned`
+
+### Return Reasons
+
+- `GET /return_reasons`
+- `GET /return_reasons/{return_reason}`
+- `POST /return_reasons`
+- `PATCH /return_reasons/{return_reason}`
+- `DELETE /return_reasons/{return_reason}`
+
+### Return Requests
+
+- `GET /return_requests`
+- `GET /return_requests/{return_request}`
+- `POST /return_requests`
+- `PATCH /return_requests/{return_request}`
+- `DELETE /return_requests/{return_request}`
+
+Notes:
+
+- `return_requests` snapshot `orders.addresses.billing` into `billing_address` when created
+- `return_request_lines` are nested inside the `lines` payload and resource, not exposed as a standalone CRUD endpoint in v1
+- each request supports a single `return_reason_id`, while multiple order lines can be included
+- requested quantities are validated against the remaining non-deleted return quantity for each order line
 
 ### Discounts
 

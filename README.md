@@ -8,6 +8,7 @@
 Venditio is a headless ecommerce package for Laravel.
 It provides API-only ecommerce primitives while host applications own auth, frontend, and rendering.
 Products can be organized through brands, categories, tags, and flat product collections.
+Orders can also expose configurable return reasons and return requests with per-line derived return state.
 
 ## Installation
 
@@ -258,6 +259,18 @@ If both couriers are linked to the same zone but with different pricing in `ship
 #### 4. Incomplete destination does not block the cart
 
 If the cart has lines but is missing `shipping_method_id`, or the shipping address is still incomplete, Venditio does not fail the request.
+
+## Returns
+
+Venditio ships with an API-first returns domain that stays aligned with the package's headless approach:
+
+- `return_reasons`: configurable database-backed reasons exposed through CRUD APIs
+- `return_requests`: order-linked return headers that snapshot `orders.addresses.billing` at creation time
+- partial quantities per `order_line`, so a line with `qty > 1` can be returned incrementally
+- derived fields on `order_lines` for frontend/admin use: `requested_return_qty`, `returned_qty`, `has_return_requests`, `is_returned`, `is_fully_returned`
+
+`return_requests` do not expose `return_request_lines` as a standalone CRUD resource in v1.
+The nested `lines` payload is validated against the selected order, and quantities cannot exceed the remaining returnable amount for each order line.
 It keeps:
 
 - `shipping_fee = 0`

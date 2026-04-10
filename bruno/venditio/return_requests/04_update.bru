@@ -1,0 +1,34 @@
+meta {
+  name: Update return_requests
+  type: http
+  seq: 121
+}
+
+patch {
+  url: {{baseUrl}}/return_requests/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id:
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "notes": "Accepted after manual inspection",
+    "is_accepted": true,
+    "is_verified": true,
+    "lines": [
+      {
+        "order_line_id": 10,
+        "qty": 1
+      }
+    ]
+  }
+}

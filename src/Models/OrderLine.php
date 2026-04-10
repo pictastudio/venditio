@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -40,6 +40,11 @@ class OrderLine extends Model
             'total_final_price' => 'decimal:2',
             'tax_rate' => 'decimal:2',
             'product_data' => 'json',
+            'requested_return_qty' => 'integer',
+            'returned_qty' => 'integer',
+            'has_return_requests' => 'boolean',
+            'is_returned' => 'boolean',
+            'is_fully_returned' => 'boolean',
         ];
     }
 
@@ -66,5 +71,10 @@ class OrderLine extends Model
     public function discount(): BelongsTo
     {
         return $this->belongsTo(resolve_model('discount'));
+    }
+
+    public function returnRequestLines(): HasMany
+    {
+        return $this->hasMany(resolve_model('return_request_line'));
     }
 }

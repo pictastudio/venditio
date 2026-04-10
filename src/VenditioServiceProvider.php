@@ -94,6 +94,10 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_cart_free_gift_decisions_table',
                 'update_cart_lines_add_free_gift_fields',
                 'update_order_lines_add_free_gift_fields',
+                'create_return_reasons_table',
+                'create_return_requests_table',
+                'create_return_request_lines_table',
+                'update_order_lines_add_return_fields',
                 'seed_venditio_data',
             ]);
         // ->hasRoute('api');

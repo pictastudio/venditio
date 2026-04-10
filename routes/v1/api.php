@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, FreeGiftController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductCollectionController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ShippingMethodController, ShippingMethodZoneController, ShippingStatusController, ShippingZoneController, TagController, TaxClassController};
+use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, FreeGiftController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductCollectionController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ReturnReasonController, ReturnRequestController, ShippingMethodController, ShippingMethodZoneController, ShippingStatusController, ShippingZoneController, TagController, TaxClassController};
 
 /*
 |--------------------------------------------------------------------------
@@ -61,5 +61,7 @@ Route::apiResource('product_custom_fields', ProductCustomFieldController::class)
 Route::apiResource('price_lists', PriceListController::class);
 Route::post('price_list_prices/bulk/upsert', [PriceListPriceController::class, 'upsertMultiple'])->name('price_list_prices.upsertMultiple');
 Route::apiResource('price_list_prices', PriceListPriceController::class);
+Route::apiResource('return_reasons', ReturnReasonController::class);
+Route::apiResource('return_requests', ReturnRequestController::class);
 Route::apiResource('cart_lines', CartLineController::class);
 Route::apiResource('order_lines', OrderLineController::class);

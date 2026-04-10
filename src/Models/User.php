@@ -33,6 +33,11 @@ class User extends Authenticatable
         return $this->hasMany(resolve_model('order'));
     }
 
+    public function returnRequests(): HasMany
+    {
+        return $this->hasMany(resolve_model('return_request'));
+    }
+
     protected function name(): Attribute
     {
         return Attribute::make(
