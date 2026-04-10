@@ -71,6 +71,11 @@ class Cart extends Model
         return $this->hasMany(resolve_model('cart_line'));
     }
 
+    public function freeGiftDecisions(): HasMany
+    {
+        return $this->hasMany(resolve_model('cart_free_gift_decision'));
+    }
+
     #[Scope]
     public function processing(Builder $builder): Builder
     {

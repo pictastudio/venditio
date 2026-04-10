@@ -50,6 +50,9 @@ class FillOrderFromCart
             return $orderLine->fill([
                 'product_id' => $cartLine->product_id,
                 'currency_id' => $cartLine->currency_id,
+                'free_gift_id' => $cartLine->free_gift_id,
+                'is_free_gift' => (bool) $cartLine->is_free_gift,
+                'free_gift_data' => $cartLine->free_gift_data,
                 'discount_id' => $cartLine->discount_id,
                 'discount_code' => $cartLine->discount_code,
                 'discount_amount' => $cartLine->discount_amount,

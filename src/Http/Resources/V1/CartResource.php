@@ -3,9 +3,11 @@
 namespace PictaStudio\Venditio\Http\Resources\V1;
 
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use JsonSerializable;
+use PictaStudio\Venditio\FreeGifts\FreeGiftEligibilityResolver;
 use PictaStudio\Venditio\Http\Resources\Traits\{CanTransformAttributes, HasAttributesToExclude};
 
 class CartResource extends JsonResource
@@ -35,6 +37,7 @@ class CartResource extends JsonResource
             'shipping_zone' => ShippingZoneResource::make($this->whenLoaded('shippingZone')),
             'lines' => CartLineResource::collection($this->whenLoaded('lines')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+            'free_gifts' => FreeGiftEligibilityResource::collection($this->resolveEligibleFreeGifts()),
         ];
     }
 
@@ -43,5 +46,18 @@ class CartResource extends JsonResource
         return [
             //
         ];
+    }
+
+    protected function resolveEligibleFreeGifts()
+    {
+        if (!$this->resource instanceof Model) {
+            return collect();
+        }
+
+        if ($this->resource->relationLoaded('eligibleFreeGifts')) {
+            return $this->resource->getRelation('eligibleFreeGifts');
+        }
+
+        return app(FreeGiftEligibilityResolver::class)->resolveForCart($this->resource);
     }
 }

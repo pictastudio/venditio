@@ -76,7 +76,9 @@ class CartDto extends Dto implements CartDtoContract
 
     public function getUserId(): ?int
     {
-        return $this->userId ?? auth()->guard()->id();
+        return $this->userId
+            ?? $this->getCart()?->user_id
+            ?? auth()->guard()->id();
     }
 
     public function getUserFirstName(): ?string

@@ -7,8 +7,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
+use PictaStudio\Venditio\Enums\CartFreeGiftDecisionType;
+use PictaStudio\Venditio\FreeGifts\FreeGiftEligibilityResolver;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
-use PictaStudio\Venditio\Http\Requests\V1\Cart\{StoreCartRequest, UpdateCartRequest};
+use PictaStudio\Venditio\Http\Requests\V1\Cart\{StoreCartRequest, UpdateCartFreeGiftsRequest, UpdateCartRequest};
 use PictaStudio\Venditio\Http\Resources\V1\CartResource;
 use PictaStudio\Venditio\Models\Cart;
 use PictaStudio\Venditio\Pipelines\Cart\{CartCreationPipeline, CartUpdatePipeline};
@@ -112,6 +114,7 @@ class CartController extends Controller
             ->map(fn (mixed $id): int => (int) $id)
             ->all();
         $cartLineIds = $cart->lines()
+            ->where('is_free_gift', false)
             ->pluck('id')
             ->map(fn (mixed $id): int => (int) $id);
         $lineIdsNotBelongingToCart = collect($lineIds)->diff($cartLineIds);
@@ -136,6 +139,7 @@ class CartController extends Controller
             $cart,
             [
                 'lines' => $cart->lines()
+                    ->where('is_free_gift', false)
                     ->get(['product_id', 'qty'])
                     ->map(fn ($line) => [
                         'product_id' => $line->product_id,
@@ -161,7 +165,9 @@ class CartController extends Controller
         ]);
 
         $lineIds = collect($validated['line_ids'])->map(fn ($id) => (int) $id)->all();
-        $cartLines = $cart->lines()->get(['id', 'product_id', 'qty']);
+        $cartLines = $cart->lines()
+            ->where('is_free_gift', false)
+            ->get(['id', 'product_id', 'qty']);
         $lineIdsNotBelongingToCart = collect($lineIds)->diff($cartLines->pluck('id'));
 
         if ($lineIdsNotBelongingToCart->isNotEmpty()) {
@@ -205,9 +211,125 @@ class CartController extends Controller
         return response()->json(CartResource::make($updatedCart));
     }
 
+    public function updateFreeGifts(UpdateCartFreeGiftsRequest $request, Cart $cart): JsonResponse
+    {
+        $this->authorizeIfConfigured('update', $cart);
+
+        $payloads = collect($request->validated()['free_gifts']);
+        $freeGiftModel = config('venditio.models.free_gift');
+        $eligibleFreeGifts = app(FreeGiftEligibilityResolver::class)
+            ->resolveForCart($cart)
+            ->keyBy(fn (mixed $freeGift): int => (int) $freeGift->getKey());
+        $freeGifts = $freeGiftModel::query()
+            ->with('giftProducts')
+            ->whereKey(
+                $payloads->pluck('free_gift_id')
+                    ->map(fn (mixed $id): int => (int) $id)
+                    ->unique()
+                    ->values()
+                    ->all()
+            )
+            ->get()
+            ->keyBy(fn (mixed $freeGift): int => (int) $freeGift->getKey());
+        $decisionsModel = config('venditio.models.cart_free_gift_decision');
+
+        foreach ($payloads as $payload) {
+            $freeGiftId = (int) $payload['free_gift_id'];
+            $freeGift = $freeGifts->get($freeGiftId);
+
+            if ($freeGift === null || !$eligibleFreeGifts->has($freeGiftId)) {
+                return $this->errorJsonResponse(
+                    data: ['free_gift_id' => $freeGiftId],
+                    message: "The free gift [{$freeGiftId}] is invalid or not eligible for the provided cart.",
+                    status: 422,
+                );
+            }
+
+            $giftProductIds = $freeGift->giftProducts
+                ->pluck('id')
+                ->map(fn (mixed $id): int => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+            $selectedProductIds = collect($payload['selected_product_ids'] ?? [])
+                ->map(fn (mixed $id): int => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+            $declinedProductIds = collect($payload['declined_product_ids'] ?? [])
+                ->map(fn (mixed $id): int => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
+            $unknownProductIds = collect($selectedProductIds)
+                ->merge($declinedProductIds)
+                ->unique()
+                ->reject(fn (int $productId): bool => in_array($productId, $giftProductIds, true))
+                ->values()
+                ->all();
+
+            if ($unknownProductIds !== []) {
+                return $this->errorJsonResponse(
+                    data: ['product_ids' => $unknownProductIds],
+                    message: 'Some selected products do not belong to the provided free gift campaign.',
+                    status: 422,
+                );
+            }
+
+            $selectionMode = is_object($freeGift->selection_mode) && isset($freeGift->selection_mode->value)
+                ? $freeGift->selection_mode->value
+                : $freeGift->selection_mode;
+
+            if ($selectionMode === 'single' && count($selectedProductIds) > 1) {
+                return $this->errorJsonResponse(
+                    data: ['free_gift_id' => $freeGiftId],
+                    message: 'Single-choice free gift campaigns accept at most one selected product.',
+                    status: 422,
+                );
+            }
+
+            if (!(bool) $freeGift->allow_decline && $declinedProductIds !== []) {
+                return $this->errorJsonResponse(
+                    data: ['free_gift_id' => $freeGiftId],
+                    message: 'This free gift campaign does not allow declining gift products.',
+                    status: 422,
+                );
+            }
+
+            $decisionsModel::query()
+                ->where('cart_id', $cart->getKey())
+                ->where('free_gift_id', $freeGiftId)
+                ->delete();
+
+            foreach ($selectedProductIds as $productId) {
+                $decisionsModel::query()->create([
+                    'cart_id' => $cart->getKey(),
+                    'free_gift_id' => $freeGiftId,
+                    'product_id' => $productId,
+                    'decision' => CartFreeGiftDecisionType::Selected->value,
+                ]);
+            }
+
+            foreach ($declinedProductIds as $productId) {
+                $decisionsModel::query()->create([
+                    'cart_id' => $cart->getKey(),
+                    'free_gift_id' => $freeGiftId,
+                    'product_id' => $productId,
+                    'decision' => CartFreeGiftDecisionType::Declined->value,
+                ]);
+            }
+        }
+
+        $updatedCart = $this->runCartUpdatePipeline($cart, [])
+            ->load(['lines', 'shippingMethod', 'shippingZone']);
+
+        return response()->json(CartResource::make($updatedCart));
+    }
+
     private function mergeExistingAndIncomingLines(Cart $cart, array $incomingLines): array
     {
         $existingLines = $cart->lines()
+            ->where('is_free_gift', false)
             ->get(['product_id', 'qty'])
             ->groupBy('product_id')
             ->map(fn (Collection $lines, mixed $productId) => [

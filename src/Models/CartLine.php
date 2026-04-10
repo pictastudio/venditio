@@ -26,6 +26,9 @@ class CartLine extends Model
     protected function casts(): array
     {
         return [
+            'free_gift_id' => 'integer',
+            'is_free_gift' => 'boolean',
+            'free_gift_data' => 'json',
             'discount_amount' => 'decimal:2',
             'unit_price' => 'decimal:2',
             'purchase_price' => 'decimal:2',
@@ -52,6 +55,11 @@ class CartLine extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(resolve_model('currency'));
+    }
+
+    public function freeGift(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('free_gift'));
     }
 
     public function discount(): BelongsTo

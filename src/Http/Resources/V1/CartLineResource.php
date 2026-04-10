@@ -30,6 +30,7 @@ class CartLineResource extends JsonResource
             'cart' => CartResource::make($this->whenLoaded('cart')),
             'product' => ProductResource::make($this->whenLoaded('product')),
             'currency' => CurrencyResource::make($this->whenLoaded('currency')),
+            'free_gift' => FreeGiftResource::make($this->whenLoaded('freeGift')),
             'discount' => DiscountResource::make($this->whenLoaded('discount')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
         ];

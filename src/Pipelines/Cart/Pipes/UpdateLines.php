@@ -18,7 +18,10 @@ class UpdateLines
         $linesPayloadProvided = (bool) $cart->getAttribute('lines_payload_provided');
         $cart->offsetUnset('lines_payload_provided');
         $incomingLines = $linesPayloadProvided ? $cart->getRelation('lines') : null;
-        $existingLines = $cart->load('lines')->getRelation('lines');
+        $existingLines = $cart->load('lines')
+            ->getRelation('lines')
+            ->filter(fn (Model $line): bool => !(bool) $line->getAttribute('is_free_gift'))
+            ->values();
 
         if ($linesPayloadProvided && $incomingLines instanceof Collection) {
             $existingByProductId = $existingLines->keyBy('product_id');
