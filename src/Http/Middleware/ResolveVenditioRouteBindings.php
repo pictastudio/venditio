@@ -61,6 +61,7 @@ class ResolveVenditioRouteBindings
             'discount' => 'discount',
             'discount_application' => 'discount_application',
             'inventory' => 'inventory',
+            'invoice' => 'invoice',
             'municipality' => 'municipality',
             'order' => 'order',
             'order_line' => 'order_line',

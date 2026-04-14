@@ -16,6 +16,7 @@ It is headless by design: host applications own authentication, UI, and renderin
 - `src/Http`: API controllers, requests, resources
 - `src/Models`: domain models
 - `src/Actions`: reusable state-changing operations
+- `src/Invoices`: default invoice payload, template, and PDF rendering implementations
 - `src/Pipelines`: cart, cart-line, and order orchestration pipelines
 - `src/Discounts`: discount calculators, context, rules, usage recording
 - `src/Validations`: validation contract implementations
@@ -34,6 +35,7 @@ It configures:
 - API route registration (when enabled)
 - validation contract bindings from config
 - discount/pricing/identifier-generator bindings
+- invoice number/payload/template/pdf renderer bindings
 - polymorphic morph map
 - scheduled command registration
 
@@ -90,6 +92,15 @@ Authorization is optional and host-controlled.
 - Controllers perform policy checks only when configured and resolvable
 - Host apps register policies/gates
 
+## Invoices
+
+Invoices are an optional order-adjacent subsystem.
+
+- one invoice document can be generated per order
+- invoices are created manually through order-scoped endpoints, not during order creation
+- the invoice record stores immutable snapshots for seller identity, addresses, lines, totals, payments, and rendered HTML
+- host apps can replace numbering, payload building, HTML templating, or PDF rendering through contracts and config
+
 ## Configuration Surface
 
 Main configuration sections:
@@ -98,6 +109,7 @@ Main configuration sections:
 - `models`
 - `validations`
 - `authorize_using_policies`
+- `invoices`
 - `product`
 - `product_variants`
 - `price_lists`

@@ -5,7 +5,7 @@ namespace PictaStudio\Venditio\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, HasOne};
 use Illuminate\Support\Fluent;
 use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods, LogsActivity};
 
@@ -76,6 +76,11 @@ class Order extends Model
     public function returnRequests(): HasMany
     {
         return $this->hasMany(resolve_model('return_request'));
+    }
+
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(resolve_model('invoice'));
     }
 
     protected function addresses(): Attribute

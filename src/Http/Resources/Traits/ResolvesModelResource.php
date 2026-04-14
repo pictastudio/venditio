@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Http\Resources\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
-use PictaStudio\Venditio\Http\Resources\V1\{AddressResource, BrandResource, CartLineResource, CartResource, CountryResource, CountryTaxClassResource, CurrencyResource, DiscountApplicationResource, DiscountResource, FreeGiftResource, InventoryResource, MunicipalityResource, OrderLineResource, OrderResource, PriceListPriceResource, PriceListResource, ProductCategoryResource, ProductCollectionResource, ProductCustomFieldResource, ProductResource, ProductTypeResource, ProductVariantOptionResource, ProductVariantResource, ProvinceResource, RegionResource, ReturnReasonResource, ReturnRequestResource, ShippingMethodResource, ShippingMethodZoneResource, ShippingStatusResource, ShippingZoneResource, TaxClassResource, UserResource};
+use PictaStudio\Venditio\Http\Resources\V1\{AddressResource, BrandResource, CartLineResource, CartResource, CountryResource, CountryTaxClassResource, CurrencyResource, DiscountApplicationResource, DiscountResource, FreeGiftResource, InventoryResource, InvoiceResource, MunicipalityResource, OrderLineResource, OrderResource, PriceListPriceResource, PriceListResource, ProductCategoryResource, ProductCollectionResource, ProductCustomFieldResource, ProductResource, ProductTypeResource, ProductVariantOptionResource, ProductVariantResource, ProvinceResource, RegionResource, ReturnReasonResource, ReturnRequestResource, ShippingMethodResource, ShippingMethodZoneResource, ShippingStatusResource, ShippingZoneResource, TaxClassResource, UserResource};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
@@ -37,6 +37,7 @@ trait ResolvesModelResource
             'discount_application' => DiscountApplicationResource::class,
             'free_gift' => FreeGiftResource::class,
             'inventory' => InventoryResource::class,
+            'invoice' => InvoiceResource::class,
             'municipality' => MunicipalityResource::class,
             'order' => OrderResource::class,
             'order_line' => OrderLineResource::class,

@@ -1,0 +1,39 @@
+meta {
+  name: Show order invoice
+  type: http
+  seq: 37
+}
+
+get {
+  url: {{baseUrl}}/orders/:id/invoice
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Show the persisted invoice document for an order.
+
+  endpoint:
+  - method: GET
+  - path: /orders/:id/invoice
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target order identifier.
+
+  body:
+  - none
+  - Returns 404 when the order has no invoice yet.
+}

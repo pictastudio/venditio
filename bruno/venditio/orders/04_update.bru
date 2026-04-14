@@ -21,7 +21,22 @@ headers {
 
 body:json {
   {
-    "name": "Updated example"
+    "shipping_status_id": 1,
+    "shipping_method_id": 1,
+    "shipping_zone_id": 1,
+    "status": "completed",
+    "tracking_code": "TRACK-123456",
+    "tracking_link": "https://example.test/track/TRACK-123456",
+    "courier_code": "DHL",
+    "addresses": {
+      "billing": {
+        "country_id": 1,
+        "province_id": 10,
+        "sdi": "ABC1234",
+        "pec": "billing@example.test"
+      }
+    },
+    "customer_notes": "Leave at reception"
   }
 }
 
@@ -44,6 +59,8 @@ docs {
   - Available fields:
   - user_id
   - shipping_status_id
+  - shipping_method_id
+  - shipping_zone_id
   - status
   - tracking_code
   - tracking_link

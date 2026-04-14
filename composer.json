@@ -22,6 +22,7 @@
     ],
     "require": {
         "php": "^8.4",
+        "barryvdh/laravel-dompdf": "^3.1",
         "illuminate/contracts": "^12.8",
         "maatwebsite/excel": "^3.1",
         "nevadskiy/laravel-tree": "^0.6.1",

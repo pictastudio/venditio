@@ -1,6 +1,6 @@
 <?php
 
-use PictaStudio\Venditio\{Discounts, Dto, Enums, Generators, Models, Pricing, Shipping};
+use PictaStudio\Venditio\{Discounts, Dto, Enums, Generators, Invoices, Models, Pricing, Shipping};
 use PictaStudio\Venditio\Pipelines\{Cart, CartLine, Order};
 use PictaStudio\Venditio\Validations;
 
@@ -56,6 +56,7 @@ return [
         'discount_application' => Models\DiscountApplication::class,
         'free_gift' => Models\FreeGift::class,
         'inventory' => Models\Inventory::class,
+        'invoice' => Models\Invoice::class,
         'municipality' => Models\Municipality::class,
         'order' => Models\Order::class,
         'order_line' => Models\OrderLine::class,
@@ -446,6 +447,42 @@ return [
                 'line_qty',
                 'line_total_final_price',
             ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Invoices
+    |--------------------------------------------------------------------------
+    |
+    | Persisted PDF-ready invoice documents for orders.
+    |
+    | Generation is opt-in and exposes configurable numbering, payload
+    | building, templating, and PDF rendering strategies.
+    |
+    */
+    'invoices' => [
+        'enabled' => env('VENDITIO_INVOICES_ENABLED', false),
+        'number_generator' => Generators\InvoiceNumberGenerator::class,
+        'payload_factory' => Invoices\DefaultInvoicePayloadFactory::class,
+        'template' => Invoices\Templates\DefaultInvoiceTemplate::class,
+        'renderer' => Invoices\Renderers\DompdfInvoicePdfRenderer::class,
+        'paper' => env('VENDITIO_INVOICES_PAPER', 'a4'),
+        'orientation' => env('VENDITIO_INVOICES_ORIENTATION', 'portrait'),
+        'locale' => env('VENDITIO_INVOICES_LOCALE'),
+        'filename_pattern' => env('VENDITIO_INVOICES_FILENAME_PATTERN', 'invoice-{identifier}.pdf'),
+        'seller' => [
+            'name' => env('VENDITIO_INVOICES_SELLER_NAME'),
+            'address_line_1' => env('VENDITIO_INVOICES_SELLER_ADDRESS_LINE_1'),
+            'address_line_2' => env('VENDITIO_INVOICES_SELLER_ADDRESS_LINE_2'),
+            'city' => env('VENDITIO_INVOICES_SELLER_CITY'),
+            'state' => env('VENDITIO_INVOICES_SELLER_STATE'),
+            'postal_code' => env('VENDITIO_INVOICES_SELLER_POSTAL_CODE'),
+            'country' => env('VENDITIO_INVOICES_SELLER_COUNTRY'),
+            'tax_id' => env('VENDITIO_INVOICES_SELLER_TAX_ID'),
+            'vat_number' => env('VENDITIO_INVOICES_SELLER_VAT_NUMBER'),
+            'email' => env('VENDITIO_INVOICES_SELLER_EMAIL'),
+            'phone' => env('VENDITIO_INVOICES_SELLER_PHONE'),
         ],
     ],
 

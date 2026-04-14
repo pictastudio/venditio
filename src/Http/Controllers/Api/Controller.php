@@ -915,6 +915,7 @@ class Controller extends BaseController
             'discount' => \PictaStudio\Venditio\Models\Discount::class,
             'discount_application' => \PictaStudio\Venditio\Models\DiscountApplication::class,
             'inventory' => \PictaStudio\Venditio\Models\Inventory::class,
+            'invoice' => \PictaStudio\Venditio\Models\Invoice::class,
             'municipality' => \PictaStudio\Venditio\Models\Municipality::class,
             'order' => \PictaStudio\Venditio\Models\Order::class,
             'order_line' => \PictaStudio\Venditio\Models\OrderLine::class,

@@ -59,6 +59,15 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app)
     {
         config()->set('database.default', 'testing');
+        config()->set('venditio.invoices.enabled', true);
+        config()->set('venditio.invoices.seller', [
+            'name' => 'Venditio SRL',
+            'address_line_1' => 'Via Sicilia 76',
+            'city' => 'Verona',
+            'postal_code' => '37138',
+            'country' => 'Italy',
+            'email' => 'billing@example.test',
+        ]);
 
         // $migration = include __DIR__.'/../database/migrations/create_venditio_table.php.stub';
         // $migration->up();

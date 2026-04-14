@@ -1,0 +1,39 @@
+meta {
+  name: Download order invoice pdf
+  type: http
+  seq: 38
+}
+
+get {
+  url: {{baseUrl}}/orders/:id/invoice/pdf
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/pdf
+}
+
+docs {
+  summary:
+  - Download the persisted order invoice as a PDF attachment.
+
+  endpoint:
+  - method: GET
+  - path: /orders/:id/invoice/pdf
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target order identifier.
+
+  body:
+  - none
+  - Returns application/pdf content.
+  - Returns 404 when the order has no invoice yet.
+}

@@ -1,0 +1,41 @@
+meta {
+  name: Create order invoice
+  type: http
+  seq: 36
+}
+
+post {
+  url: {{baseUrl}}/orders/:id/invoice
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Create or return the persisted invoice for an order.
+
+  endpoint:
+  - method: POST
+  - path: /orders/:id/invoice
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target order identifier.
+
+  body:
+  - none
+  - Requires venditio.invoices.enabled=true.
+  - Returns 201 when a new invoice is created, 200 when the order already has one.
+  - Invoice generation requires seller config, a billing address, at least one order line, and a single shared currency across all lines.
+}

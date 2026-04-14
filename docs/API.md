@@ -68,6 +68,13 @@ Export-specific query parameters:
 - `/exports/orders`: `columns[]` (or `columns=order_id,line_id,...`) and optional `filename`
 - both export endpoints support the same list filters used by `/products` and `/orders`
 
+Invoice-specific notes:
+
+- invoice routes are enabled by `venditio.invoices.enabled` (default: `false`)
+- invoices are generated explicitly from an order and persisted as immutable snapshots
+- each order supports one invoice document in v1
+- the PDF endpoint renders from stored HTML, not from the current order state
+
 ## Endpoints
 
 ### Products
@@ -172,6 +179,35 @@ Export-specific query parameters:
 - `POST /orders`
 - `PATCH /orders/{order}`
 - `DELETE /orders/{order}`
+
+### Invoices
+
+- `POST /orders/{order}/invoice`
+- `GET /orders/{order}/invoice`
+- `GET /orders/{order}/invoice/pdf`
+
+Returned invoice documents expose these stable fields:
+
+- `id`
+- `order_id`
+- `identifier`
+- `issued_at`
+- `currency_code`
+- `seller`
+- `billing_address`
+- `shipping_address`
+- `lines`
+- `totals`
+- `payments`
+- `template_key`
+- `pdf_download_url`
+
+Invoice generation returns `422` when:
+
+- seller configuration is incomplete
+- the order has no billing address
+- the order has no lines
+- order lines use mixed or missing currencies
 
 ### Exports
 

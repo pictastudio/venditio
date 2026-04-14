@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, FreeGiftController, InventoryController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductCollectionController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ReturnReasonController, ReturnRequestController, ShippingMethodController, ShippingMethodZoneController, ShippingStatusController, ShippingZoneController, TagController, TaxClassController};
+use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, FreeGiftController, InventoryController, InvoiceController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductCollectionController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ReturnReasonController, ReturnRequestController, ShippingMethodController, ShippingMethodZoneController, ShippingStatusController, ShippingZoneController, TagController, TaxClassController};
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +34,11 @@ Route::post('carts/{cart}/add_discount', [CartController::class, 'addDiscount'])
 Route::patch('carts/{cart}/update_lines', [CartController::class, 'updateLines'])->name('carts.updateLines');
 Route::patch('carts/{cart}/free_gifts', [CartController::class, 'updateFreeGifts'])->name('carts.updateFreeGifts');
 Route::apiResource('orders', OrderController::class);
+if (config('venditio.invoices.enabled', false)) {
+    Route::post('orders/{order}/invoice', [InvoiceController::class, 'store'])->name('orders.invoice.store');
+    Route::get('orders/{order}/invoice', [InvoiceController::class, 'show'])->name('orders.invoice.show');
+    Route::get('orders/{order}/invoice/pdf', [InvoiceController::class, 'pdf'])->name('orders.invoice.pdf');
+}
 if (config('venditio.exports.enabled', true)) {
     Route::get('exports/products', [ExportController::class, 'products'])->name('exports.products');
     Route::get('exports/orders', [ExportController::class, 'orders'])->name('exports.orders');

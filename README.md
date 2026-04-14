@@ -55,6 +55,7 @@ All behavior is configured through `config/venditio.php`.
 - `shipping`: shipping strategy, default volumetric divisor, and resolver bindings
 - `product`: product enums, sku generator and product list variant visibility defaults
 - `product_variants`: variant naming/copy behavior
+- `invoices`: optional persisted invoice generation and swappable PDF pipeline
 
 ### User model and auth integration
 
@@ -116,11 +117,59 @@ public function boot(): void
 
 ```php
 use PictaStudio\Venditio\Contracts\CartIdentifierGeneratorInterface;
+use PictaStudio\Venditio\Contracts\InvoiceNumberGeneratorInterface;
 use PictaStudio\Venditio\Contracts\OrderIdentifierGeneratorInterface;
 
 $this->app->singleton(CartIdentifierGeneratorInterface::class, App\Generators\CartIdentifierGenerator::class);
+$this->app->singleton(InvoiceNumberGeneratorInterface::class, App\Generators\InvoiceNumberGenerator::class);
 $this->app->singleton(OrderIdentifierGeneratorInterface::class, App\Generators\OrderIdentifierGenerator::class);
 ```
+
+## Invoices
+
+Venditio can persist one immutable invoice document per order and render a PDF from the stored snapshot.
+The feature is disabled by default and stays API-only: host apps decide when to create an invoice and can replace the default number generator, payload factory, HTML template, or PDF renderer.
+
+Enable it in `config/venditio.php`:
+
+```php
+'invoices' => [
+    'enabled' => true,
+    'seller' => [
+        'name' => 'Acme SRL',
+        'address_line_1' => 'Via Roma 1',
+        'city' => 'Verona',
+        'postal_code' => '37100',
+        'country' => 'Italy',
+    ],
+],
+```
+
+Default endpoints:
+
+- `POST /orders/{order}/invoice`
+- `GET /orders/{order}/invoice`
+- `GET /orders/{order}/invoice/pdf`
+
+The generated invoice record stores seller data, billing/shipping addresses, lines, totals, payments, and rendered HTML so later order edits do not rewrite already issued documents.
+
+### Invoice customization
+
+```php
+'invoices' => [
+    'number_generator' => App\Invoices\CustomInvoiceNumberGenerator::class,
+    'payload_factory' => App\Invoices\CustomInvoicePayloadFactory::class,
+    'template' => App\Invoices\CustomInvoiceTemplate::class,
+    'renderer' => App\Invoices\CustomInvoicePdfRenderer::class,
+],
+```
+
+Relevant contracts:
+
+- `PictaStudio\Venditio\Contracts\InvoiceNumberGeneratorInterface`
+- `PictaStudio\Venditio\Contracts\InvoicePayloadFactoryInterface`
+- `PictaStudio\Venditio\Contracts\InvoiceTemplateInterface`
+- `PictaStudio\Venditio\Contracts\InvoicePdfRendererInterface`
 
 ## Shipping
 

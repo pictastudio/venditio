@@ -2,6 +2,7 @@
 
 namespace PictaStudio\Venditio;
 
+use Barryvdh\DomPDF\ServiceProvider as DomPdfServiceProvider;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -9,11 +10,14 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\ExcelServiceProvider;
 use PictaStudio\Venditio\Console\Commands\{InstallCommand, ReleaseStockForAbandonedCarts, SeedRandomDataCommand};
-use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface, ShippingFeeCalculatorInterface, ShippingWeightsResolverInterface, ShippingZoneResolverInterface};
+use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, InvoiceNumberGeneratorInterface, InvoicePayloadFactoryInterface, InvoicePdfRendererInterface, InvoiceTemplateInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface, ShippingFeeCalculatorInterface, ShippingWeightsResolverInterface, ShippingZoneResolverInterface};
 use PictaStudio\Venditio\Discounts\{CartTotalDiscountCalculator, DiscountCalculator, DiscountUsageRecorder, DiscountablesResolver};
 use PictaStudio\Venditio\Facades\Venditio as VenditioFacade;
-use PictaStudio\Venditio\Generators\{CartIdentifierGenerator, OrderIdentifierGenerator, ProductSkuGenerator};
+use PictaStudio\Venditio\Generators\{CartIdentifierGenerator, InvoiceNumberGenerator, OrderIdentifierGenerator, ProductSkuGenerator};
 use PictaStudio\Venditio\Http\Middleware\ResolveVenditioRouteBindings;
+use PictaStudio\Venditio\Invoices\DefaultInvoicePayloadFactory;
+use PictaStudio\Venditio\Invoices\Renderers\DompdfInvoicePdfRenderer;
+use PictaStudio\Venditio\Invoices\Templates\DefaultInvoiceTemplate;
 use PictaStudio\Venditio\Models\User;
 use PictaStudio\Venditio\Pricing\DefaultProductPriceResolver;
 use Spatie\LaravelPackageTools\{Package, PackageServiceProvider};
@@ -97,6 +101,7 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_return_reasons_table',
                 'create_return_requests_table',
                 'create_return_request_lines_table',
+                'create_invoices_table',
                 'update_order_lines_add_return_fields',
                 'seed_venditio_data',
             ]);
@@ -118,6 +123,7 @@ class VenditioServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         $this->registerExcelProvider();
+        $this->registerDomPdfProvider();
         $this->registerPublishableAssets();
         $this->registerApiRoutes();
         $this->registerScheduledCommands();
@@ -128,6 +134,7 @@ class VenditioServiceProvider extends PackageServiceProvider
         $this->bindPricingClasses();
         $this->bindShippingClasses();
         $this->bindIdentifierGenerators();
+        $this->bindInvoiceClasses();
     }
 
     private function registerExcelProvider(): void
@@ -141,6 +148,19 @@ class VenditioServiceProvider extends PackageServiceProvider
         }
 
         $this->app->register(ExcelServiceProvider::class);
+    }
+
+    private function registerDomPdfProvider(): void
+    {
+        if (!class_exists(DomPdfServiceProvider::class)) {
+            return;
+        }
+
+        if ($this->app->getProviders(DomPdfServiceProvider::class)) {
+            return;
+        }
+
+        $this->app->register(DomPdfServiceProvider::class);
     }
 
     private function mergeVenditioConfig(): void
@@ -192,6 +212,37 @@ class VenditioServiceProvider extends PackageServiceProvider
         $this->app->singleton(
             ProductSkuGeneratorInterface::class,
             config('venditio.product.sku_generator', ProductSkuGenerator::class)
+        );
+    }
+
+    private function bindInvoiceClasses(): void
+    {
+        $this->app->singleton(
+            InvoiceNumberGeneratorInterface::class,
+            fn (Application $app) => $app->make(
+                config('venditio.invoices.number_generator', InvoiceNumberGenerator::class)
+            )
+        );
+
+        $this->app->singleton(
+            InvoicePayloadFactoryInterface::class,
+            fn (Application $app) => $app->make(
+                config('venditio.invoices.payload_factory', DefaultInvoicePayloadFactory::class)
+            )
+        );
+
+        $this->app->singleton(
+            InvoiceTemplateInterface::class,
+            fn (Application $app) => $app->make(
+                config('venditio.invoices.template', DefaultInvoiceTemplate::class)
+            )
+        );
+
+        $this->app->singleton(
+            InvoicePdfRendererInterface::class,
+            fn (Application $app) => $app->make(
+                config('venditio.invoices.renderer', DompdfInvoicePdfRenderer::class)
+            )
         );
     }
 
