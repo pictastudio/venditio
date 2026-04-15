@@ -10,7 +10,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\ExcelServiceProvider;
 use PictaStudio\Venditio\Console\Commands\{InstallCommand, ReleaseStockForAbandonedCarts, SeedRandomDataCommand};
-use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, CreditNoteNumberGeneratorInterface, CreditNotePayloadFactoryInterface, CreditNotePdfRendererInterface, CreditNoteTemplateInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, InvoiceNumberGeneratorInterface, InvoicePayloadFactoryInterface, InvoicePdfRendererInterface, InvoiceTemplateInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface, ShippingFeeCalculatorInterface, ShippingWeightsResolverInterface, ShippingZoneResolverInterface};
+use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, CreditNoteNumberGeneratorInterface, CreditNotePayloadFactoryInterface, CreditNotePdfRendererInterface, CreditNoteTemplateInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, InvoiceNumberGeneratorInterface, InvoicePayloadFactoryInterface, InvoicePdfRendererInterface, InvoiceSellerResolverInterface, InvoiceTemplateInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface, ShippingFeeCalculatorInterface, ShippingWeightsResolverInterface, ShippingZoneResolverInterface};
 use PictaStudio\Venditio\CreditNotes\DefaultCreditNotePayloadFactory;
 use PictaStudio\Venditio\CreditNotes\Renderers\DompdfCreditNotePdfRenderer;
 use PictaStudio\Venditio\CreditNotes\Templates\DefaultCreditNoteTemplate;
@@ -18,7 +18,7 @@ use PictaStudio\Venditio\Discounts\{CartTotalDiscountCalculator, DiscountCalcula
 use PictaStudio\Venditio\Facades\Venditio as VenditioFacade;
 use PictaStudio\Venditio\Generators\{CartIdentifierGenerator, CreditNoteNumberGenerator, InvoiceNumberGenerator, OrderIdentifierGenerator, ProductSkuGenerator};
 use PictaStudio\Venditio\Http\Middleware\ResolveVenditioRouteBindings;
-use PictaStudio\Venditio\Invoices\DefaultInvoicePayloadFactory;
+use PictaStudio\Venditio\Invoices\{DefaultInvoicePayloadFactory, DefaultInvoiceSellerResolver};
 use PictaStudio\Venditio\Invoices\Renderers\DompdfInvoicePdfRenderer;
 use PictaStudio\Venditio\Invoices\Templates\DefaultInvoiceTemplate;
 use PictaStudio\Venditio\Models\User;
@@ -222,6 +222,13 @@ class VenditioServiceProvider extends PackageServiceProvider
 
     private function bindInvoiceClasses(): void
     {
+        $this->app->singleton(
+            InvoiceSellerResolverInterface::class,
+            fn (Application $app) => $app->make(
+                config('venditio.invoices.seller_resolver', DefaultInvoiceSellerResolver::class)
+            )
+        );
+
         $this->app->singleton(
             InvoiceNumberGeneratorInterface::class,
             fn (Application $app) => $app->make(

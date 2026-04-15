@@ -2,8 +2,9 @@
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\{Gate, Route};
+use Illuminate\Support\Facades\{DB, Gate, Route, Schema};
 use PictaStudio\Venditio\Actions\Invoices\GenerateOrderInvoice;
 use PictaStudio\Venditio\Contracts\{CreditNoteNumberGeneratorInterface, CreditNotePayloadFactoryInterface, CreditNotePdfRendererInterface, CreditNoteTemplateInterface};
 use PictaStudio\Venditio\Enums\ProductStatus;
@@ -85,6 +86,71 @@ it('creates, lists, returns, and downloads a persisted credit note pdf', functio
         ->assertHeader('content-disposition', 'attachment; filename="credit-note-' . $creditNote->identifier . '.pdf"');
 
     expect($downloadResponse->getContent())->toStartWith('%PDF-');
+});
+
+it('copies the settings-backed invoice seller snapshot to credit notes', function () {
+    createCreditNoteSellerSettingsTable();
+    seedCreditNoteCompanySettings([
+        'address' => 'Via Credit Settings 20',
+        'city' => 'Treviso',
+        'zip' => '31100',
+        'province' => 'TV',
+        'country' => 'Italy',
+        'vat' => 'IT12312312312',
+        'fiscal_code' => '12312312312',
+        'email' => 'credit-settings@example.test',
+        'pec' => 'credit-settings@pec.example.test',
+        'sdi' => 'XYZ9876',
+        'iban' => 'IT44A0306909606100000123456',
+    ]);
+
+    config()->set('venditio.invoices.seller', [
+        'name' => 'Configured Credit Seller',
+        'address_line_1' => 'Config Street 1',
+        'city' => 'Config City',
+        'postal_code' => '00000',
+        'country' => 'Config Country',
+    ]);
+
+    [$order, $orderLine] = createCreditNoteReadyOrder();
+    $invoice = ensureCreditOrderInvoice($order);
+    $returnRequest = createCreditNoteReturnRequest($order, [
+        ['order_line' => $orderLine, 'qty' => 1],
+    ]);
+
+    $creditNoteId = postJson(config('venditio.routes.api.v1.prefix') . '/orders/' . $order->getKey() . '/credit_notes', [
+        'return_request_id' => $returnRequest->getKey(),
+    ])->assertCreated()
+        ->assertJsonPath('seller.name', 'Configured Credit Seller')
+        ->assertJsonPath('seller.address_line_1', 'Via Credit Settings 20')
+        ->assertJsonPath('seller.city', 'Treviso')
+        ->assertJsonPath('seller.postal_code', '31100')
+        ->assertJsonPath('seller.state', 'TV')
+        ->assertJsonPath('seller.country', 'Italy')
+        ->assertJsonPath('seller.vat_number', 'IT12312312312')
+        ->assertJsonPath('seller.tax_id', '12312312312')
+        ->assertJsonPath('seller.email', 'credit-settings@example.test')
+        ->assertJsonPath('seller.pec', 'credit-settings@pec.example.test')
+        ->assertJsonPath('seller.sdi', 'XYZ9876')
+        ->assertJsonPath('seller.iban', 'IT44A0306909606100000123456')
+        ->json('id');
+
+    $creditNote = CreditNote::query()->findOrFail($creditNoteId);
+
+    expect($invoice->seller)->toMatchArray([
+        'name' => 'Configured Credit Seller',
+        'address_line_1' => 'Via Credit Settings 20',
+        'city' => 'Treviso',
+        'postal_code' => '31100',
+        'state' => 'TV',
+        'country' => 'Italy',
+        'vat_number' => 'IT12312312312',
+        'tax_id' => '12312312312',
+        'email' => 'credit-settings@example.test',
+        'pec' => 'credit-settings@pec.example.test',
+        'sdi' => 'XYZ9876',
+        'iban' => 'IT44A0306909606100000123456',
+    ])->and($creditNote->seller)->toBe($invoice->seller);
 });
 
 it('returns the existing credit note on repeated creation requests', function () {
@@ -438,6 +504,41 @@ function ensureCreditOrderInvoice(Order $order): Invoice
 {
     /** @var Invoice $invoice */
     return app(GenerateOrderInvoice::class)->handle($order)['invoice'];
+}
+
+function createCreditNoteSellerSettingsTable(): void
+{
+    Schema::dropIfExists('settings');
+
+    Schema::create('settings', function (Blueprint $table): void {
+        $table->id();
+        $table->string('group')->index();
+        $table->string('name')->index();
+        $table->text('value')->nullable();
+        $table->timestamps();
+        $table->unique(['group', 'name']);
+    });
+}
+
+/**
+ * @param  array<string, mixed>  $settings
+ */
+function seedCreditNoteCompanySettings(array $settings): void
+{
+    $timestamp = now();
+
+    DB::table('settings')->insert(
+        collect($settings)
+            ->map(fn (mixed $value, string $name): array => [
+                'group' => 'company',
+                'name' => $name,
+                'value' => $value,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ])
+            ->values()
+            ->all()
+    );
 }
 
 function createCreditNoteReturnRequest(Order $order, array $lines, bool $accepted = true): Model

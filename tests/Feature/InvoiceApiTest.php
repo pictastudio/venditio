@@ -1,8 +1,9 @@
 <?php
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\{Gate, Route};
+use Illuminate\Support\Facades\{DB, Gate, Route, Schema};
 use PictaStudio\Venditio\Contracts\{InvoiceNumberGeneratorInterface, InvoicePayloadFactoryInterface, InvoicePdfRendererInterface, InvoiceTemplateInterface};
 use PictaStudio\Venditio\Enums\ProductStatus;
 use PictaStudio\Venditio\Models\{Currency, Invoice, Order, Product, TaxClass};
@@ -72,6 +73,95 @@ it('creates, returns, and downloads a persisted invoice pdf', function () {
         ->assertHeader('content-disposition', 'attachment; filename="invoice-' . $invoice->identifier . '.pdf"');
 
     expect($downloadResponse->getContent())->toStartWith('%PDF-');
+});
+
+it('uses company settings table values when available for invoice seller', function () {
+    createInvoiceSellerSettingsTable();
+    seedInvoiceCompanySettings([
+        'address' => 'Via Settings 10',
+        'city' => 'Padova',
+        'zip' => '35100',
+        'province' => 'PD',
+        'country' => 'Italy',
+        'vat' => 'IT98765432109',
+        'fiscal_code' => '98765432109',
+        'email' => 'settings@example.test',
+        'pec' => 'settings@pec.example.test',
+        'sdi' => 'ABC1234',
+        'iban' => 'IT60X0542811101000000123456',
+    ]);
+
+    config()->set('venditio.invoices.seller', [
+        'name' => 'Configured Seller Name',
+        'address_line_1' => 'Config Street 1',
+        'city' => 'Config City',
+        'postal_code' => '00000',
+        'country' => 'Config Country',
+        'email' => 'config@example.test',
+    ]);
+
+    $order = createInvoiceReadyOrder();
+
+    $invoiceId = postJson(config('venditio.routes.api.v1.prefix') . '/orders/' . $order->getKey() . '/invoice')
+        ->assertCreated()
+        ->assertJsonPath('seller.name', 'Configured Seller Name')
+        ->assertJsonPath('seller.address_line_1', 'Via Settings 10')
+        ->assertJsonPath('seller.city', 'Padova')
+        ->assertJsonPath('seller.postal_code', '35100')
+        ->assertJsonPath('seller.state', 'PD')
+        ->assertJsonPath('seller.country', 'Italy')
+        ->assertJsonPath('seller.vat_number', 'IT98765432109')
+        ->assertJsonPath('seller.tax_id', '98765432109')
+        ->assertJsonPath('seller.email', 'settings@example.test')
+        ->assertJsonPath('seller.pec', 'settings@pec.example.test')
+        ->assertJsonPath('seller.sdi', 'ABC1234')
+        ->assertJsonPath('seller.iban', 'IT60X0542811101000000123456')
+        ->json('id');
+
+    $invoice = Invoice::query()->findOrFail($invoiceId);
+
+    expect($invoice->seller)->toMatchArray([
+        'name' => 'Configured Seller Name',
+        'address_line_1' => 'Via Settings 10',
+        'city' => 'Padova',
+        'postal_code' => '35100',
+        'state' => 'PD',
+        'country' => 'Italy',
+        'vat_number' => 'IT98765432109',
+        'tax_id' => '98765432109',
+        'email' => 'settings@example.test',
+        'pec' => 'settings@pec.example.test',
+        'sdi' => 'ABC1234',
+        'iban' => 'IT60X0542811101000000123456',
+    ]);
+});
+
+it('falls back to configured invoice seller when settings table does not exist', function () {
+    $order = createInvoiceReadyOrder();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/orders/' . $order->getKey() . '/invoice')
+        ->assertCreated()
+        ->assertJsonPath('seller.name', 'Venditio SRL')
+        ->assertJsonPath('seller.address_line_1', 'Via Sicilia 76')
+        ->assertJsonPath('seller.city', 'Verona')
+        ->assertJsonPath('seller.postal_code', '37138')
+        ->assertJsonPath('seller.country', 'Italy')
+        ->assertJsonPath('seller.email', 'billing@example.test');
+});
+
+it('falls back to configured invoice seller when settings table has an unexpected schema', function () {
+    createInvoiceSellerSettingsTable(includeValueColumn: false);
+
+    $order = createInvoiceReadyOrder();
+
+    postJson(config('venditio.routes.api.v1.prefix') . '/orders/' . $order->getKey() . '/invoice')
+        ->assertCreated()
+        ->assertJsonPath('seller.name', 'Venditio SRL')
+        ->assertJsonPath('seller.address_line_1', 'Via Sicilia 76')
+        ->assertJsonPath('seller.city', 'Verona')
+        ->assertJsonPath('seller.postal_code', '37138')
+        ->assertJsonPath('seller.country', 'Italy')
+        ->assertJsonPath('seller.email', 'billing@example.test');
 });
 
 it('returns the existing invoice on repeated creation requests', function () {
@@ -200,6 +290,25 @@ it('returns 422 when seller configuration is missing', function () {
         ]);
 });
 
+it('validates the final merged seller payload after settings are applied', function () {
+    config(['venditio.invoices.seller' => []]);
+    createInvoiceSellerSettingsTable();
+    seedInvoiceCompanySettings([
+        'address' => 'Via Settings 10',
+        'city' => 'Padova',
+        'zip' => '35100',
+        'country' => 'Italy',
+    ]);
+
+    $order = createInvoiceReadyOrder();
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/orders/' . $order->getKey() . '/invoice')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['seller.name']);
+
+    expect(array_keys($response->json('errors')))->toBe(['seller.name']);
+});
+
 it('returns 422 when the order has no billing address', function () {
     $order = createInvoiceReadyOrder([
         'addresses' => [],
@@ -280,6 +389,47 @@ function createInvoiceReadyOrder(array $overrides = [], bool $withLine = true): 
     }
 
     return $order->refresh();
+}
+
+function createInvoiceSellerSettingsTable(bool $includeValueColumn = true): void
+{
+    Schema::dropIfExists('settings');
+
+    Schema::create('settings', function (Blueprint $table) use ($includeValueColumn): void {
+        $table->id();
+        $table->string('group')->index();
+        $table->string('name')->index();
+
+        if ($includeValueColumn) {
+            $table->text('value')->nullable();
+        } else {
+            $table->text('payload')->nullable();
+        }
+
+        $table->timestamps();
+        $table->unique(['group', 'name']);
+    });
+}
+
+/**
+ * @param  array<string, mixed>  $settings
+ */
+function seedInvoiceCompanySettings(array $settings): void
+{
+    $timestamp = now();
+
+    DB::table('settings')->insert(
+        collect($settings)
+            ->map(fn (mixed $value, string $name): array => [
+                'group' => 'company',
+                'name' => $name,
+                'value' => $value,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ])
+            ->values()
+            ->all()
+    );
 }
 
 function createOrderLine(Order $order, Currency $currency, array $overrides = []): void

@@ -5,10 +5,14 @@ namespace PictaStudio\Venditio\Invoices;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
-use PictaStudio\Venditio\Contracts\InvoicePayloadFactoryInterface;
+use PictaStudio\Venditio\Contracts\{InvoicePayloadFactoryInterface, InvoiceSellerResolverInterface};
 
 class DefaultInvoicePayloadFactory implements InvoicePayloadFactoryInterface
 {
+    public function __construct(
+        private readonly ?InvoiceSellerResolverInterface $sellerResolver = null,
+    ) {}
+
     public function build(Model $order): array
     {
         $order->loadMissing(['lines.currency']);
@@ -108,9 +112,7 @@ class DefaultInvoicePayloadFactory implements InvoicePayloadFactoryInterface
      */
     protected function resolveSeller(): array
     {
-        $seller = collect(config('venditio.invoices.seller', []))
-            ->filter(fn (mixed $value): bool => $value !== null && $value !== '')
-            ->all();
+        $seller = ($this->sellerResolver ?? new DefaultInvoiceSellerResolver)->resolve();
 
         $required = [
             'name',
