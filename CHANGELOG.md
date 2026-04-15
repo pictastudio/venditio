@@ -2,6 +2,31 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.1.0 - 2026-04-15
+
+### What's Changed
+
+#### Features
+
+- **Shipping domain and cart fee calculation** - Added CRUD APIs for `shipping_methods`, `shipping_zones`, and `shipping_method_zones`, plus configurable flat or zone-based shipping calculation with volumetric-weight support and shipping snapshots on carts and orders.
+- **Promotions and collections** - Added product collections, free gift management, cart free-gift decisions, and the new `first_purchase_only` discount rule so host apps can model broader merchandising flows through stable APIs.
+- **Returns workflow** - Added `return_reasons` and `return_requests` APIs with nested line validation, derived return state on order lines, and immutability rules once follow-up crediting begins.
+- **Invoices and credit notes** - Added optional order-scoped invoice and credit note generation with persisted snapshots, swappable numbering/payload/template/PDF contracts, and PDF download endpoints for issued documents.
+
+#### Fixes
+
+- **Document seller fallback** - Generated invoices and credit notes now read seller company data from the settings table when configured there, keeping issued documents aligned with host-app business identity settings.
+
+#### API & Tooling
+
+- **Docs and examples** - Expanded the README, API reference, architecture notes, and Bruno collections to document shipping, returns, invoices, credit notes, product collections, and the widened discountable surface.
+
+#### Tests
+
+- Added broad feature and unit coverage for shipping flows, free gifts, returns, invoices, credit notes, product collections, enriched cart behavior, and the default document templates.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.0.3...v2.1.0
+
 ## v2.0.3 - 2026-03-17
 
 ### What's Changed
