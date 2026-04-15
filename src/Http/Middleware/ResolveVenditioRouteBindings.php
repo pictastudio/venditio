@@ -57,6 +57,7 @@ class ResolveVenditioRouteBindings
             'cart_line' => 'cart_line',
             'country' => 'country',
             'country_tax_class' => 'country_tax_class',
+            'credit_note' => 'credit_note',
             'currency' => 'currency',
             'discount' => 'discount',
             'discount_application' => 'discount_application',

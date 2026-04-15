@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Http\Resources\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
-use PictaStudio\Venditio\Http\Resources\V1\{AddressResource, BrandResource, CartLineResource, CartResource, CountryResource, CountryTaxClassResource, CurrencyResource, DiscountApplicationResource, DiscountResource, FreeGiftResource, InventoryResource, InvoiceResource, MunicipalityResource, OrderLineResource, OrderResource, PriceListPriceResource, PriceListResource, ProductCategoryResource, ProductCollectionResource, ProductCustomFieldResource, ProductResource, ProductTypeResource, ProductVariantOptionResource, ProductVariantResource, ProvinceResource, RegionResource, ReturnReasonResource, ReturnRequestResource, ShippingMethodResource, ShippingMethodZoneResource, ShippingStatusResource, ShippingZoneResource, TaxClassResource, UserResource};
+use PictaStudio\Venditio\Http\Resources\V1\{AddressResource, BrandResource, CartLineResource, CartResource, CountryResource, CountryTaxClassResource, CreditNoteResource, CurrencyResource, DiscountApplicationResource, DiscountResource, FreeGiftResource, InventoryResource, InvoiceResource, MunicipalityResource, OrderLineResource, OrderResource, PriceListPriceResource, PriceListResource, ProductCategoryResource, ProductCollectionResource, ProductCustomFieldResource, ProductResource, ProductTypeResource, ProductVariantOptionResource, ProductVariantResource, ProvinceResource, RegionResource, ReturnReasonResource, ReturnRequestResource, ShippingMethodResource, ShippingMethodZoneResource, ShippingStatusResource, ShippingZoneResource, TaxClassResource, UserResource};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
@@ -32,6 +32,7 @@ trait ResolvesModelResource
             'cart_line' => CartLineResource::class,
             'country' => CountryResource::class,
             'country_tax_class' => CountryTaxClassResource::class,
+            'credit_note' => CreditNoteResource::class,
             'currency' => CurrencyResource::class,
             'discount' => DiscountResource::class,
             'discount_application' => DiscountApplicationResource::class,

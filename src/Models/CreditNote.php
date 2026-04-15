@@ -4,12 +4,12 @@ namespace PictaStudio\Venditio\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use PictaStudio\Venditio\Models\Traits\HasHelperMethods;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
-class Invoice extends Model
+class CreditNote extends Model
 {
     use HasFactory;
     use HasHelperMethods;
@@ -27,9 +27,9 @@ class Invoice extends Model
             'seller' => 'array',
             'billing_address' => 'array',
             'shipping_address' => 'array',
+            'references' => 'array',
             'lines' => 'array',
             'totals' => 'array',
-            'payments' => 'array',
         ];
     }
 
@@ -38,8 +38,13 @@ class Invoice extends Model
         return $this->belongsTo(resolve_model('order'));
     }
 
-    public function creditNotes(): HasMany
+    public function invoice(): BelongsTo
     {
-        return $this->hasMany(resolve_model('credit_note'));
+        return $this->belongsTo(resolve_model('invoice'));
+    }
+
+    public function returnRequest(): BelongsTo
+    {
+        return $this->belongsTo(resolve_model('return_request'));
     }
 }

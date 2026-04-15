@@ -3,7 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
-use PictaStudio\Venditio\Models\{Brand, Cart, CartLine, Discount, Invoice, Order, OrderLine, PriceList, PriceListPrice, Product, ProductCategory, ProductType, ShippingMethod, ShippingMethodZone, ShippingStatus, ShippingZone};
+use PictaStudio\Venditio\Models\{Brand, Cart, CartLine, CreditNote, Discount, Invoice, Order, OrderLine, PriceList, PriceListPrice, Product, ProductCategory, ProductType, ReturnRequest, ShippingMethod, ShippingMethodZone, ShippingStatus, ShippingZone};
 
 use function Pest\Laravel\artisan;
 
@@ -29,6 +29,7 @@ it('seeds random venditio data from command options with shipping snapshots and 
     config()->set('venditio.price_lists.enabled', true);
     config()->set('venditio.shipping.strategy', 'zones');
     config()->set('venditio.invoices.enabled', true);
+    config()->set('venditio.credit_notes.enabled', true);
     config()->set('venditio.invoices.seller', [
         'name' => 'Venditio SRL',
         'address_line_1' => 'Via Sicilia 76',
@@ -54,11 +55,14 @@ it('seeds random venditio data from command options with shipping snapshots and 
         '--orders' => 2,
         '--order-lines' => 2,
         '--invoices' => 1,
+        '--credit-notes' => 1,
         '--price-lists' => 1,
     ])
         ->expectsOutputToContain('Shipping Statuses')
         ->expectsOutputToContain('Shipping Method Zones')
         ->expectsOutputToContain('Invoices')
+        ->expectsOutputToContain('Return Requests')
+        ->expectsOutputToContain('Credit Notes')
         ->assertSuccessful();
 
     expect(Brand::query()->count())->toBeGreaterThanOrEqual(3)
@@ -75,6 +79,8 @@ it('seeds random venditio data from command options with shipping snapshots and 
         ->and(Order::query()->count())->toBeGreaterThanOrEqual(2)
         ->and(OrderLine::query()->count())->toBeGreaterThan(0)
         ->and(Invoice::query()->count())->toBeGreaterThanOrEqual(1)
+        ->and(ReturnRequest::query()->count())->toBeGreaterThanOrEqual(1)
+        ->and(CreditNote::query()->count())->toBeGreaterThanOrEqual(1)
         ->and(PriceList::query()->count())->toBeGreaterThanOrEqual(1)
         ->and(PriceListPrice::query()->count())->toBeGreaterThan(0);
 
@@ -183,4 +189,56 @@ it('skips invoice seeding when seller configuration is incomplete', function () 
 
     expect(Order::query()->count())->toBeGreaterThanOrEqual(1)
         ->and(Invoice::query()->count())->toBe(0);
+});
+
+it('skips credit note seeding when credit notes are disabled', function () {
+    config()->set('venditio.commands.seed_random_data.enabled', true);
+    config()->set('venditio.shipping.strategy', 'zones');
+    config()->set('venditio.invoices.enabled', true);
+    config()->set('venditio.credit_notes.enabled', false);
+    config()->set('venditio.invoices.seller', [
+        'name' => 'Venditio SRL',
+        'address_line_1' => 'Via Sicilia 76',
+        'city' => 'Verona',
+        'postal_code' => '37138',
+        'country' => 'Italy',
+    ]);
+
+    artisan('venditio:seed-random', [
+        '--products' => 4,
+        '--shipping-statuses' => 1,
+        '--shipping-methods' => 1,
+        '--shipping-zones' => 1,
+        '--orders' => 2,
+        '--order-lines' => 2,
+        '--credit-notes' => 1,
+    ])
+        ->expectsOutputToContain('Skipping credit note seeding')
+        ->assertSuccessful();
+
+    expect(Order::query()->count())->toBeGreaterThanOrEqual(2)
+        ->and(CreditNote::query()->count())->toBe(0);
+});
+
+it('skips credit note seeding when invoices are disabled', function () {
+    config()->set('venditio.commands.seed_random_data.enabled', true);
+    config()->set('venditio.shipping.strategy', 'zones');
+    config()->set('venditio.invoices.enabled', false);
+    config()->set('venditio.credit_notes.enabled', true);
+
+    artisan('venditio:seed-random', [
+        '--products' => 4,
+        '--shipping-statuses' => 1,
+        '--shipping-methods' => 1,
+        '--shipping-zones' => 1,
+        '--orders' => 2,
+        '--order-lines' => 2,
+        '--credit-notes' => 1,
+    ])
+        ->expectsOutputToContain('Credit note seeding requires invoices')
+        ->assertSuccessful();
+
+    expect(Order::query()->count())->toBeGreaterThanOrEqual(2)
+        ->and(Invoice::query()->count())->toBe(0)
+        ->and(CreditNote::query()->count())->toBe(0);
 });

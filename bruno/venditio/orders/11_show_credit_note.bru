@@ -1,0 +1,42 @@
+meta {
+  name: Show order credit note
+  type: http
+  seq: 41
+}
+
+get {
+  url: {{baseUrl}}/orders/:id/credit_notes/:credit_note_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+  credit_note_id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Show one immutable credit note document for an order.
+
+  endpoint:
+  - method: GET
+  - path: /orders/:id/credit_notes/:credit_note_id
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target order identifier.
+  - credit_note_id: Replace with target credit note identifier.
+
+  body:
+  - none
+  - Requires venditio.credit_notes.enabled=true.
+  - Returns 404 when the credit note does not belong to the order.
+}

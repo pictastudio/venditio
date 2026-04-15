@@ -47,6 +47,7 @@ Additional supported filters:
 - `product_type_id` on `/product_variants`
 - `product_variant_id` on `/product_variant_options`
 - `product_id` and `price_list_id` on `/price_list_prices`
+- `invoice_id`, `return_request_id`, and `identifier` on `/orders/{order}/credit_notes`
 - `/return_reasons`: `code`, `name`, `description`, `is_active`
 - `/return_requests`: `order_id`, `user_id`, `return_reason_id`, `is_accepted`, `is_verified`
 - `as_tree` boolean on `/product_categories`
@@ -74,6 +75,13 @@ Invoice-specific notes:
 - invoices are generated explicitly from an order and persisted as immutable snapshots
 - each order supports one invoice document in v1
 - the PDF endpoint renders from stored HTML, not from the current order state
+
+Credit-note-specific notes:
+
+- credit note routes are enabled by `venditio.credit_notes.enabled` (default: `false`)
+- credit notes are generated explicitly from accepted return requests and persisted as immutable snapshots
+- each accepted return request supports one credit note document in v1
+- the PDF endpoint renders from stored HTML, not from the current order, invoice, or return request state
 
 ## Endpoints
 
@@ -209,6 +217,43 @@ Invoice generation returns `422` when:
 - the order has no lines
 - order lines use mixed or missing currencies
 
+### Credit Notes
+
+- `GET /orders/{order}/credit_notes`
+- `POST /orders/{order}/credit_notes`
+- `GET /orders/{order}/credit_notes/{credit_note}`
+- `GET /orders/{order}/credit_notes/{credit_note}/pdf`
+
+`POST /orders/{order}/credit_notes` accepts:
+
+- `return_request_id`
+
+Returned credit note documents expose these stable fields:
+
+- `id`
+- `order_id`
+- `invoice_id`
+- `return_request_id`
+- `identifier`
+- `issued_at`
+- `currency_code`
+- `seller`
+- `billing_address`
+- `shipping_address`
+- `references`
+- `lines`
+- `totals`
+- `template_key`
+- `pdf_download_url`
+
+Credit note generation returns `422` when:
+
+- the order does not have an invoice
+- the return request belongs to a different order
+- the return request is not accepted
+- the return request has no active lines
+- credited lines use mixed or missing currencies
+
 ### Exports
 
 - `GET /exports/products`
@@ -260,6 +305,7 @@ Notes:
 - `return_request_lines` are nested inside the `lines` payload and resource, not exposed as a standalone CRUD endpoint in v1
 - each request supports a single `return_reason_id`, while multiple order lines can be included
 - requested quantities are validated against the remaining non-deleted return quantity for each order line
+- credited return requests become immutable through the API and can no longer be updated or deleted
 
 ### Discounts
 

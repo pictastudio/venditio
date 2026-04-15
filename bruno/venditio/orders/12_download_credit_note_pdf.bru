@@ -1,0 +1,42 @@
+meta {
+  name: Download order credit note pdf
+  type: http
+  seq: 42
+}
+
+get {
+  url: {{baseUrl}}/orders/:id/credit_notes/:credit_note_id/pdf
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+  credit_note_id: 
+}
+
+headers {
+  Accept: application/pdf
+}
+
+docs {
+  summary:
+  - Download the persisted order credit note as a PDF attachment.
+
+  endpoint:
+  - method: GET
+  - path: /orders/:id/credit_notes/:credit_note_id/pdf
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target order identifier.
+  - credit_note_id: Replace with target credit note identifier.
+
+  body:
+  - none
+  - Requires venditio.credit_notes.enabled=true.
+  - Returns application/pdf content.
+  - Returns 404 when the credit note does not belong to the order.
+}

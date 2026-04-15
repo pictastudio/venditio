@@ -1,0 +1,49 @@
+meta {
+  name: Create order credit note
+  type: http
+  seq: 40
+}
+
+post {
+  url: {{baseUrl}}/orders/:id/credit_notes
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "return_request_id": 1
+  }
+}
+
+docs {
+  summary:
+  - Create or return the persisted credit note for an accepted return request.
+
+  endpoint:
+  - method: POST
+  - path: /orders/:id/credit_notes
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target order identifier.
+
+  body:
+  - JSON payload.
+  - return_request_id (integer): Accepted return request belonging to this order.
+  - Requires venditio.credit_notes.enabled=true.
+  - Requires the order to already have an invoice.
+  - Returns 201 when a new credit note is created, 200 when the return request already has one.
+  - Generation requires an accepted return request with at least one line and a single shared currency across credited lines.
+}

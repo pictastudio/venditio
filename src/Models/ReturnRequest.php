@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany, HasOne};
 use PictaStudio\Venditio\Events\{ReturnRequestCreated, ReturnRequestDeleted, ReturnRequestUpdated};
 use PictaStudio\Venditio\Models\Traits\{HasHelperMethods, LogsActivity};
 
@@ -60,5 +60,10 @@ class ReturnRequest extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(resolve_model('return_request_line'));
+    }
+
+    public function creditNote(): HasOne
+    {
+        return $this->hasOne(resolve_model('credit_note'));
     }
 }

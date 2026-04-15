@@ -362,6 +362,52 @@ Table return_request_lines {
   }
 }
 
+Table invoices {
+  id bigint [pk, increment, not null]
+  order_id bigint [not null, ref: > orders.id, unique]
+  identifier varchar(100) [not null, unique]
+  issued_at datetime [not null]
+  currency_code varchar(10) [not null]
+  template_key varchar(100) [not null]
+  template_version varchar(50)
+  locale varchar(12)
+  paper varchar(20) [not null, default: 'a4']
+  orientation varchar(20) [not null, default: 'portrait']
+  seller json [not null]
+  billing_address json [not null]
+  shipping_address json
+  lines json [not null]
+  totals json [not null]
+  payments json
+  rendered_html text [not null]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table credit_notes {
+  id bigint [pk, increment, not null]
+  order_id bigint [not null, ref: > orders.id]
+  invoice_id bigint [not null, ref: > invoices.id]
+  return_request_id bigint [not null, ref: > return_requests.id, unique]
+  identifier varchar(100) [not null, unique]
+  issued_at datetime [not null]
+  currency_code varchar(10) [not null]
+  template_key varchar(100) [not null]
+  template_version varchar(50)
+  locale varchar(12)
+  paper varchar(20) [not null, default: 'a4']
+  orientation varchar(20) [not null, default: 'portrait']
+  seller json [not null]
+  billing_address json [not null]
+  shipping_address json
+  references json [not null, note: 'immutable references to the source order, invoice, and return request']
+  lines json [not null]
+  totals json [not null]
+  rendered_html text [not null]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
 Table price_list_prices {
   id bigint [pk, increment, not null]
   product_id bigint [not null, ref: > products.id]

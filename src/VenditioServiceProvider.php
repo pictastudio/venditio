@@ -10,10 +10,13 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\ExcelServiceProvider;
 use PictaStudio\Venditio\Console\Commands\{InstallCommand, ReleaseStockForAbandonedCarts, SeedRandomDataCommand};
-use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, InvoiceNumberGeneratorInterface, InvoicePayloadFactoryInterface, InvoicePdfRendererInterface, InvoiceTemplateInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface, ShippingFeeCalculatorInterface, ShippingWeightsResolverInterface, ShippingZoneResolverInterface};
+use PictaStudio\Venditio\Contracts\{CartIdentifierGeneratorInterface, CartTotalDiscountCalculatorInterface, CreditNoteNumberGeneratorInterface, CreditNotePayloadFactoryInterface, CreditNotePdfRendererInterface, CreditNoteTemplateInterface, DiscountCalculatorInterface, DiscountUsageRecorderInterface, DiscountablesResolverInterface, InvoiceNumberGeneratorInterface, InvoicePayloadFactoryInterface, InvoicePdfRendererInterface, InvoiceTemplateInterface, OrderIdentifierGeneratorInterface, ProductPriceResolverInterface, ProductSkuGeneratorInterface, ShippingFeeCalculatorInterface, ShippingWeightsResolverInterface, ShippingZoneResolverInterface};
+use PictaStudio\Venditio\CreditNotes\DefaultCreditNotePayloadFactory;
+use PictaStudio\Venditio\CreditNotes\Renderers\DompdfCreditNotePdfRenderer;
+use PictaStudio\Venditio\CreditNotes\Templates\DefaultCreditNoteTemplate;
 use PictaStudio\Venditio\Discounts\{CartTotalDiscountCalculator, DiscountCalculator, DiscountUsageRecorder, DiscountablesResolver};
 use PictaStudio\Venditio\Facades\Venditio as VenditioFacade;
-use PictaStudio\Venditio\Generators\{CartIdentifierGenerator, InvoiceNumberGenerator, OrderIdentifierGenerator, ProductSkuGenerator};
+use PictaStudio\Venditio\Generators\{CartIdentifierGenerator, CreditNoteNumberGenerator, InvoiceNumberGenerator, OrderIdentifierGenerator, ProductSkuGenerator};
 use PictaStudio\Venditio\Http\Middleware\ResolveVenditioRouteBindings;
 use PictaStudio\Venditio\Invoices\DefaultInvoicePayloadFactory;
 use PictaStudio\Venditio\Invoices\Renderers\DompdfInvoicePdfRenderer;
@@ -102,6 +105,7 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_return_requests_table',
                 'create_return_request_lines_table',
                 'create_invoices_table',
+                'create_credit_notes_table',
                 'update_order_lines_add_return_fields',
                 'seed_venditio_data',
             ]);
@@ -135,6 +139,7 @@ class VenditioServiceProvider extends PackageServiceProvider
         $this->bindShippingClasses();
         $this->bindIdentifierGenerators();
         $this->bindInvoiceClasses();
+        $this->bindCreditNoteClasses();
     }
 
     private function registerExcelProvider(): void
@@ -242,6 +247,37 @@ class VenditioServiceProvider extends PackageServiceProvider
             InvoicePdfRendererInterface::class,
             fn (Application $app) => $app->make(
                 config('venditio.invoices.renderer', DompdfInvoicePdfRenderer::class)
+            )
+        );
+    }
+
+    private function bindCreditNoteClasses(): void
+    {
+        $this->app->singleton(
+            CreditNoteNumberGeneratorInterface::class,
+            fn (Application $app) => $app->make(
+                config('venditio.credit_notes.number_generator', CreditNoteNumberGenerator::class)
+            )
+        );
+
+        $this->app->singleton(
+            CreditNotePayloadFactoryInterface::class,
+            fn (Application $app) => $app->make(
+                config('venditio.credit_notes.payload_factory', DefaultCreditNotePayloadFactory::class)
+            )
+        );
+
+        $this->app->singleton(
+            CreditNoteTemplateInterface::class,
+            fn (Application $app) => $app->make(
+                config('venditio.credit_notes.template', DefaultCreditNoteTemplate::class)
+            )
+        );
+
+        $this->app->singleton(
+            CreditNotePdfRendererInterface::class,
+            fn (Application $app) => $app->make(
+                config('venditio.credit_notes.renderer', DompdfCreditNotePdfRenderer::class)
             )
         );
     }

@@ -1,0 +1,75 @@
+meta {
+  name: List order credit notes
+  type: http
+  seq: 39
+}
+
+get {
+  url: {{baseUrl}}/orders/:id/credit_notes
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 
+}
+
+params:query {
+  ~all: 0
+  ~page: 1
+  ~per_page: 30
+  ~sort_by: id
+  ~sort_dir: asc
+  ~id[]: 1
+  ~invoice_id: 1
+  ~return_request_id: 1
+  ~identifier: CN-2026-04-000001
+  ~issued_at: 2026-04-15
+  ~issued_at_start: 2026-04-01
+  ~issued_at_end: 2026-04-30
+  ~currency_code: EUR
+  ~template_key: default
+  ~created_at: 2026-04-15
+  ~created_at_start: 2026-04-01
+  ~created_at_end: 2026-04-30
+  ~updated_at: 2026-04-15
+  ~updated_at_start: 2026-04-01
+  ~updated_at_end: 2026-04-30
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - List immutable credit notes generated for one order.
+
+  endpoint:
+  - method: GET
+  - path: /orders/:id/credit_notes
+
+  query params:
+  - all (boolean): Return all records without pagination.
+  - page (integer): Page number used when all is false.
+  - per_page (integer): Items per page (bounded by API config).
+  - sort_by (string): Sort field. Allowed: id and filterable columns.
+  - sort_dir (string): Sort direction: asc or desc.
+  - id[] (integer[]): Filter by one or more credit note IDs.
+  - invoice_id (integer): Exact-match filter for the related invoice.
+  - return_request_id (integer): Exact-match filter for the credited return request.
+  - identifier (string): Filter by credit note identifier.
+  - issued_at (date): Exact-match filter for issued_at.
+  - issued_at_start (date): Filter issued_at greater than or equal to this date.
+  - issued_at_end (date): Filter issued_at less than or equal to this date.
+  - currency_code (string): Exact-match filter for currency_code.
+  - template_key (string): Exact-match filter for template_key.
+
+  path params:
+  - id: Replace with target order identifier.
+
+  body:
+  - none
+  - Requires venditio.credit_notes.enabled=true.
+}

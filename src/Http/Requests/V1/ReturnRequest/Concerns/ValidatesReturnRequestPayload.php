@@ -19,6 +19,7 @@ trait ValidatesReturnRequestPayload
             $returnRequest = $this->route('return_request');
             $order = $this->resolveOrder($returnRequest);
 
+            $this->ensureReturnRequestIsNotCredited($validator, $returnRequest);
             $this->ensureOrderHasBillingAddress($validator, $order);
             $this->ensureVerifiedRequestsAreAccepted($validator, $returnRequest);
 
@@ -40,6 +41,26 @@ trait ValidatesReturnRequestPayload
         $validator->errors()->add(
             'order_id',
             'The selected order must have a billing address snapshot before a return request can be created or updated.'
+        );
+    }
+
+    private function ensureReturnRequestIsNotCredited($validator, ?Model $returnRequest): void
+    {
+        if (!$returnRequest instanceof Model) {
+            return;
+        }
+
+        $creditNote = $returnRequest->relationLoaded('creditNote')
+            ? $returnRequest->creditNote
+            : $returnRequest->creditNote()->first();
+
+        if (!$creditNote instanceof Model) {
+            return;
+        }
+
+        $validator->errors()->add(
+            'return_request_id',
+            'A credited return request cannot be updated.'
         );
     }
 

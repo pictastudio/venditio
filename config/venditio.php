@@ -1,6 +1,6 @@
 <?php
 
-use PictaStudio\Venditio\{Discounts, Dto, Enums, Generators, Invoices, Models, Pricing, Shipping};
+use PictaStudio\Venditio\{CreditNotes, Discounts, Dto, Enums, Generators, Invoices, Models, Pricing, Shipping};
 use PictaStudio\Venditio\Pipelines\{Cart, CartLine, Order};
 use PictaStudio\Venditio\Validations;
 
@@ -50,6 +50,7 @@ return [
         'cart_line' => Models\CartLine::class,
         'country' => Models\Country::class,
         'country_tax_class' => Models\CountryTaxClass::class,
+        'credit_note' => Models\CreditNote::class,
         'currency' => Models\Currency::class,
         'cart_free_gift_decision' => Models\CartFreeGiftDecision::class,
         'discount' => Models\Discount::class,
@@ -99,6 +100,7 @@ return [
         Validations\Contracts\BrandValidationRules::class => Validations\BrandValidation::class,
         Validations\Contracts\CartValidationRules::class => Validations\CartValidation::class,
         Validations\Contracts\CartLineValidationRules::class => Validations\CartLineValidation::class,
+        Validations\Contracts\CreditNoteValidationRules::class => Validations\CreditNoteValidation::class,
         Validations\Contracts\FreeGiftValidationRules::class => Validations\FreeGiftValidation::class,
         Validations\Contracts\OrderValidationRules::class => Validations\OrderValidation::class,
         Validations\Contracts\ProductValidationRules::class => Validations\ProductValidation::class,
@@ -484,6 +486,29 @@ return [
             'email' => env('VENDITIO_INVOICES_SELLER_EMAIL'),
             'phone' => env('VENDITIO_INVOICES_SELLER_PHONE'),
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Credit Notes
+    |--------------------------------------------------------------------------
+    |
+    | Persisted PDF-ready credit note documents for accepted return requests.
+    |
+    | Generation is opt-in and exposes configurable numbering, payload
+    | building, templating, and PDF rendering strategies.
+    |
+    */
+    'credit_notes' => [
+        'enabled' => env('VENDITIO_CREDIT_NOTES_ENABLED', false),
+        'number_generator' => Generators\CreditNoteNumberGenerator::class,
+        'payload_factory' => CreditNotes\DefaultCreditNotePayloadFactory::class,
+        'template' => CreditNotes\Templates\DefaultCreditNoteTemplate::class,
+        'renderer' => CreditNotes\Renderers\DompdfCreditNotePdfRenderer::class,
+        'paper' => env('VENDITIO_CREDIT_NOTES_PAPER', 'a4'),
+        'orientation' => env('VENDITIO_CREDIT_NOTES_ORIENTATION', 'portrait'),
+        'locale' => env('VENDITIO_CREDIT_NOTES_LOCALE'),
+        'filename_pattern' => env('VENDITIO_CREDIT_NOTES_FILENAME_PATTERN', 'credit-note-{identifier}.pdf'),
     ],
 
     /*

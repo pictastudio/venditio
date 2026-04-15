@@ -60,6 +60,7 @@ class TestCase extends Orchestra
     {
         config()->set('database.default', 'testing');
         config()->set('venditio.invoices.enabled', true);
+        config()->set('venditio.credit_notes.enabled', true);
         config()->set('venditio.invoices.seller', [
             'name' => 'Venditio SRL',
             'address_line_1' => 'Via Sicilia 76',

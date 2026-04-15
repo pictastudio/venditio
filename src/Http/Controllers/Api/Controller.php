@@ -911,6 +911,7 @@ class Controller extends BaseController
             'cart_line' => \PictaStudio\Venditio\Models\CartLine::class,
             'country' => \PictaStudio\Venditio\Models\Country::class,
             'country_tax_class' => \PictaStudio\Venditio\Models\CountryTaxClass::class,
+            'credit_note' => \PictaStudio\Venditio\Models\CreditNote::class,
             'currency' => \PictaStudio\Venditio\Models\Currency::class,
             'discount' => \PictaStudio\Venditio\Models\Discount::class,
             'discount_application' => \PictaStudio\Venditio\Models\DiscountApplication::class,

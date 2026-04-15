@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, FreeGiftController, InventoryController, InvoiceController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductCollectionController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ReturnReasonController, ReturnRequestController, ShippingMethodController, ShippingMethodZoneController, ShippingStatusController, ShippingZoneController, TagController, TaxClassController};
+use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CreditNoteController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, FreeGiftController, InventoryController, InvoiceController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductCollectionController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ReturnReasonController, ReturnRequestController, ShippingMethodController, ShippingMethodZoneController, ShippingStatusController, ShippingZoneController, TagController, TaxClassController};
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +38,12 @@ if (config('venditio.invoices.enabled', false)) {
     Route::post('orders/{order}/invoice', [InvoiceController::class, 'store'])->name('orders.invoice.store');
     Route::get('orders/{order}/invoice', [InvoiceController::class, 'show'])->name('orders.invoice.show');
     Route::get('orders/{order}/invoice/pdf', [InvoiceController::class, 'pdf'])->name('orders.invoice.pdf');
+}
+if (config('venditio.credit_notes.enabled', false)) {
+    Route::get('orders/{order}/credit_notes', [CreditNoteController::class, 'index'])->name('orders.credit_notes.index');
+    Route::post('orders/{order}/credit_notes', [CreditNoteController::class, 'store'])->name('orders.credit_notes.store');
+    Route::get('orders/{order}/credit_notes/{credit_note}', [CreditNoteController::class, 'show'])->name('orders.credit_notes.show');
+    Route::get('orders/{order}/credit_notes/{credit_note}/pdf', [CreditNoteController::class, 'pdf'])->name('orders.credit_notes.pdf');
 }
 if (config('venditio.exports.enabled', true)) {
     Route::get('exports/products', [ExportController::class, 'products'])->name('exports.products');

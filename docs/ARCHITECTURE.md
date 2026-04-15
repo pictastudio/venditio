@@ -16,6 +16,7 @@ It is headless by design: host applications own authentication, UI, and renderin
 - `src/Http`: API controllers, requests, resources
 - `src/Models`: domain models
 - `src/Actions`: reusable state-changing operations
+- `src/CreditNotes`: default credit note payload, template, and PDF rendering implementations
 - `src/Invoices`: default invoice payload, template, and PDF rendering implementations
 - `src/Pipelines`: cart, cart-line, and order orchestration pipelines
 - `src/Discounts`: discount calculators, context, rules, usage recording
@@ -35,6 +36,7 @@ It configures:
 - API route registration (when enabled)
 - validation contract bindings from config
 - discount/pricing/identifier-generator bindings
+- credit note number/payload/template/pdf renderer bindings
 - invoice number/payload/template/pdf renderer bindings
 - polymorphic morph map
 - scheduled command registration
@@ -101,6 +103,16 @@ Invoices are an optional order-adjacent subsystem.
 - the invoice record stores immutable snapshots for seller identity, addresses, lines, totals, payments, and rendered HTML
 - host apps can replace numbering, payload building, HTML templating, or PDF rendering through contracts and config
 
+## Credit Notes
+
+Credit notes are an optional order-adjacent subsystem.
+
+- one credit note document can be generated per accepted return request
+- credit notes are created manually through order-scoped endpoints, not during return-request creation or update
+- each credit note references the source order, invoice, and return request, then stores immutable snapshots for seller identity, addresses, references, lines, totals, and rendered HTML
+- host apps can replace numbering, payload building, HTML templating, or PDF rendering through contracts and config
+- once a credit note exists, the related return request becomes immutable through the public API
+
 ## Configuration Surface
 
 Main configuration sections:
@@ -109,6 +121,7 @@ Main configuration sections:
 - `models`
 - `validations`
 - `authorize_using_policies`
+- `credit_notes`
 - `invoices`
 - `product`
 - `product_variants`

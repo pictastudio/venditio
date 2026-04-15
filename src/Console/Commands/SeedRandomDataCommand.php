@@ -5,8 +5,10 @@ namespace PictaStudio\Venditio\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\{Collection, Str};
-use Illuminate\Support\Facades\{Hash, Schema};
+use Illuminate\Support\Facades\{DB, Hash, Schema};
+use PictaStudio\Venditio\Actions\CreditNotes\GenerateOrderCreditNote;
 use PictaStudio\Venditio\Actions\Invoices\GenerateOrderInvoice;
+use PictaStudio\Venditio\Actions\Returns\RecalculateOrderLineReturnState;
 use PictaStudio\Venditio\Actions\Taxes\{ExtractTaxFromGrossPrice, ResolveTaxRate};
 use PictaStudio\Venditio\Contracts\{ShippingFeeCalculatorInterface, ShippingWeightsResolverInterface, ShippingZoneResolverInterface};
 use PictaStudio\Venditio\Enums\DiscountType;
@@ -34,6 +36,7 @@ class SeedRandomDataCommand extends Command
         {--orders=20 : Number of orders}
         {--order-lines=3 : Max lines per order}
         {--invoices=0 : Number of invoices to generate from seeded orders}
+        {--credit-notes=0 : Number of credit notes to generate from seeded orders and accepted return requests}
         {--price-lists=0 : Number of price lists (requires venditio.price_lists.enabled=true)}';
 
     protected $description = 'Seed random Venditio data for local/testing environments';
@@ -67,6 +70,8 @@ class SeedRandomDataCommand extends Command
             'orders' => 0,
             'order_lines' => 0,
             'invoices' => 0,
+            'return_requests' => 0,
+            'credit_notes' => 0,
             'price_lists' => 0,
             'price_list_prices' => 0,
         ]);
@@ -163,6 +168,14 @@ class SeedRandomDataCommand extends Command
             )
         );
 
+        $creditNoteSeed = $this->seedCreditNotes(
+            count: $counts->get('credit_notes', 0),
+            orders: $orderSeed['models']
+        );
+        $summary->put('invoices', (int) $summary->get('invoices') + $creditNoteSeed['invoices']);
+        $summary->put('return_requests', $creditNoteSeed['return_requests']);
+        $summary->put('credit_notes', $creditNoteSeed['credit_notes']);
+
         $priceListSeed = $this->seedPriceLists(
             count: $counts->get('price_lists', 0),
             products: $products
@@ -202,6 +215,7 @@ class SeedRandomDataCommand extends Command
             'orders' => $this->asNonNegativeInt('orders'),
             'order_lines' => $this->asNonNegativeInt('order-lines'),
             'invoices' => $this->asNonNegativeInt('invoices'),
+            'credit_notes' => $this->asNonNegativeInt('credit-notes'),
             'price_lists' => $this->asNonNegativeInt('price-lists'),
         ]);
     }
@@ -1039,6 +1053,166 @@ class SeedRandomDataCommand extends Command
         }
 
         return $createdInvoices;
+    }
+
+    /**
+     * @return array{invoices: int, return_requests: int, credit_notes: int}
+     */
+    private function seedCreditNotes(int $count, Collection $orders): array
+    {
+        if ($count < 1 || $orders->isEmpty()) {
+            return [
+                'invoices' => 0,
+                'return_requests' => 0,
+                'credit_notes' => 0,
+            ];
+        }
+
+        if (!config('venditio.credit_notes.enabled', false)) {
+            $this->components->warn('Credit notes are disabled (`venditio.credit_notes.enabled=false`). Skipping credit note seeding.');
+
+            return [
+                'invoices' => 0,
+                'return_requests' => 0,
+                'credit_notes' => 0,
+            ];
+        }
+
+        if (!config('venditio.invoices.enabled', false)) {
+            $this->components->warn('Credit note seeding requires invoices (`venditio.invoices.enabled=true`). Skipping credit note seeding.');
+
+            return [
+                'invoices' => 0,
+                'return_requests' => 0,
+                'credit_notes' => 0,
+            ];
+        }
+
+        $requiredSellerFields = ['name', 'address_line_1', 'city', 'postal_code', 'country'];
+        $missingSellerFields = collect($requiredSellerFields)
+            ->reject(fn (string $key): bool => filled(config('venditio.invoices.seller.' . $key)));
+
+        if ($missingSellerFields->isNotEmpty()) {
+            $this->components->warn('Credit note seeding requires complete invoice seller configuration. Skipping credit note seeding.');
+
+            return [
+                'invoices' => 0,
+                'return_requests' => 0,
+                'credit_notes' => 0,
+            ];
+        }
+
+        $createdInvoices = 0;
+        $createdReturnRequests = 0;
+        $createdCreditNotes = 0;
+        $invoiceGenerator = app(GenerateOrderInvoice::class);
+        $creditNoteGenerator = app(GenerateOrderCreditNote::class);
+        $recalculateReturnState = app(RecalculateOrderLineReturnState::class);
+        $returnReason = $this->ensureSeedReturnReason();
+
+        foreach ($orders->shuffle()->take($count) as $order) {
+            try {
+                $seedResult = DB::transaction(function () use (
+                    $creditNoteGenerator,
+                    $invoiceGenerator,
+                    $order,
+                    $recalculateReturnState,
+                    $returnReason
+                ): array {
+                    $order->loadMissing('lines');
+                    $orderLine = $order->lines->filter(fn (Model $line): bool => (int) $line->qty > 0)->random();
+
+                    $invoiceResult = $invoiceGenerator->handle($order);
+
+                    $returnRequest = $this->createAcceptedSeedReturnRequest($order, $orderLine, $returnReason);
+                    $recalculateReturnState->handle([(int) $orderLine->getKey()]);
+
+                    $creditNoteResult = $creditNoteGenerator->handle($order, (int) $returnRequest->getKey());
+
+                    return [
+                        'credit_note_created' => (bool) ($creditNoteResult['created'] ?? false),
+                        'invoice_created' => (bool) ($invoiceResult['created'] ?? false),
+                    ];
+                });
+            } catch (Throwable) {
+                $this->components->warn('Unable to generate one of the requested credit notes. Continuing with the remaining orders.');
+
+                continue;
+            }
+
+            if ($seedResult['invoice_created']) {
+                $createdInvoices++;
+            }
+
+            $createdReturnRequests++;
+
+            if ($seedResult['credit_note_created']) {
+                $createdCreditNotes++;
+            }
+        }
+
+        return [
+            'invoices' => $createdInvoices,
+            'return_requests' => $createdReturnRequests,
+            'credit_notes' => $createdCreditNotes,
+        ];
+    }
+
+    private function ensureSeedReturnReason(): Model
+    {
+        $returnReason = query('return_reason')
+            ->where('code', 'seed-random-return')
+            ->first();
+
+        if ($returnReason instanceof Model) {
+            return $returnReason;
+        }
+
+        return query('return_reason')->create([
+            'code' => 'seed-random-return',
+            'name' => 'Seeded return',
+            'description' => 'Return reason generated by venditio:seed-random.',
+            'active' => true,
+            'sort_order' => 0,
+        ]);
+    }
+
+    private function createAcceptedSeedReturnRequest(Model $order, Model $orderLine, Model $returnReason): Model
+    {
+        $qty = random_int(1, max(1, (int) $orderLine->qty));
+
+        $returnRequest = query('return_request')->create([
+            'order_id' => $order->getKey(),
+            'user_id' => $order->user_id,
+            'return_reason_id' => $returnReason->getKey(),
+            'billing_address' => $this->extractBillingAddressSnapshot($order),
+            'description' => 'Accepted return generated for a seeded credit note.',
+            'notes' => null,
+            'is_accepted' => true,
+            'is_verified' => false,
+        ]);
+
+        $returnRequest->lines()->create([
+            'order_line_id' => $orderLine->getKey(),
+            'qty' => $qty,
+        ]);
+
+        return $returnRequest->refresh();
+    }
+
+    private function extractBillingAddressSnapshot(Model $order): array
+    {
+        $addresses = $order->addresses;
+
+        if ($addresses instanceof \Illuminate\Support\Fluent) {
+            $addresses = $addresses->toArray();
+        }
+
+        $billingAddress = is_array($addresses)
+            ? data_get($addresses, 'billing')
+            : null;
+
+        return is_array($billingAddress) ? $billingAddress : [];
     }
 
     private function createLinePayload(array $product, Collection $discountMap, ?int $billingCountryId = null): array

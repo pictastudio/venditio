@@ -83,6 +83,11 @@ class Order extends Model
         return $this->hasOne(resolve_model('invoice'));
     }
 
+    public function creditNotes(): HasMany
+    {
+        return $this->hasMany(resolve_model('credit_note'));
+    }
+
     protected function addresses(): Attribute
     {
         return Attribute::make(
