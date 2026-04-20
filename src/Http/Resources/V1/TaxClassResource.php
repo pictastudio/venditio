@@ -27,6 +27,7 @@ class TaxClassResource extends JsonResource
     protected function getRelationshipsToInclude(): array
     {
         return [
+            'pivot' => CountryTaxClassResource::make($this->whenLoaded('pivot')),
             'countries' => CountryResource::collection($this->whenLoaded('countries')),
         ];
     }
