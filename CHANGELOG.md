@@ -2,6 +2,26 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.2.0 - 2026-04-21
+
+### What's Changed
+
+#### Features
+
+- **Discount list filters** - Added `is_general` filtering for general versus scoped discounts and exact `discountable_type` filtering with package morph alias normalization on the discount index endpoint.
+- **Country tax class pivot payloads** - Country and tax class relationship includes now expose the country-tax-class pivot resource so consumers can read pivot values such as tax rates from included country payloads.
+
+#### API & Tooling
+
+- **Docs and Bruno examples** - Documented the new discount list filters in the API reference and added Bruno requests for listing general discounts and filtering discounts by discountable type.
+- **Manual CI triggers** - Changed the test and PHP style GitHub Actions workflows to run only through manual dispatch instead of automatically on push or pull request events.
+
+#### Tests
+
+- Added feature coverage for general discount filtering, exact discountable type filtering, and country-tax-class pivot serialization on tax class includes.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.1.0...v2.2.0
+
 ## v2.1.0 - 2026-04-15
 
 ### What's Changed
