@@ -2,6 +2,8 @@
 
 namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 
+use Illuminate\Database\Eloquent\{Builder, Model as EloquentModel};
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\ValidationException;
@@ -19,8 +21,14 @@ class DiscountController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', Discount::class);
 
+        $filters = request()->all();
+        $query = query('discount');
+
+        $this->applyDiscountIndexFilters($query, $filters);
+        unset($filters['is_general'], $filters['discountable_type']);
+
         return DiscountResource::collection(
-            $this->applyBaseFilters(query('discount'), request()->all(), 'discount')
+            $this->applyBaseFilters($query, $filters, 'discount')
         );
     }
 
@@ -112,5 +120,47 @@ class DiscountController extends Controller
         $discount->delete();
 
         return response()->noContent();
+    }
+
+    protected function applyDiscountIndexFilters(Builder $query, array $filters): void
+    {
+        $this->validateData($filters, [
+            'is_general' => ['sometimes', 'boolean'],
+            'discountable_type' => ['sometimes', 'string', 'max:255'],
+        ]);
+
+        if (array_key_exists('is_general', $filters)) {
+            $isGeneral = filter_var($filters['is_general'], FILTER_VALIDATE_BOOL);
+
+            if ($isGeneral) {
+                $query->whereNull('discountable_type')
+                    ->whereNull('discountable_id');
+            } else {
+                $query->whereNotNull('discountable_type')
+                    ->whereNotNull('discountable_id');
+            }
+        }
+
+        if (filled($filters['discountable_type'] ?? null)) {
+            $query->where(
+                'discountable_type',
+                $this->normalizeDiscountableTypeFilter((string) $filters['discountable_type'])
+            );
+        }
+    }
+
+    protected function normalizeDiscountableTypeFilter(string $discountableType): string
+    {
+        $resolvedMorphedModel = Relation::getMorphedModel($discountableType);
+
+        if (is_string($resolvedMorphedModel) && is_a($resolvedMorphedModel, EloquentModel::class, true)) {
+            return app($resolvedMorphedModel)->getMorphClass();
+        }
+
+        if (is_a($discountableType, EloquentModel::class, true)) {
+            return app($discountableType)->getMorphClass();
+        }
+
+        return $discountableType;
     }
 }

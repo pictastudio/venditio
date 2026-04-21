@@ -8,6 +8,13 @@ use function Pest\Laravel\{assertDatabaseHas, getJson, postJson};
 
 uses(RefreshDatabase::class);
 
+function discountApiListData(array $json): array
+{
+    return is_array(data_get($json, 'data'))
+        ? data_get($json, 'data')
+        : $json;
+}
+
 it('serializes the polymorphic discountable relation using its dedicated resource', function () {
     $product = Product::factory()->create([
         'name' => 'Test Polymorphic Product',
@@ -152,6 +159,70 @@ it('requires code when creating a discount not scoped to a discountable resource
         'ends_at' => now()->addDay()->toDateTimeString(),
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['code']);
+});
+
+it('filters discount index by general discounts', function () {
+    $generalDiscount = Discount::factory()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'code' => 'GENERAL10',
+        'apply_to_cart_total' => true,
+    ]);
+
+    $scopedDiscount = Discount::factory()->create([
+        'discountable_type' => 'product',
+        'discountable_id' => Product::factory(),
+        'code' => 'PRODUCT10',
+    ]);
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $generalIds = collect(
+        discountApiListData(
+            getJson($prefix . '/discounts?all=1&is_general=1')
+                ->assertOk()
+                ->json()
+        )
+    )->pluck('id')->all();
+
+    expect($generalIds)->toBe([$generalDiscount->getKey()]);
+
+    $scopedIds = collect(
+        discountApiListData(
+            getJson($prefix . '/discounts?all=1&is_general=0')
+                ->assertOk()
+                ->json()
+        )
+    )->pluck('id')->all();
+
+    expect($scopedIds)->toContain($scopedDiscount->getKey())
+        ->not->toContain($generalDiscount->getKey());
+});
+
+it('filters discount index by discountable_type using exact matching', function () {
+    $productDiscount = Discount::factory()->create([
+        'discountable_type' => 'product',
+        'discountable_id' => Product::factory(),
+        'code' => 'PRODUCT-ONLY10',
+    ]);
+
+    Discount::factory()->create([
+        'discountable_type' => 'product_collection',
+        'discountable_id' => ProductCollection::factory(),
+        'code' => 'COLLECTION10',
+    ]);
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $filteredIds = collect(
+        discountApiListData(
+            getJson($prefix . '/discounts?all=1&discountable_type=product')
+                ->assertOk()
+                ->json()
+        )
+    )->pluck('id')->all();
+
+    expect($filteredIds)->toBe([$productDiscount->getKey()]);
 });
 
 it('bulk upserts discounts by updating existing discounts and creating new ones', function () {

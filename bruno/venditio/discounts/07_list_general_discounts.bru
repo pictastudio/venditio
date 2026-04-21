@@ -1,0 +1,46 @@
+meta {
+  name: List general discounts
+  type: http
+  seq: 81
+}
+
+get {
+  url: {{baseUrl}}/discounts
+  body: none
+  auth: inherit
+}
+
+params:query {
+  all: 1
+  is_general: 1
+  ~apply_to_cart_total: 1
+  ~sort_by: id
+  ~sort_dir: desc
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - List general discounts
+
+  endpoint:
+  - method: GET
+  - path: /discounts
+
+  query params:
+  - all (boolean): Return all records without pagination.
+  - is_general (boolean): Restrict results to discounts where discountable_type and discountable_id are both null.
+  - apply_to_cart_total (boolean): Optional extra filter to keep only cart-total discounts among the general ones.
+  - sort_by (string): Optional sort field.
+  - sort_dir (string): Optional sort direction.
+
+  path params:
+  - none
+
+  body:
+  - none
+}

@@ -324,6 +324,11 @@ Discount columns are first-level fields on `discounts`:
 
 `discountable_type` accepts package morph aliases such as `product`, `product_category`, `product_collection`, `product_type`, `brand`, and `user`.
 
+Discount list filters:
+
+- `is_general` boolean, filters discounts without a discountable target (`discountable_type` and `discountable_id` are both `null`)
+- `discountable_type` uses exact matching against the stored morph alias/class instead of partial string matching
+
 ### Discount Applications
 
 - `GET /discount_applications`

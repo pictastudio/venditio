@@ -1,4 +1,4 @@
-# Agents Rules – Laravel API-Only CMS Package
+# Agents Rules - Laravel API-Only CMS Package
 
 ## Role
 
@@ -83,6 +83,7 @@ Think in terms of **stable APIs, extensibility, and zero frontend assumptions**.
 - Resources define the public API shape
 - Avoid returning Eloquent models directly
 - Public response fields are considered stable APIs
+- After touching api implementations always update bruno requests to reflect the changes
 
 ## Requests & Validation
 

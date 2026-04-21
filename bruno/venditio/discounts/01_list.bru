@@ -19,7 +19,8 @@ params:query {
   ~exclude_all_scopes: 0
   ~exclude_active_scope: 0
   ~id[]: 1
-  ~discountable_type: sample
+  ~is_general: 0
+  ~discountable_type: product
   ~discountable_id: 1
   ~type: sample
   ~value: 10
@@ -78,7 +79,8 @@ docs {
   - exclude_all_scopes (boolean): Skip all global scopes for this request.
   - exclude_active_scope (boolean): Skip only the active global scope when available.
   - id[] (integer[]): Filter by one or more resource IDs.
-  - discountable_type (string): Exact-match filter for discountable_type.
+  - is_general (boolean): When true, return only discounts without a discountable target. When false, return only scoped discounts.
+  - discountable_type (string): Exact-match filter for discountable_type. Use package morph aliases such as product, product_category, product_collection, product_type, brand, or user.
   - discountable_id (integer): Exact-match filter for discountable_id.
   - type (string): Exact-match filter for type.
   - value (number): Exact-match filter for value.

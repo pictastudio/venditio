@@ -1,0 +1,44 @@
+meta {
+  name: List discounts by discountable type
+  type: http
+  seq: 82
+}
+
+get {
+  url: {{baseUrl}}/discounts
+  body: none
+  auth: inherit
+}
+
+params:query {
+  all: 1
+  discountable_type: product
+  ~sort_by: id
+  ~sort_dir: desc
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - List discounts by discountable type
+
+  endpoint:
+  - method: GET
+  - path: /discounts
+
+  query params:
+  - all (boolean): Return all records without pagination.
+  - discountable_type (string): Exact-match filter for the stored morph type. Prefer package aliases such as product, product_category, product_collection, product_type, brand, or user.
+  - sort_by (string): Optional sort field.
+  - sort_dir (string): Optional sort direction.
+
+  path params:
+  - none
+
+  body:
+  - none
+}
