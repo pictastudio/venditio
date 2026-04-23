@@ -19,8 +19,7 @@ return new class extends Migration
             $table->text('abstract')->nullable();
             $table->text('description')->nullable();
             $table->json('metadata')->nullable();
-            $table->json('img_thumb')->nullable();
-            $table->json('img_cover')->nullable();
+            $table->json('images')->nullable();
             $table->boolean('active')->default(true);
             $table->boolean('show_in_menu')->default(false);
             $table->boolean('in_evidence')->default(false);

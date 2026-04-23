@@ -36,42 +36,15 @@ class TagResource extends JsonResource
             'children' => self::collection($this->whenLoaded('children')),
             'descendants' => self::collection($this->whenLoaded('descendants')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+            'valid_discounts' => DiscountResource::collection($this->whenLoaded('validDiscounts')),
+            'expired_discounts' => DiscountResource::collection($this->whenLoaded('expiredDiscounts')),
         ];
     }
 
     protected function transformAttributes(): array
     {
         return [
-            'img_thumb' => function (mixed $image): ?array {
-                if (is_string($image)) {
-                    $image = json_decode($image, true);
-                }
-
-                if (!is_array($image)) {
-                    return null;
-                }
-
-                return [
-                    'name' => data_get($image, 'name'),
-                    'alt' => data_get($image, 'alt'),
-                    'src' => $this->getImageAssetUrl(data_get($image, 'src')),
-                ];
-            },
-            'img_cover' => function (mixed $image): ?array {
-                if (is_string($image)) {
-                    $image = json_decode($image, true);
-                }
-
-                if (!is_array($image)) {
-                    return null;
-                }
-
-                return [
-                    'name' => data_get($image, 'name'),
-                    'alt' => data_get($image, 'alt'),
-                    'src' => $this->getImageAssetUrl(data_get($image, 'src')),
-                ];
-            },
+            'images' => fn (mixed $images): array => $this->transformCatalogImageCollection($images),
         ];
     }
 }

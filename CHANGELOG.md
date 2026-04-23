@@ -2,6 +2,33 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.3.0 - 2026-04-23
+
+### What's Changed
+
+#### Breaking Changes
+
+- **Tag image payloads** - Tags now use the shared `images` collection instead of the legacy `img_thumb` / `img_cover` fields. A dedicated migration converts existing tag images into collection items and preserves rollback support for the old columns.
+
+#### Features
+
+- **Separated discount includes across discountable APIs** - Discountable resources now accept `include=discounts,valid_discounts,expired_discounts`, exposing all non-deleted discounts plus filtered current and expired subsets on products, brands, product categories, product collections, product types, tags, carts, cart lines, orders, and order lines. Product responses also propagate the same split discount relations to nested variants when included.
+- **Shared catalog image galleries** - Brand, product category, product collection, and tag image payloads now support repeated generic gallery items with `type=null` while still enforcing unique `thumb` and `cover` slots through the shared catalog image merge and validation flow.
+
+#### Fixes
+
+- **Discount start-date fallback** - Updating a discount with `starts_at=null` now resets the value to the current timestamp instead of leaving the previous start date in place.
+
+#### API & Tooling
+
+- **Docs and Bruno examples** - Expanded the API reference and Bruno requests to document the new discount include variants, the tag endpoints, and the catalog `images` payload shape for tags and other catalog image owners.
+
+#### Tests
+
+- Added feature coverage for separated discount includes on show and index endpoints, tag image collection validation and persistence, multi-image gallery payloads, and the discount `starts_at` fallback on update.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.2.0...v2.3.0
+
 ## v2.2.0 - 2026-04-21
 
 ### What's Changed

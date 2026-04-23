@@ -24,7 +24,8 @@ class CartController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', Cart::class);
 
-        $filters = request()->all();
+        $includes = $this->resolveCartIncludes();
+        $filters = request()->except('include');
 
         $this->validateData($filters, [
             'user_id' => [
@@ -37,7 +38,7 @@ class CartController extends Controller
         return CartResource::collection(
             $this->applyBaseFilters(
                 query('cart')
-                    ->with('lines')
+                    ->with($this->cartRelationsForIncludes($includes))
                     ->when(
                         isset($filters['user_id']),
                         fn (Builder $builder) => $builder->where('user_id', $filters['user_id']),
@@ -52,10 +53,12 @@ class CartController extends Controller
     {
         $this->authorizeIfConfigured('create', Cart::class);
 
+        $includes = $this->resolveCartIncludes();
+
         return CartResource::make(
             $pipeline->run(
                 resolve_dto('cart')::fromArray($request->validated())
-            )->load(['lines', 'shippingMethod', 'shippingZone'])
+            )->load($this->cartRelationsForIncludes($includes))
         );
     }
 
@@ -63,12 +66,16 @@ class CartController extends Controller
     {
         $this->authorizeIfConfigured('view', $cart);
 
-        return CartResource::make($cart->load(['lines', 'shippingMethod', 'shippingZone']));
+        $includes = $this->resolveCartIncludes();
+
+        return CartResource::make($cart->load($this->cartRelationsForIncludes($includes)));
     }
 
     public function update(UpdateCartRequest $request, Cart $cart, CartUpdatePipeline $pipeline): JsonResource
     {
         $this->authorizeIfConfigured('update', $cart);
+
+        $includes = $this->resolveCartIncludes();
 
         return CartResource::make(
             $pipeline->run(
@@ -78,7 +85,7 @@ class CartController extends Controller
                         ['cart' => $cart]
                     )
                 )
-            )->load(['lines', 'shippingMethod', 'shippingZone'])
+            )->load($this->cartRelationsForIncludes($includes))
         );
     }
 
@@ -372,5 +379,20 @@ class CartController extends Controller
         return $pipeline->run(
             resolve_dto('cart')::fromArray($payload)
         );
+    }
+
+    protected function resolveCartIncludes(): array
+    {
+        return $this->resolveIncludes($this->allowedIncludesWithDiscounts());
+    }
+
+    protected function cartRelationsForIncludes(array $includes): array
+    {
+        return [
+            'lines',
+            'shippingMethod',
+            'shippingZone',
+            ...$this->discountRelationsForIncludes($includes),
+        ];
     }
 }

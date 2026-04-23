@@ -18,8 +18,14 @@ class CartLineController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', CartLine::class);
 
+        $includes = $this->resolveCartLineIncludes();
+
         return CartLineResource::collection(
-            $this->applyBaseFilters(query('cart_line'), request()->all(), 'cart_line')
+            $this->applyBaseFilters(
+                query('cart_line')->with($this->cartLineRelationsForIncludes($includes)),
+                request()->except('include'),
+                'cart_line'
+            )
         );
     }
 
@@ -32,14 +38,18 @@ class CartLineController extends Controller
 
         $cartLine = query('cart_line')->create($payload);
 
-        return CartLineResource::make($cartLine);
+        $includes = $this->resolveCartLineIncludes();
+
+        return CartLineResource::make($cartLine->load($this->cartLineRelationsForIncludes($includes)));
     }
 
     public function show(CartLine $cartLine): JsonResource
     {
         $this->authorizeIfConfigured('view', $cartLine);
 
-        return CartLineResource::make($cartLine);
+        $includes = $this->resolveCartLineIncludes();
+
+        return CartLineResource::make($cartLine->load($this->cartLineRelationsForIncludes($includes)));
     }
 
     public function update(UpdateCartLineRequest $request, CartLine $cartLine): JsonResource
@@ -55,7 +65,9 @@ class CartLineController extends Controller
         $cartLine->fill($payload);
         $cartLine->save();
 
-        return CartLineResource::make($cartLine->refresh());
+        $includes = $this->resolveCartLineIncludes();
+
+        return CartLineResource::make($cartLine->refresh()->load($this->cartLineRelationsForIncludes($includes)));
     }
 
     public function destroy(CartLine $cartLine)
@@ -65,6 +77,16 @@ class CartLineController extends Controller
         $cartLine->delete();
 
         return response()->noContent();
+    }
+
+    protected function resolveCartLineIncludes(): array
+    {
+        return $this->resolveIncludes($this->allowedIncludesWithDiscounts());
+    }
+
+    protected function cartLineRelationsForIncludes(array $includes): array
+    {
+        return $this->discountRelationsForIncludes($includes);
     }
 
     private function resolveInventoryCurrencyId(int $productId): ?int

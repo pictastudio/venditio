@@ -58,9 +58,13 @@ Additional supported filters:
 
 Include parameters:
 
-- `/products`: `include=brand,categories,collections,product_type,tax_class,variants,variants_options_table,price_breakdown` (and `price_lists` only when `venditio.price_lists.enabled=true`)
+- `/products`: `include=brand,categories,collections,discounts,valid_discounts,expired_discounts,product_type,tax_class,variants,variants_options_table,price_breakdown` (and `price_lists` only when `venditio.price_lists.enabled=true`)
   - `price_breakdown` adds `price_calculated.price_source` and `price_calculated.discounts_applied`, so admin UIs can show which base price source was selected and the ordered automatic discounts applied to the product preview
-- `/product_collections`: `include=products,discounts`
+- `/product_collections`: `include=products,discounts,valid_discounts,expired_discounts`
+- `/brands`, `/product_categories`, `/product_types`, `/tags`, `/carts`, `/cart_lines`, `/orders`, `/order_lines`: `include=discounts,valid_discounts,expired_discounts`
+  - `discounts` returns all non-deleted discounts scoped to that resource, including inactive, future, currently valid, and expired rows
+  - `valid_discounts` returns date-valid active discounts only (`active=true`, `starts_at <= now`, and `ends_at` is null or in the future)
+  - `expired_discounts` returns discounts with `ends_at < now`
 - `/tax_classes`: `include[]=countries`
 
 Export-specific query parameters:
@@ -112,6 +116,8 @@ Credit-note-specific notes:
 - `PATCH /product_collections/{product_collection}`
 - `DELETE /product_collections/{product_collection}`
 
+Catalog image owners (`product_categories`, `brands`, `product_collections`, and `tags`) expose an `images` array. Each image item contains `id`, `type`, `src`, `alt`, `name`, `mimetype`, and `sort_order`. `type` accepts `thumb`, `cover`, or `null`; only one `thumb` and one `cover` are allowed per resource, while multiple `null` images are allowed and are stored as generic images.
+
 ### Product Types
 
 - `GET /product_types`
@@ -119,6 +125,14 @@ Credit-note-specific notes:
 - `POST /product_types`
 - `PATCH /product_types/{product_type}`
 - `DELETE /product_types/{product_type}`
+
+### Tags
+
+- `GET /tags`
+- `GET /tags/{tag}`
+- `POST /tags`
+- `PATCH /tags/{tag}`
+- `DELETE /tags/{tag}`
 
 ### Product Variants (Axes)
 

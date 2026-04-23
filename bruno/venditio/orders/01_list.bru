@@ -54,6 +54,7 @@ params:query {
   ~deleted_at_end: 2026-12-31
   ~with_trashed: 0
   ~only_trashed: 0
+  ~include: discounts,valid_discounts,expired_discounts
 }
 
 headers {
@@ -113,6 +114,7 @@ docs {
   - deleted_at_end (date): Filter deleted_at less than or equal to this date.
   - with_trashed (boolean): Include soft deleted records in results.
   - only_trashed (boolean): Return only soft deleted records.
+  - include (string|array): Optional includes: discounts, valid_discounts, expired_discounts.
 
   path params:
   - none

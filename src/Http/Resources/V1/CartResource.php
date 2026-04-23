@@ -37,6 +37,8 @@ class CartResource extends JsonResource
             'shipping_zone' => ShippingZoneResource::make($this->whenLoaded('shippingZone')),
             'lines' => CartLineResource::collection($this->whenLoaded('lines')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+            'valid_discounts' => DiscountResource::collection($this->whenLoaded('validDiscounts')),
+            'expired_discounts' => DiscountResource::collection($this->whenLoaded('expiredDiscounts')),
             'free_gifts' => FreeGiftEligibilityResource::collection($this->resolveEligibleFreeGifts()),
         ];
     }

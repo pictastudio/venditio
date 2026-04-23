@@ -536,6 +536,43 @@ it('stores product category images with sort_order and returns them in the persi
         ->and(data_get($category->images, '1.sort_order'))->toBe(20);
 });
 
+it('allows multiple product category images with null type', function () {
+    Storage::fake('public');
+
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    patch(
+        config('venditio.routes.api.v1.prefix') . '/product_categories/' . $category->getKey(),
+        [
+            'images' => [
+                [
+                    'file' => UploadedFile::fake()->image('gallery-a.jpg'),
+                    'type' => null,
+                    'sort_order' => 10,
+                ],
+                [
+                    'file' => UploadedFile::fake()->image('gallery-b.jpg'),
+                    'sort_order' => 20,
+                ],
+            ],
+        ],
+        ['Accept' => 'application/json']
+    )->assertOk()
+        ->assertJsonCount(2, 'images')
+        ->assertJsonPath('images.0.type', null)
+        ->assertJsonPath('images.1.type', null);
+
+    $category->refresh();
+
+    expect($category->images)->toHaveCount(2)
+        ->and(str_starts_with((string) data_get($category->images, '0.src'), 'product_categories/' . $category->getKey() . '/images/'))->toBeTrue()
+        ->and(str_starts_with((string) data_get($category->images, '1.src'), 'product_categories/' . $category->getKey() . '/images/'))->toBeTrue();
+});
+
 it('updates product category image sort_order without requiring a new upload', function () {
     $category = ProductCategory::factory()->create([
         'active' => true,

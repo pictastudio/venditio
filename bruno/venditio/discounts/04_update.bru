@@ -23,7 +23,8 @@ body:json {
   {
     "discountable_type": "product_collection",
     "discountable_id": 1,
-    "name": "Updated example"
+    "name": "Updated example",
+    "starts_at": null
   }
 }
 
@@ -51,7 +52,7 @@ docs {
   - name
   - code
   - active
-  - starts_at
+  - starts_at (date|null; null is normalized to the current date)
   - ends_at
   - uses
   - max_uses

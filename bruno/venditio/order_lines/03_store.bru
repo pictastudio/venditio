@@ -10,6 +10,10 @@ post {
   auth: inherit
 }
 
+params:query {
+  ~include: discounts,valid_discounts,expired_discounts
+}
+
 headers {
   Accept: application/json
   Content-Type: application/json
@@ -30,7 +34,7 @@ docs {
   - path: /order_lines
 
   query params:
-  - none
+  - include (string|array): Optional includes: discounts, valid_discounts, expired_discounts.
 
   path params:
   - none

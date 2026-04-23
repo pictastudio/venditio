@@ -32,6 +32,8 @@ class ProductTypeResource extends JsonResource
             'variants' => ProductVariantResource::collection($this->whenLoaded('productVariants')),
             'product_custom_fields' => ProductCustomFieldResource::collection($this->whenLoaded('productCustomFields')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+            'valid_discounts' => DiscountResource::collection($this->whenLoaded('validDiscounts')),
+            'expired_discounts' => DiscountResource::collection($this->whenLoaded('expiredDiscounts')),
         ];
     }
 

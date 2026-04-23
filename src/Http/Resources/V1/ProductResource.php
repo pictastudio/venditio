@@ -52,6 +52,8 @@ class ProductResource extends JsonResource
             'variant_options' => ProductVariantOptionResource::collection($this->whenLoaded('variantOptions')),
             'inventory' => InventoryResource::make($this->whenLoaded('inventory')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+            'valid_discounts' => DiscountResource::collection($this->whenLoaded('validDiscounts')),
+            'expired_discounts' => DiscountResource::collection($this->whenLoaded('expiredDiscounts')),
             'price_lists' => $this->when(
                 $shouldIncludePriceLists && $this->resource->relationLoaded('priceListPrices'),
                 fn () => collect($this->resource->getRelation('priceListPrices'))

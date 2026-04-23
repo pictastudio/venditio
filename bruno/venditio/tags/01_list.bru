@@ -50,7 +50,7 @@ params:query {
   ~only_trashed: 0
   ~is_active: 1
   ~as_tree: 1
-  ~include: product_type
+  ~include: product_type,discounts,valid_discounts,expired_discounts
 }
 
 headers {
@@ -107,7 +107,7 @@ docs {
   - only_trashed (boolean): Return only soft deleted records.
   - is_active (boolean): Alias filter for active state.
   - as_tree (boolean): When true, returns tags as a hierarchical tree.
-  - include (string|array): Optional includes: product_type.
+  - include (string|array): Optional includes: product_type, discounts, valid_discounts, expired_discounts.
 
   path params:
   - none

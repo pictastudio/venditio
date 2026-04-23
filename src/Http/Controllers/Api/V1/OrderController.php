@@ -4,7 +4,6 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Order\{StoreOrderRequest, UpdateOrderRequest};
 use PictaStudio\Venditio\Http\Resources\V1\OrderResource;
@@ -19,7 +18,8 @@ class OrderController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', Order::class);
 
-        $filters = request()->all();
+        $includes = $this->resolveOrderIncludes();
+        $filters = request()->except('include');
 
         // $this->validateData($filters, [
         //     'all' => [
@@ -34,7 +34,11 @@ class OrderController extends Controller
         // ]);
 
         return OrderResource::collection(
-            $this->applyBaseFilters(query('order'), $filters, 'order')
+            $this->applyBaseFilters(
+                query('order')->with($this->orderRelationsForIncludes($includes)),
+                $filters,
+                'order'
+            )
         );
     }
 
@@ -42,6 +46,7 @@ class OrderController extends Controller
     {
         $this->authorizeIfConfigured('create', Order::class);
 
+        $includes = $this->resolveOrderIncludes();
         $order = $pipeline->run(
             resolve_dto('order')::fromCart(
                 query('cart')
@@ -50,14 +55,16 @@ class OrderController extends Controller
             )
         );
 
-        return OrderResource::make($order->load(['lines', 'shippingMethod', 'shippingZone']));
+        return OrderResource::make($order->load($this->orderRelationsForIncludes($includes)));
     }
 
     public function show(Order $order): JsonResource
     {
         $this->authorizeIfConfigured('view', $order);
 
-        return OrderResource::make($order->load(['lines', 'shippingMethod', 'shippingZone']));
+        $includes = $this->resolveOrderIncludes();
+
+        return OrderResource::make($order->load($this->orderRelationsForIncludes($includes)));
     }
 
     public function update(UpdateOrderRequest $request, Order $order): JsonResource
@@ -67,7 +74,9 @@ class OrderController extends Controller
         $order->fill($request->validated());
         $order->save();
 
-        return OrderResource::make($order->refresh()->load(['lines', 'shippingMethod', 'shippingZone']));
+        $includes = $this->resolveOrderIncludes();
+
+        return OrderResource::make($order->refresh()->load($this->orderRelationsForIncludes($includes)));
     }
 
     public function destroy(Order $order)
@@ -77,5 +86,20 @@ class OrderController extends Controller
         $order->delete();
 
         return response()->noContent();
+    }
+
+    protected function resolveOrderIncludes(): array
+    {
+        return $this->resolveIncludes($this->allowedIncludesWithDiscounts());
+    }
+
+    protected function orderRelationsForIncludes(array $includes): array
+    {
+        return [
+            'lines',
+            'shippingMethod',
+            'shippingZone',
+            ...$this->discountRelationsForIncludes($includes),
+        ];
     }
 }

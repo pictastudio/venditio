@@ -33,6 +33,8 @@ class CartLineResource extends JsonResource
             'free_gift' => FreeGiftResource::make($this->whenLoaded('freeGift')),
             'discount' => DiscountResource::make($this->whenLoaded('discount')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+            'valid_discounts' => DiscountResource::collection($this->whenLoaded('validDiscounts')),
+            'expired_discounts' => DiscountResource::collection($this->whenLoaded('expiredDiscounts')),
         ];
     }
 

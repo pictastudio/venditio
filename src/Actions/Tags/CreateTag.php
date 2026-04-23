@@ -2,10 +2,10 @@
 
 namespace PictaStudio\Venditio\Actions\Tags;
 
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 use PictaStudio\Venditio\Models\Tag;
+use PictaStudio\Venditio\Support\CatalogImage;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
@@ -15,10 +15,8 @@ class CreateTag
     {
         $tagIdsProvided = array_key_exists('tag_ids', $payload);
         $tagIds = Arr::pull($payload, 'tag_ids', []);
-        $thumbProvided = array_key_exists('img_thumb', $payload);
-        $coverProvided = array_key_exists('img_cover', $payload);
-        $thumb = Arr::pull($payload, 'img_thumb');
-        $cover = Arr::pull($payload, 'img_cover');
+        $imagesProvided = array_key_exists('images', $payload);
+        $images = Arr::pull($payload, 'images');
 
         $parentId = Arr::get($payload, 'parent_id');
         $parent = $this->resolveParent($parentId);
@@ -27,18 +25,15 @@ class CreateTag
             Arr::get($payload, 'product_type_id')
         );
 
+        if ($imagesProvided) {
+            CatalogImage::validatePayload($images, []);
+        }
+
         /** @var Tag $tag */
         $tag = resolve_model('tag')::create($payload);
 
-        if ($thumbProvided) {
-            $tag->img_thumb = $this->storeImage($tag, $thumb, 'img_thumb');
-        }
-
-        if ($coverProvided) {
-            $tag->img_cover = $this->storeImage($tag, $cover, 'img_cover');
-        }
-
-        if ($thumbProvided || $coverProvided) {
+        if ($imagesProvided) {
+            $tag->images = CatalogImage::mergeCollection($tag, [], $images, 'tags');
             $tag->save();
         }
 
@@ -78,22 +73,5 @@ class CreateTag
         }
 
         return (int) $parent->product_type_id;
-    }
-
-    private function storeImage(Tag $tag, mixed $payload, string $folder): ?array
-    {
-        if ($payload === null) {
-            return null;
-        }
-
-        if (!is_array($payload) || !isset($payload['file']) || !$payload['file'] instanceof UploadedFile) {
-            return null;
-        }
-
-        return [
-            'src' => $payload['file']->store("tags/{$tag->getKey()}/{$folder}", 'public'),
-            'alt' => Arr::get($payload, 'alt'),
-            'name' => Arr::get($payload, 'name'),
-        ];
     }
 }

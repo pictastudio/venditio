@@ -196,6 +196,43 @@ it('stores product collection images with sort_order and returns them in the per
         ->and(data_get($collection->images, '1.sort_order'))->toBe(20);
 });
 
+it('allows multiple product collection images with null type', function () {
+    Storage::fake('public');
+
+    $collection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    patch(
+        config('venditio.routes.api.v1.prefix') . '/product_collections/' . $collection->getKey(),
+        [
+            'images' => [
+                [
+                    'file' => UploadedFile::fake()->image('gallery-a.jpg'),
+                    'type' => null,
+                    'sort_order' => 10,
+                ],
+                [
+                    'file' => UploadedFile::fake()->image('gallery-b.jpg'),
+                    'sort_order' => 20,
+                ],
+            ],
+        ],
+        ['Accept' => 'application/json']
+    )->assertOk()
+        ->assertJsonCount(2, 'images')
+        ->assertJsonPath('images.0.type', null)
+        ->assertJsonPath('images.1.type', null);
+
+    $collection->refresh();
+
+    expect($collection->images)->toHaveCount(2)
+        ->and(str_starts_with((string) data_get($collection->images, '0.src'), 'product_collections/' . $collection->getKey() . '/images/'))->toBeTrue()
+        ->and(str_starts_with((string) data_get($collection->images, '1.src'), 'product_collections/' . $collection->getKey() . '/images/'))->toBeTrue();
+});
+
 it('updates product collection image sort_order without requiring a new upload', function () {
     $collection = ProductCollection::factory()->create([
         'active' => true,

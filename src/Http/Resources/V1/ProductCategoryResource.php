@@ -34,6 +34,8 @@ class ProductCategoryResource extends JsonResource
             'children' => self::collection($this->whenLoaded('children')),
             'descendants' => self::collection($this->whenLoaded('descendants')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+            'valid_discounts' => DiscountResource::collection($this->whenLoaded('validDiscounts')),
+            'expired_discounts' => DiscountResource::collection($this->whenLoaded('expiredDiscounts')),
         ];
     }
 

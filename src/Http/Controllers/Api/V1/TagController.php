@@ -53,10 +53,11 @@ class TagController extends Controller
     {
         $this->authorizeIfConfigured('create', Tag::class);
 
+        $includes = $this->resolveTagIncludes();
         $tag = app(CreateTag::class)
             ->handle($request->validated());
 
-        return TagResource::make($tag);
+        return TagResource::make($tag->load($this->tagRelationsForIncludes($includes)));
     }
 
     public function show(Tag $tag): JsonResource
@@ -72,10 +73,11 @@ class TagController extends Controller
     {
         $this->authorizeIfConfigured('update', $tag);
 
+        $includes = $this->resolveTagIncludes();
         $updatedTag = app(UpdateTag::class)
             ->handle($tag, $request->validated());
 
-        return TagResource::make($updatedTag);
+        return TagResource::make($updatedTag->load($this->tagRelationsForIncludes($includes)));
     }
 
     public function destroy(Tag $tag): JsonResponse
@@ -89,24 +91,7 @@ class TagController extends Controller
 
     protected function resolveTagIncludes(): array
     {
-        $rawIncludes = request()->query('include', []);
-
-        $includes = collect(is_array($rawIncludes) ? $rawIncludes : [$rawIncludes])
-            ->flatMap(fn (mixed $include) => is_string($include) ? explode(',', $include) : [])
-            ->map(fn (string $include) => mb_trim($include))
-            ->filter(fn (string $include) => filled($include))
-            ->unique()
-            ->values()
-            ->all();
-
-        $this->validateData([
-            'include' => $includes,
-        ], [
-            'include' => ['array'],
-            'include.*' => ['string', Rule::in(['product_type'])],
-        ]);
-
-        return $includes;
+        return $this->resolveIncludes($this->allowedIncludesWithDiscounts(['product_type']));
     }
 
     protected function tagRelationsForIncludes(array $includes): array
@@ -117,7 +102,10 @@ class TagController extends Controller
             $relations[] = 'productType';
         }
 
-        return $relations;
+        return [
+            ...$relations,
+            ...$this->discountRelationsForIncludes($includes),
+        ];
     }
 
     protected function tagIndexValidationRules(): array

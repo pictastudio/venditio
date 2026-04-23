@@ -1,10 +1,12 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use PictaStudio\Venditio\Enums\ProductStatus;
 use PictaStudio\Venditio\Models\{Brand, Product, ProductCategory, ProductType, Tag, TaxClass};
 
-use function Pest\Laravel\{assertDatabaseHas, getJson, patchJson, postJson};
+use function Pest\Laravel\{assertDatabaseHas, getJson, patchJson, post, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -31,6 +33,137 @@ it('creates tags and supports product_type include and filter', function () {
 
     expect($response->json())->toHaveCount(1)
         ->and(data_get($response->json(), '0.product_type.id'))->toBe($productType->getKey());
+});
+
+it('stores tag images as a catalog images collection', function () {
+    Storage::fake('public');
+
+    $response = post(
+        config('venditio.routes.api.v1.prefix') . '/tags',
+        [
+            'name' => 'Visual tag',
+            'sort_order' => 1,
+            'images' => [
+                [
+                    'file' => UploadedFile::fake()->image('thumb.jpg'),
+                    'type' => 'thumb',
+                    'alt' => 'Thumb',
+                ],
+                [
+                    'file' => UploadedFile::fake()->image('gallery-a.jpg'),
+                    'type' => null,
+                    'alt' => 'Gallery A',
+                    'sort_order' => 10,
+                ],
+                [
+                    'file' => UploadedFile::fake()->image('gallery-b.jpg'),
+                    'alt' => 'Gallery B',
+                    'sort_order' => 20,
+                ],
+            ],
+        ],
+        ['Accept' => 'application/json']
+    )->assertCreated()
+        ->assertJsonCount(3, 'images')
+        ->assertJsonPath('images.0.type', 'thumb')
+        ->assertJsonPath('images.1.type', null)
+        ->assertJsonPath('images.2.type', null);
+
+    $tag = Tag::query()->findOrFail($response->json('id'));
+    $thumb = collect($tag->images)->firstWhere('type', 'thumb');
+    $genericImages = collect($tag->images)->where('type', null)->values();
+
+    expect($tag->images)->toBeArray()->toHaveCount(3)
+        ->and(str_starts_with((string) data_get($thumb, 'src'), 'tags/' . $tag->getKey() . '/thumb/'))->toBeTrue()
+        ->and(str_starts_with((string) data_get($genericImages->first(), 'src'), 'tags/' . $tag->getKey() . '/images/'))->toBeTrue();
+
+    Storage::disk('public')->assertExists((string) data_get($thumb, 'src'));
+    Storage::disk('public')->assertExists((string) data_get($genericImages->first(), 'src'));
+});
+
+it('updates tag image metadata without requiring a new upload', function () {
+    $tag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+        'images' => [
+            [
+                'id' => 'generic-image',
+                'type' => null,
+                'alt' => 'Old alt',
+                'mimetype' => 'image/jpeg',
+                'sort_order' => 10,
+                'src' => 'tags/generic.jpg',
+            ],
+        ],
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/tags/' . $tag->getKey(), [
+        'images' => [
+            [
+                'id' => 'generic-image',
+                'alt' => 'Updated alt',
+                'sort_order' => 2,
+            ],
+        ],
+    ])->assertOk()
+        ->assertJsonPath('images.0.id', 'generic-image')
+        ->assertJsonPath('images.0.type', null)
+        ->assertJsonPath('images.0.alt', 'Updated alt')
+        ->assertJsonPath('images.0.sort_order', 2);
+});
+
+it('rejects more than one thumb or cover image per tag payload', function () {
+    Storage::fake('public');
+
+    post(
+        config('venditio.routes.api.v1.prefix') . '/tags',
+        [
+            'name' => 'Duplicate type tag',
+            'sort_order' => 1,
+            'images' => [
+                [
+                    'file' => UploadedFile::fake()->image('thumb-a.jpg'),
+                    'type' => 'thumb',
+                ],
+                [
+                    'file' => UploadedFile::fake()->image('thumb-b.jpg'),
+                    'type' => 'thumb',
+                ],
+            ],
+        ],
+        ['Accept' => 'application/json']
+    )->assertUnprocessable()
+        ->assertJsonValidationErrors(['images.1.type']);
+});
+
+it('rejects moving a tag image to a typed slot already in use', function () {
+    $tag = Tag::factory()->create([
+        'images' => [
+            [
+                'id' => 'thumb-image',
+                'type' => 'thumb',
+                'src' => 'tags/thumb.jpg',
+                'sort_order' => 0,
+            ],
+            [
+                'id' => 'generic-image',
+                'type' => null,
+                'src' => 'tags/generic.jpg',
+                'sort_order' => 1,
+            ],
+        ],
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/tags/' . $tag->getKey(), [
+        'images' => [
+            [
+                'id' => 'generic-image',
+                'type' => 'thumb',
+            ],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['images.0.type']);
 });
 
 it('inherits parent product_type_id on child tag creation', function () {

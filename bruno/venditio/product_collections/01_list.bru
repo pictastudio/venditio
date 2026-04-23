@@ -42,7 +42,7 @@ params:query {
   ~with_trashed: 0
   ~only_trashed: 0
   ~is_active: 1
-  ~include: products,discounts
+  ~include: products,discounts,valid_discounts,expired_discounts
 }
 
 headers {
@@ -91,7 +91,7 @@ docs {
   - with_trashed (boolean): Include soft deleted records in results.
   - only_trashed (boolean): Return only soft deleted records.
   - is_active (boolean): Alias filter for active state.
-  - include (string|array): Optional includes: products, discounts.
+  - include (string|array): Optional includes: products, discounts, valid_discounts, expired_discounts.
 
   path params:
   - none

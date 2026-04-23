@@ -10,6 +10,10 @@ get {
   auth: inherit
 }
 
+params:query {
+  ~include: discounts,valid_discounts,expired_discounts
+}
+
 params:path {
   id: 
 }
@@ -28,7 +32,7 @@ docs {
   - path: /orders/:id
 
   query params:
-  - none
+  - include (string|array): Optional includes: discounts, valid_discounts, expired_discounts.
 
   path params:
   - id: Replace with target resource identifier.

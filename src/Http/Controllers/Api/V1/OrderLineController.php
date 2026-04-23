@@ -18,8 +18,14 @@ class OrderLineController extends Controller
     {
         $this->authorizeIfConfigured('viewAny', OrderLine::class);
 
+        $includes = $this->resolveOrderLineIncludes();
+
         return OrderLineResource::collection(
-            $this->applyBaseFilters(query('order_line'), request()->all(), 'order_line')
+            $this->applyBaseFilters(
+                query('order_line')->with($this->orderLineRelationsForIncludes($includes)),
+                request()->except('include'),
+                'order_line'
+            )
         );
     }
 
@@ -32,14 +38,18 @@ class OrderLineController extends Controller
 
         $orderLine = query('order_line')->create($payload);
 
-        return OrderLineResource::make($orderLine);
+        $includes = $this->resolveOrderLineIncludes();
+
+        return OrderLineResource::make($orderLine->load($this->orderLineRelationsForIncludes($includes)));
     }
 
     public function show(OrderLine $orderLine): JsonResource
     {
         $this->authorizeIfConfigured('view', $orderLine);
 
-        return OrderLineResource::make($orderLine);
+        $includes = $this->resolveOrderLineIncludes();
+
+        return OrderLineResource::make($orderLine->load($this->orderLineRelationsForIncludes($includes)));
     }
 
     public function update(UpdateOrderLineRequest $request, OrderLine $orderLine): JsonResource
@@ -55,7 +65,9 @@ class OrderLineController extends Controller
         $orderLine->fill($payload);
         $orderLine->save();
 
-        return OrderLineResource::make($orderLine->refresh());
+        $includes = $this->resolveOrderLineIncludes();
+
+        return OrderLineResource::make($orderLine->refresh()->load($this->orderLineRelationsForIncludes($includes)));
     }
 
     public function destroy(OrderLine $orderLine)
@@ -65,6 +77,16 @@ class OrderLineController extends Controller
         $orderLine->delete();
 
         return response()->noContent();
+    }
+
+    protected function resolveOrderLineIncludes(): array
+    {
+        return $this->resolveIncludes($this->allowedIncludesWithDiscounts());
+    }
+
+    protected function orderLineRelationsForIncludes(array $includes): array
+    {
+        return $this->discountRelationsForIncludes($includes);
     }
 
     private function resolveInventoryCurrencyId(int $productId): ?int

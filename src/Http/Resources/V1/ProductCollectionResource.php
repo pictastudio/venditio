@@ -29,6 +29,8 @@ class ProductCollectionResource extends JsonResource
         return [
             'products' => ProductResource::collection($this->whenLoaded('products')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+            'valid_discounts' => DiscountResource::collection($this->whenLoaded('validDiscounts')),
+            'expired_discounts' => DiscountResource::collection($this->whenLoaded('expiredDiscounts')),
         ];
     }
 

@@ -10,6 +10,7 @@ use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
 use PictaStudio\Venditio\Models\Scopes\{Active, InDateRange, Ordered};
 use PictaStudio\Venditio\Models\Traits\{HasDiscounts, HasHelperMethods, LogsActivity, ResolvesRouteBindingByIdOrSlug};
+use PictaStudio\Venditio\Support\CatalogImage;
 use Spatie\Sluggable\{HasSlug, SlugOptions};
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -44,8 +45,7 @@ class Tag extends Model implements TranslatableContract
             'visible_from' => 'datetime:Y-m-d H:i:s',
             'visible_until' => 'datetime:Y-m-d H:i:s',
             'metadata' => 'json',
-            'img_thumb' => 'json',
-            'img_cover' => 'json',
+            'images' => 'json',
         ];
     }
 
@@ -56,6 +56,14 @@ class Tag extends Model implements TranslatableContract
             Active::class,
             new InDateRange('visible_from', 'visible_until'),
         ]);
+
+        static::saving(function (self $tag): void {
+            if ($tag->getAttribute('images') === null) {
+                return;
+            }
+
+            $tag->setAttribute('images', CatalogImage::normalizeCollection($tag->getAttribute('images')));
+        });
     }
 
     public function products(): MorphToMany

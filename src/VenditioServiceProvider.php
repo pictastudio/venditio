@@ -78,6 +78,7 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_products_table',
                 'create_product_types_table',
                 'create_tags_table',
+                'update_tags_images_to_collection',
                 'create_product_category_product_table',
                 'create_product_collection_product_table',
                 'create_taggables_table',

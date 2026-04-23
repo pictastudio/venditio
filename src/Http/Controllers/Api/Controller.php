@@ -220,6 +220,62 @@ class Controller extends BaseController
         return response()->json($response, $status);
     }
 
+    protected function resolveIncludes(array $allowedIncludes): array
+    {
+        $rawIncludes = request()->query('include', []);
+
+        $includes = collect(is_array($rawIncludes) ? $rawIncludes : [$rawIncludes])
+            ->flatMap(fn (mixed $include) => is_string($include) ? explode(',', $include) : [])
+            ->map(fn (string $include) => mb_trim($include))
+            ->filter(fn (string $include) => filled($include))
+            ->unique()
+            ->values()
+            ->all();
+
+        $this->validateData([
+            'include' => $includes,
+        ], [
+            'include' => ['array'],
+            'include.*' => [
+                'string',
+                Rule::in($allowedIncludes),
+            ],
+        ]);
+
+        return $includes;
+    }
+
+    protected function allowedIncludesWithDiscounts(array $allowedIncludes = []): array
+    {
+        return collect($allowedIncludes)
+            ->merge($this->discountIncludeNames())
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    protected function discountRelationsForIncludes(array $includes, ?string $prefix = null): array
+    {
+        return collect([
+            'discounts' => 'discounts',
+            'valid_discounts' => 'validDiscounts',
+            'expired_discounts' => 'expiredDiscounts',
+        ])
+            ->filter(fn (string $relation, string $include): bool => in_array($include, $includes, true))
+            ->values()
+            ->map(fn (string $relation): string => filled($prefix) ? $prefix . '.' . $relation : $relation)
+            ->all();
+    }
+
+    protected function discountIncludeNames(): array
+    {
+        return [
+            'discounts',
+            'valid_discounts',
+            'expired_discounts',
+        ];
+    }
+
     protected function buildStaticFilterRules(string $model, string $keyName): array
     {
         $columns = $this->queryFilterColumns()[$model] ?? [];

@@ -31,6 +31,8 @@ class UserResource extends JsonResource
             'orders' => OrderResource::collection($this->whenLoaded('orders')),
             'addresses' => AddressResource::collection($this->whenLoaded('addresses')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+            'valid_discounts' => DiscountResource::collection($this->whenLoaded('validDiscounts')),
+            'expired_discounts' => DiscountResource::collection($this->whenLoaded('expiredDiscounts')),
         ];
     }
 

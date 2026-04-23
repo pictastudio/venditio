@@ -10,6 +10,10 @@ patch {
   auth: inherit
 }
 
+params:query {
+  ~include: discounts,valid_discounts,expired_discounts
+}
+
 params:path {
   id-or-slug: 
 }
@@ -35,7 +39,7 @@ docs {
   - path: /product_types/:id-or-slug
 
   query params:
-  - none
+  - include (string|array): Optional includes: discounts, valid_discounts, expired_discounts.
 
   path params:
   - id-or-slug: Replace with target resource identifier.

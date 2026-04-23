@@ -37,7 +37,7 @@ params:query {
   ~with_trashed: 0
   ~only_trashed: 0
   ~tag_ids[]: 1
-  ~include: tags
+  ~include: tags,discounts,valid_discounts,expired_discounts
 }
 
 headers {
@@ -81,7 +81,7 @@ docs {
   - with_trashed (boolean): Include soft deleted records in results.
   - only_trashed (boolean): Return only soft deleted records.
   - tag_ids[] (integer[]): Match brands assigned to at least one tag in this list.
-  - include (string|array): Optional includes: tags.
+  - include (string|array): Optional includes: tags, discounts, valid_discounts, expired_discounts.
 
   path params:
   - none

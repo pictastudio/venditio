@@ -71,27 +71,7 @@ class BrandController extends Controller
 
     protected function resolveBrandIncludes(): array
     {
-        $rawIncludes = request()->query('include', []);
-
-        $includes = collect(is_array($rawIncludes) ? $rawIncludes : [$rawIncludes])
-            ->flatMap(fn (mixed $include) => is_string($include) ? explode(',', $include) : [])
-            ->map(fn (string $include) => mb_trim($include))
-            ->filter(fn (string $include) => filled($include))
-            ->unique()
-            ->values()
-            ->all();
-
-        $this->validateData([
-            'include' => $includes,
-        ], [
-            'include' => ['array'],
-            'include.*' => [
-                'string',
-                Rule::in(['discounts', 'tags']),
-            ],
-        ]);
-
-        return $includes;
+        return $this->resolveIncludes($this->allowedIncludesWithDiscounts(['tags']));
     }
 
     protected function brandRelationsForIncludes(array $includes, bool $includeTagsByDefault = false): array
@@ -102,11 +82,10 @@ class BrandController extends Controller
             $relations[] = 'tags';
         }
 
-        if (in_array('discounts', $includes, true)) {
-            $relations[] = 'discounts';
-        }
-
-        return $relations;
+        return [
+            ...$relations,
+            ...$this->discountRelationsForIncludes($includes),
+        ];
     }
 
     protected function brandIndexValidationRules(): array

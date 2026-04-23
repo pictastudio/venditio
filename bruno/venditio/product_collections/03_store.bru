@@ -11,7 +11,7 @@ post {
 }
 
 params:query {
-  ~include: products,discounts
+  ~include: products,discounts,valid_discounts,expired_discounts
 }
 
 headers {
@@ -39,7 +39,7 @@ docs {
   - path: /product_collections
 
   query params:
-  - include (string|array): Optional includes: products, discounts.
+  - include (string|array): Optional includes: products, discounts, valid_discounts, expired_discounts.
 
   path params:
   - none
@@ -57,7 +57,7 @@ docs {
   - images.*.name
   - images.*.mimetype
   - images.*.sort_order
-  - images.*.type (required, thumb|cover, distinct)
+  - images.*.type (nullable, thumb|cover)
   - active
   - visible_from
   - visible_until
@@ -65,5 +65,5 @@ docs {
   - {locale}.slug / slug:{locale}
   - {locale}.description / description:{locale}
   - Note: for image upload use multipart/form-data with fields like `images[0][file]` and `images[0][type]=thumb`.
-  - Note: each image item must include a unique `type` of `thumb` or `cover`.
+  - Note: only one `thumb` and one `cover` are allowed. `type=null` can be repeated for generic images.
 }

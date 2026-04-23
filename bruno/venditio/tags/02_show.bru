@@ -11,7 +11,7 @@ get {
 }
 
 params:query {
-  ~include: product_type
+  ~include: product_type,discounts,valid_discounts,expired_discounts
   ~exclude_all_scopes: 0
   ~exclude_active_scope: 0
   ~exclude_date_range_scope: 0
@@ -36,7 +36,7 @@ docs {
   - path: /tags/:id-or-slug
 
   query params:
-  - include (string|array): Optional includes: product_type.
+  - include (string|array): Optional includes: product_type, discounts, valid_discounts, expired_discounts.
   - exclude_all_scopes (boolean): Skip all global scopes for this request.
   - exclude_active_scope (boolean): Skip only the active global scope when available.
   - exclude_date_range_scope (boolean): Skip only the date range global scope when available.

@@ -2,10 +2,10 @@
 
 namespace PictaStudio\Venditio\Actions\Tags;
 
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 use PictaStudio\Venditio\Models\Tag;
+use PictaStudio\Venditio\Support\CatalogImage;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
@@ -15,10 +15,8 @@ class UpdateTag
     {
         $tagIdsProvided = array_key_exists('tag_ids', $payload);
         $tagIds = Arr::pull($payload, 'tag_ids', []);
-        $thumbProvided = array_key_exists('img_thumb', $payload);
-        $coverProvided = array_key_exists('img_cover', $payload);
-        $thumb = Arr::pull($payload, 'img_thumb');
-        $cover = Arr::pull($payload, 'img_cover');
+        $imagesProvided = array_key_exists('images', $payload);
+        $images = Arr::pull($payload, 'images');
         $tagIdsCollection = collect($tagIds ?? [])
             ->map(fn (mixed $id): int => (int) $id);
 
@@ -41,16 +39,13 @@ class UpdateTag
         $parent = $this->resolveParent($parentId);
         $payload['product_type_id'] = $this->resolveProductTypeId($parent, $candidateProductTypeId);
 
+        if ($imagesProvided) {
+            $currentImages = CatalogImage::normalizeCollection($tag->getAttribute('images'));
+            CatalogImage::validatePayload($images, CatalogImage::collectUsedIds($currentImages), 'images', $currentImages);
+            $payload['images'] = CatalogImage::mergeCollection($tag, $currentImages, $images, 'tags');
+        }
+
         $tag->fill($payload);
-
-        if ($thumbProvided) {
-            $tag->img_thumb = $this->storeImage($tag, $thumb, 'img_thumb');
-        }
-
-        if ($coverProvided) {
-            $tag->img_cover = $this->storeImage($tag, $cover, 'img_cover');
-        }
-
         $tag->save();
 
         $this->propagateProductTypeToChildren($tag->refresh());
@@ -145,22 +140,5 @@ class UpdateTag
 
             $this->propagateProductTypeToChildren($child->refresh());
         }
-    }
-
-    private function storeImage(Tag $tag, mixed $payload, string $folder): ?array
-    {
-        if ($payload === null) {
-            return null;
-        }
-
-        if (!is_array($payload) || !isset($payload['file']) || !$payload['file'] instanceof UploadedFile) {
-            return null;
-        }
-
-        return [
-            'src' => $payload['file']->store("tags/{$tag->getKey()}/{$folder}", 'public'),
-            'alt' => Arr::get($payload, 'alt'),
-            'name' => Arr::get($payload, 'name'),
-        ];
     }
 }

@@ -127,6 +127,41 @@ it('stores brand images with sort_order and returns them in the persisted order'
         ->and(data_get($brand->images, '1.sort_order'))->toBe(20);
 });
 
+it('allows multiple brand images with null type', function () {
+    Storage::fake('public');
+
+    $brand = Brand::factory()->create([
+        'active' => true,
+    ]);
+
+    patch(
+        config('venditio.routes.api.v1.prefix') . '/brands/' . $brand->getKey(),
+        [
+            'images' => [
+                [
+                    'file' => UploadedFile::fake()->image('gallery-a.jpg'),
+                    'type' => null,
+                    'sort_order' => 10,
+                ],
+                [
+                    'file' => UploadedFile::fake()->image('gallery-b.jpg'),
+                    'sort_order' => 20,
+                ],
+            ],
+        ],
+        ['Accept' => 'application/json']
+    )->assertOk()
+        ->assertJsonCount(2, 'images')
+        ->assertJsonPath('images.0.type', null)
+        ->assertJsonPath('images.1.type', null);
+
+    $brand->refresh();
+
+    expect($brand->images)->toHaveCount(2)
+        ->and(str_starts_with((string) data_get($brand->images, '0.src'), 'brands/' . $brand->getKey() . '/images/'))->toBeTrue()
+        ->and(str_starts_with((string) data_get($brand->images, '1.src'), 'brands/' . $brand->getKey() . '/images/'))->toBeTrue();
+});
+
 it('updates brand image sort_order without requiring a new upload', function () {
     $brand = Brand::factory()->create([
         'active' => true,

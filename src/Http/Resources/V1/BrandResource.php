@@ -30,6 +30,8 @@ class BrandResource extends JsonResource
             'products' => ProductResource::collection($this->whenLoaded('products')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
             'discounts' => DiscountResource::collection($this->whenLoaded('discounts')),
+            'valid_discounts' => DiscountResource::collection($this->whenLoaded('validDiscounts')),
+            'expired_discounts' => DiscountResource::collection($this->whenLoaded('expiredDiscounts')),
         ];
     }
 

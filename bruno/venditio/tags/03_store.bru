@@ -10,6 +10,10 @@ post {
   auth: inherit
 }
 
+params:query {
+  ~include: product_type,discounts,valid_discounts,expired_discounts
+}
+
 headers {
   Accept: application/json
   Content-Type: application/json
@@ -41,7 +45,7 @@ docs {
   - path: /tags
 
   query params:
-  - none
+  - include (string|array): Optional includes: product_type, discounts, valid_discounts, expired_discounts.
 
   path params:
   - none
@@ -56,14 +60,14 @@ docs {
   - abstract
   - description
   - metadata (array)
-  - img_thumb (object|nullable)
-  - img_thumb.file (file|image, required_with:img_thumb)
-  - img_thumb.alt
-  - img_thumb.name
-  - img_cover (object|nullable)
-  - img_cover.file (file|image, required_with:img_cover)
-  - img_cover.alt
-  - img_cover.name
+  - images (array|nullable)
+  - images.*.id
+  - images.*.file (file|image)
+  - images.*.alt
+  - images.*.name
+  - images.*.mimetype
+  - images.*.sort_order
+  - images.*.type (nullable, thumb|cover)
   - active
   - show_in_menu
   - in_evidence
@@ -76,5 +80,6 @@ docs {
   - {locale}.slug / slug:{locale}
   - {locale}.abstract / abstract:{locale}
   - {locale}.description / description:{locale}
-  - Note: for image upload use multipart/form-data.
+  - Note: for image upload use multipart/form-data with fields like `images[0][file]` and `images[0][type]=thumb`.
+  - Note: only one `thumb` and one `cover` are allowed. `type=null` can be repeated for generic images.
 }

@@ -3,6 +3,7 @@
 namespace PictaStudio\Venditio\Http\Requests\V1\Discount;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Enums\DiscountType;
 
@@ -51,6 +52,15 @@ class UpdateDiscountRequest extends FormRequest
             'priority' => ['sometimes', 'integer'],
             'stop_after_propagation' => ['sometimes', 'boolean'],
         ];
+    }
+
+    public function prepareForValidation(): void
+    {
+        if (array_key_exists('starts_at', $this->all()) && $this->input('starts_at') === null) {
+            $this->merge([
+                'starts_at' => Date::now(),
+            ]);
+        }
     }
 
     private function tableFor(?string $model): string

@@ -4,7 +4,6 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Actions\ProductTypes\{CreateProductType, UpdateProductType};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\ProductType\{StoreProductTypeRequest, UpdateProductTypeRequest};
@@ -72,34 +71,11 @@ class ProductTypeController extends Controller
 
     protected function resolveProductTypeIncludes(): array
     {
-        $rawIncludes = request()->query('include', []);
-
-        $includes = collect(is_array($rawIncludes) ? $rawIncludes : [$rawIncludes])
-            ->flatMap(fn (mixed $include) => is_string($include) ? explode(',', $include) : [])
-            ->map(fn (string $include) => mb_trim($include))
-            ->filter(fn (string $include) => filled($include))
-            ->unique()
-            ->values()
-            ->all();
-
-        $this->validateData([
-            'include' => $includes,
-        ], [
-            'include' => ['array'],
-            'include.*' => ['string', Rule::in(['discounts'])],
-        ]);
-
-        return $includes;
+        return $this->resolveIncludes($this->allowedIncludesWithDiscounts());
     }
 
     protected function productTypeRelationsForIncludes(array $includes): array
     {
-        $relations = [];
-
-        if (in_array('discounts', $includes, true)) {
-            $relations[] = 'discounts';
-        }
-
-        return $relations;
+        return $this->discountRelationsForIncludes($includes);
     }
 }

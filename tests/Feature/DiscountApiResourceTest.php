@@ -1,10 +1,11 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Date;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
 use PictaStudio\Venditio\Models\{Discount, Product, ProductCollection};
 
-use function Pest\Laravel\{assertDatabaseHas, getJson, postJson};
+use function Pest\Laravel\{assertDatabaseHas, getJson, patchJson, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -159,6 +160,33 @@ it('requires code when creating a discount not scoped to a discountable resource
         'ends_at' => now()->addDay()->toDateTimeString(),
     ])->assertUnprocessable()
         ->assertJsonValidationErrors(['code']);
+});
+
+it('sets starts_at to the current date when updating a discount with a null starts_at', function () {
+    $currentDate = Date::parse('2026-04-21 12:34:56');
+    $discount = Discount::factory()->create([
+        'starts_at' => Date::parse('2026-04-18 08:00:00'),
+        'ends_at' => Date::parse('2026-04-30 08:00:00'),
+    ]);
+
+    Date::setTestNow($currentDate);
+
+    try {
+        $prefix = config('venditio.routes.api.v1.prefix');
+
+        patchJson($prefix . '/discounts/' . $discount->getKey(), [
+            'starts_at' => null,
+        ])->assertOk()
+            ->assertJsonPath('id', $discount->getKey())
+            ->assertJsonPath('starts_at', $currentDate->toDateTimeString());
+
+        assertDatabaseHas('discounts', [
+            'id' => $discount->getKey(),
+            'starts_at' => $currentDate->toDateTimeString(),
+        ]);
+    } finally {
+        Date::setTestNow();
+    }
 });
 
 it('filters discount index by general discounts', function () {
