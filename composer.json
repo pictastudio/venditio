@@ -27,7 +27,7 @@
         "maatwebsite/excel": "^3.1",
         "nevadskiy/laravel-tree": "^0.6.1",
         "pictastudio/translatable": "^0",
-        "spatie/laravel-activitylog": "^4.7",
+        "spatie/laravel-activitylog": "^5.0",
         "spatie/laravel-package-tools": "^1.16",
         "spatie/laravel-sluggable": "^3.7"
     },
