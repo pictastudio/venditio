@@ -38,6 +38,7 @@ docs {
 
   query params:
   - include (string|array): Optional includes: variants, variants_options_table, brand, categories, collections, discounts, valid_discounts, expired_discounts, tags, product_type, tax_class, price_breakdown, price_lists (if enabled).
+    When the shown product is itself a variant, include=variants returns the variant set inside the parent object.
   - exclude_all_scopes (boolean): Skip all global scopes for this request.
   - exclude_active_scope (boolean): Skip only the active global scope when available.
   - exclude_date_range_scope (boolean): Skip only the date range global scope when available.

@@ -56,8 +56,16 @@ class ProductController extends Controller
         $this->authorizeIfConfigured('view', $product);
 
         $includes = $this->resolveProductIncludes();
+        $relations = $this->productRelationsForIncludes($includes);
 
-        return ProductResource::make($product->load($this->productRelationsForIncludes($includes)));
+        if (in_array('variants', $includes, true) && filled($product->parent_id)) {
+            $relations = [
+                ...$relations,
+                ...$this->parentVariantRelationsForIncludes($relations),
+            ];
+        }
+
+        return ProductResource::make($product->load($relations));
     }
 
     public function variants(Product $product): JsonResource|JsonResponse
@@ -244,6 +252,17 @@ class ProductController extends Controller
         }
 
         return collect($relations)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    protected function parentVariantRelationsForIncludes(array $relations): array
+    {
+        return collect($relations)
+            ->filter(fn (string $relation): bool => $relation === 'variants' || str_starts_with($relation, 'variants.'))
+            ->map(fn (string $relation): string => "parent.{$relation}")
+            ->push('parent.variants')
             ->unique()
             ->values()
             ->all();

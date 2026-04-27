@@ -60,6 +60,7 @@ Include parameters:
 
 - `/products`: `include=brand,categories,collections,discounts,valid_discounts,expired_discounts,product_type,tax_class,variants,variants_options_table,price_breakdown` (and `price_lists` only when `venditio.price_lists.enabled=true`)
   - `price_breakdown` adds `price_calculated.price_source` and `price_calculated.discounts_applied`, so admin UIs can show which base price source was selected and the ordered automatic discounts applied to the product preview
+  - on `GET /products/{product}`, requesting `variants` for a product that is itself a variant exposes the variant set inside the `parent.variants` object
 - `/product_collections`: `include=products,discounts,valid_discounts,expired_discounts`
 - `/brands`, `/product_categories`, `/product_types`, `/tags`, `/carts`, `/cart_lines`, `/orders`, `/order_lines`: `include=discounts,valid_discounts,expired_discounts`
   - `discounts` returns all non-deleted discounts scoped to that resource, including inactive, future, currently valid, and expired rows

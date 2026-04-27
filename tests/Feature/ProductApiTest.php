@@ -850,6 +850,35 @@ it('includes variants and variants options table when requested', function () {
         ->assertJsonCount(0, 'variants_options_table.1.values.1.images');
 });
 
+it('includes variants inside parent when showing a variant with variants requested', function () {
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $variantA = Product::factory()->create([
+        'parent_id' => $product->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $variantB = Product::factory()->create([
+        'parent_id' => $product->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . "/products/{$variantA->getKey()}?include=variants")
+        ->assertOk()
+        ->assertJsonMissingPath('variants')
+        ->assertJsonPath('parent.id', $product->getKey())
+        ->assertJsonCount(2, 'parent.variants');
+
+    expect(collect($response->json('parent.variants'))->pluck('id')->all())
+        ->toContain($variantA->getKey(), $variantB->getKey());
+});
+
 it('includes requested product relations on show endpoint', function () {
     config()->set('venditio.price_lists.enabled', true);
 
