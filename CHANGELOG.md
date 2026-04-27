@@ -2,6 +2,24 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.4.0 - 2026-04-27
+
+### What's Changed
+
+#### Features
+
+- **Parent variant set on variant product show responses** - `GET /products/{product}?include=variants` now loads the sibling variant set under `parent.variants` when the requested product is itself a variant, so host apps can retrieve the full variant family from a variant detail request without a follow-up parent fetch.
+
+#### API & Tooling
+
+- **Product show docs and Bruno example** - Documented the variant-product `include=variants` behavior in the API reference and Bruno product show request.
+
+#### Tests
+
+- Added feature coverage to ensure variant product show responses expose the full parent variant set when `include=variants` is requested.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.3.0...v2.4.0
+
 ## v2.3.0 - 2026-04-23
 
 ### What's Changed
