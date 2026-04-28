@@ -2,6 +2,29 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.5.0 - 2026-04-28
+
+### What's Changed
+
+#### Features
+
+- **Catalog image delete endpoints** - Added dedicated `DELETE /brands/{brand}/images/{imageId}`, `DELETE /product_categories/{productCategory}/images/{imageId}`, `DELETE /product_collections/{productCollection}/images/{imageId}`, and `DELETE /tags/{tag}/images/{imageId}` endpoints so host apps can remove individual catalog image entries without resubmitting the full resource payload. Deleted files are removed from the public disk by default and now honor the configurable `VENDITIO_CATALOG_IMAGE_DELETE_FILES_FROM_FILESYSTEM` toggle, while shared file paths are preserved when another catalog resource still references them.
+
+#### Fixes
+
+- **Typed catalog image replacement flow** - Catalog image updates now allow a request to promote a generic image into the `thumb` or `cover` slot when the existing typed image is released in the same `images` payload, avoiding false validation conflicts during slot reassignment.
+- **Scoped variant-option images on product payloads** - Product `variants_options_table.values[].images` responses now include only the shared variant-option media that belongs to the requested product, preventing sibling products from leaking their option images into each other's payloads.
+
+#### API & Tooling
+
+- **Bruno catalog image coverage** - Added Bruno requests for the new catalog image delete endpoints and documented the typed-image replacement rule plus the product-scoped variant-option media behavior in the existing request examples.
+
+#### Tests
+
+- Added feature coverage for catalog image deletion across all catalog owners, filesystem retention rules, typed image slot reassignment, and product-scoped variant option images.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.4.0...v2.5.0
+
 ## v2.4.0 - 2026-04-27
 
 ### What's Changed
