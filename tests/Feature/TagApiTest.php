@@ -166,6 +166,65 @@ it('rejects moving a tag image to a typed slot already in use', function () {
         ->assertJsonValidationErrors(['images.0.type']);
 });
 
+it('allows replacing tag thumb and cover assignments when the old slots are released in the same payload', function () {
+    $tag = Tag::factory()->create([
+        'images' => [
+            [
+                'id' => 'thumb-image',
+                'type' => 'thumb',
+                'src' => 'tags/thumb.jpg',
+                'sort_order' => 0,
+            ],
+            [
+                'id' => 'cover-image',
+                'type' => 'cover',
+                'src' => 'tags/cover.jpg',
+                'sort_order' => 1,
+            ],
+            [
+                'id' => 'gallery-a',
+                'type' => null,
+                'src' => 'tags/gallery-a.jpg',
+                'sort_order' => 2,
+            ],
+            [
+                'id' => 'gallery-b',
+                'type' => null,
+                'src' => 'tags/gallery-b.jpg',
+                'sort_order' => 3,
+            ],
+        ],
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/tags/' . $tag->getKey(), [
+        'images' => [
+            [
+                'id' => 'thumb-image',
+                'type' => null,
+            ],
+            [
+                'id' => 'cover-image',
+                'type' => null,
+            ],
+            [
+                'id' => 'gallery-a',
+                'type' => 'thumb',
+            ],
+            [
+                'id' => 'gallery-b',
+                'type' => 'cover',
+            ],
+        ],
+    ])->assertOk();
+
+    $tag->refresh();
+
+    expect(collect($tag->images)->firstWhere('id', 'gallery-a')['type'])->toBe('thumb')
+        ->and(collect($tag->images)->firstWhere('id', 'gallery-b')['type'])->toBe('cover')
+        ->and(collect($tag->images)->firstWhere('id', 'thumb-image')['type'])->toBeNull()
+        ->and(collect($tag->images)->firstWhere('id', 'cover-image')['type'])->toBeNull();
+});
+
 it('inherits parent product_type_id on child tag creation', function () {
     $productType = ProductType::factory()->create(['active' => true]);
 

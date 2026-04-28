@@ -5,11 +5,12 @@ namespace PictaStudio\Venditio\Http\Resources\V1;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Collection;
+use Illuminate\Support\{Arr, Collection};
 use PictaStudio\Venditio\Actions\Taxes\{ExtractTaxFromGrossPrice, ResolveTaxRate};
 use PictaStudio\Venditio\Contracts\{DiscountCalculatorInterface, ProductPriceResolverInterface};
 use PictaStudio\Venditio\Discounts\DiscountContext;
 use PictaStudio\Venditio\Http\Resources\Traits\{CanTransformAttributes, HasAttributesToExclude};
+use PictaStudio\Venditio\Support\ProductMedia;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
@@ -227,7 +228,7 @@ class ProductResource extends JsonResource
                         ->map(fn ($option): array => [
                             'id' => $option->getKey(),
                             'value' => $option->name,
-                            'images' => ProductVariantOptionResource::make($option)->resolve()['images'] ?? [],
+                            'images' => $this->resolveVariantOptionImages($option),
                             'hex_color' => $option->hex_color,
                         ])
                         ->all(),
@@ -240,6 +241,32 @@ class ProductResource extends JsonResource
             ->values();
 
         return $table->toArray();
+    }
+
+    protected function resolveVariantOptionImages(mixed $option): array
+    {
+        $productId = $this->resource->getKey();
+        $pathFragment = "products/{$productId}/variant_options/{$option->getKey()}/images/";
+
+        $images = $this->resource->variants
+            ->filter(fn ($variant): bool => (string) $variant->parent_id === (string) $productId)
+            ->filter(fn ($variant): bool => $variant->relationLoaded('variantOptions')
+                && $variant->variantOptions->contains(fn ($variantOption): bool => (
+                    (string) $variantOption->getKey() === (string) $option->getKey()
+                ))
+            )
+            ->flatMap(fn ($variant): array => ProductMedia::normalizeCollection(
+                $variant->getAttribute('images'),
+                isImage: true
+            ))
+            ->filter(fn (array $image): bool => (bool) Arr::get($image, 'shared_from_variant_option', false)
+                && str_contains((string) Arr::get($image, 'src'), $pathFragment)
+            )
+            ->unique(fn (array $image): string => (string) Arr::get($image, 'src'))
+            ->values()
+            ->all();
+
+        return $this->transformProductMediaCollection($images, true);
     }
 
     protected function resolvePriceSource(array $resolved): array

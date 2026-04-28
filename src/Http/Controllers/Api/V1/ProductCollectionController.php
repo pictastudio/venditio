@@ -4,6 +4,7 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use PictaStudio\Venditio\Actions\CatalogImages\DeleteCatalogImage;
 use PictaStudio\Venditio\Actions\ProductCollections\{CreateProductCollection, UpdateProductCollection};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\ProductCollection\{StoreProductCollectionRequest, UpdateProductCollectionRequest};
@@ -65,6 +66,15 @@ class ProductCollectionController extends Controller
         $this->authorizeIfConfigured('delete', $productCollection);
 
         $productCollection->delete();
+
+        return response()->noContent();
+    }
+
+    public function destroyImage(ProductCollection $productCollection, string $imageId, DeleteCatalogImage $action)
+    {
+        $this->authorizeIfConfigured('update', $productCollection);
+
+        $action->handle($productCollection, $imageId);
 
         return response()->noContent();
     }

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\{Rule, ValidationException};
+use PictaStudio\Venditio\Actions\CatalogImages\DeleteCatalogImage;
 use PictaStudio\Venditio\Actions\ProductCategories\{CreateProductCategory, UpdateMultipleProductCategories, UpdateProductCategory};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\ProductCategory\{StoreProductCategoryRequest, UpdateMultipleProductCategoryRequest, UpdateProductCategoryRequest};
@@ -128,6 +129,15 @@ class ProductCategoryController extends Controller
         $this->authorizeIfConfigured('delete', $productCategory);
 
         $productCategory->delete();
+
+        return response()->noContent();
+    }
+
+    public function destroyImage(ProductCategory $productCategory, string $imageId, DeleteCatalogImage $action)
+    {
+        $this->authorizeIfConfigured('update', $productCategory);
+
+        $action->handle($productCategory, $imageId);
 
         return response()->noContent();
     }

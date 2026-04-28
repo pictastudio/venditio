@@ -850,6 +850,84 @@ it('includes variants and variants options table when requested', function () {
         ->assertJsonCount(0, 'variants_options_table.1.values.1.images');
 });
 
+it('scopes shared variant option images to the requested product variants options table', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $productType = ProductType::factory()->create(['active' => true]);
+
+    $color = ProductVariant::factory()->create([
+        'product_type_id' => $productType->getKey(),
+        'name' => 'Color',
+    ]);
+
+    $porpora = ProductVariantOption::factory()->create([
+        'product_variant_id' => $color->getKey(),
+        'name' => 'porpora',
+    ]);
+
+    $firstProduct = Product::factory()->create([
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'product_type_id' => $productType->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $secondProduct = Product::factory()->create([
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'product_type_id' => $productType->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $firstPorporaVariant = Product::factory()->create([
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'product_type_id' => $productType->getKey(),
+        'parent_id' => $firstProduct->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $firstPorporaVariant->variantOptions()->sync([$porpora->getKey()]);
+    $firstPorporaVariant->forceFill([
+        'images' => [[
+            'id' => 'first-product-porpora-image',
+            'alt' => 'First product porpora',
+            'mimetype' => 'image/jpeg',
+            'sort_order' => 0,
+            'active' => true,
+            'thumbnail' => true,
+            'shared_from_variant_option' => true,
+            'src' => "products/{$firstProduct->getKey()}/variant_options/{$porpora->getKey()}/images/porpora.jpg",
+        ]],
+    ])->save();
+
+    $secondPorporaVariant = Product::factory()->create([
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'product_type_id' => $productType->getKey(),
+        'parent_id' => $secondProduct->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $secondPorporaVariant->variantOptions()->sync([$porpora->getKey()]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$firstProduct->getKey()}?include=variants,variants_options_table")
+        ->assertOk()
+        ->assertJsonPath('variants_options_table.0.values.0.value', 'porpora')
+        ->assertJsonPath('variants_options_table.0.values.0.images.0.alt', 'First product porpora');
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$secondProduct->getKey()}?include=variants,variants_options_table")
+        ->assertOk()
+        ->assertJsonPath('variants_options_table.0.values.0.value', 'porpora')
+        ->assertJsonCount(0, 'variants_options_table.0.values.0.images');
+});
+
 it('includes variants inside parent when showing a variant with variants requested', function () {
     $product = Product::factory()->create([
         'active' => true,

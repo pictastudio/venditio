@@ -1,0 +1,39 @@
+meta {
+  name: Delete tag image
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/tags/:id-or-slug/images/:image-id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id-or-slug: 
+  image-id: 
+}
+
+headers {
+  Accept: application/json
+  Locale: {{locale}}
+}
+
+docs {
+  summary:
+  - Delete a tag image by its unique backend-generated image id.
+
+  endpoint:
+  - method: DELETE
+  - path: /tags/:id-or-slug/images/:image-id
+
+  path params:
+  - id-or-slug: Replace with target tag identifier.
+  - image-id: Unique image id returned in the tag `images` array.
+
+  behavior:
+  - Removes the matching entry from the tag `images` collection.
+  - Returns `204 No Content` on success.
+  - Filesystem deletion is controlled by `VENDITIO_CATALOG_IMAGE_DELETE_FILES_FROM_FILESYSTEM`.
+}

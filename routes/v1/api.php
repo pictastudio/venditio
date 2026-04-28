@@ -22,8 +22,11 @@ Route::post('product/{product}/{productVariantOption}/upload', [ProductControlle
 
 Route::patch('product_categories/bulk/update', [ProductCategoryController::class, 'updateMultiple'])->name('product_categories.updateMultiple');
 Route::apiResource('product_categories', ProductCategoryController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+Route::delete('product_categories/{productCategory}/images/{imageId}', [ProductCategoryController::class, 'destroyImage'])->name('product_categories.images.destroy');
 Route::apiResource('product_collections', ProductCollectionController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+Route::delete('product_collections/{productCollection}/images/{imageId}', [ProductCollectionController::class, 'destroyImage'])->name('product_collections.images.destroy');
 Route::apiResource('tags', TagController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+Route::delete('tags/{tag}/images/{imageId}', [TagController::class, 'destroyImage'])->name('tags.images.destroy');
 Route::apiResource('product_types', ProductTypeController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 Route::apiResource('product_variants', ProductVariantController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 Route::apiResource('product_variant_options', ProductVariantOptionController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
@@ -51,6 +54,7 @@ if (config('venditio.exports.enabled', true)) {
 }
 Route::apiResource('addresses', AddressController::class);
 Route::apiResource('brands', BrandController::class);
+Route::delete('brands/{brand}/images/{imageId}', [BrandController::class, 'destroyImage'])->name('brands.images.destroy');
 Route::apiResource('inventories', InventoryController::class);
 Route::apiResource('countries', CountryController::class)->only(['index', 'show']);
 Route::apiResource('regions', RegionController::class)->only(['index', 'show']);

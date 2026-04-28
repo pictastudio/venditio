@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Actions\Brands\{CreateBrand, UpdateBrand};
+use PictaStudio\Venditio\Actions\CatalogImages\DeleteCatalogImage;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Brand\{StoreBrandRequest, UpdateBrandRequest};
 use PictaStudio\Venditio\Http\Resources\V1\BrandResource;
@@ -65,6 +66,15 @@ class BrandController extends Controller
         $this->authorizeIfConfigured('delete', $brand);
 
         $brand->delete();
+
+        return response()->noContent();
+    }
+
+    public function destroyImage(Brand $brand, string $imageId, DeleteCatalogImage $action)
+    {
+        $this->authorizeIfConfigured('update', $brand);
+
+        $action->handle($brand, $imageId);
 
         return response()->noContent();
     }

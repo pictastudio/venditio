@@ -309,6 +309,7 @@ class CatalogImage
         }
 
         $errors = [];
+        $releasedTypes = self::collectReleasedTypes($items, $existingTypes);
 
         foreach (is_array($items) ? $items : [] as $index => $item) {
             $item = is_array($item) ? $item : [];
@@ -321,12 +322,39 @@ class CatalogImage
                 && filled($imageId)
                 && filled($existingIdForType)
                 && $existingIdForType !== $imageId
+                && !($releasedTypes[$type] ?? false)
             ) {
                 $errors["{$attribute}.{$index}.type"] = ['The selected image type is already in use.'];
             }
         }
 
         return $errors;
+    }
+
+    /**
+     * @param  array<string, string|null>  $existingTypes
+     * @return array<string, bool>
+     */
+    private static function collectReleasedTypes(mixed $items, array $existingTypes): array
+    {
+        $releasedTypes = [];
+
+        foreach (is_array($items) ? $items : [] as $item) {
+            $item = is_array($item) ? $item : [];
+            $imageId = self::scalarString(Arr::get($item, 'id'));
+
+            if (!filled($imageId) || !array_key_exists('type', $item)) {
+                continue;
+            }
+
+            foreach ($existingTypes as $type => $existingId) {
+                if ($existingId === $imageId && self::resolveType(Arr::get($item, 'type')) !== $type) {
+                    $releasedTypes[$type] = true;
+                }
+            }
+        }
+
+        return $releasedTypes;
     }
 
     private static function resolveUniqueId(mixed $id, array &$usedIds): string

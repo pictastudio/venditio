@@ -5,6 +5,7 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Validation\Rule;
+use PictaStudio\Venditio\Actions\CatalogImages\DeleteCatalogImage;
 use PictaStudio\Venditio\Actions\Tags\{CreateTag, UpdateTag};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Tag\{StoreTagRequest, UpdateTagRequest};
@@ -85,6 +86,15 @@ class TagController extends Controller
         $this->authorizeIfConfigured('delete', $tag);
 
         $tag->delete();
+
+        return response()->noContent();
+    }
+
+    public function destroyImage(Tag $tag, string $imageId, DeleteCatalogImage $action)
+    {
+        $this->authorizeIfConfigured('update', $tag);
+
+        $action->handle($tag, $imageId);
 
         return response()->noContent();
     }

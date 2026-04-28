@@ -1,0 +1,39 @@
+meta {
+  name: Delete product collection image
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/product_collections/:id-or-slug/images/:image-id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id-or-slug: 
+  image-id: 
+}
+
+headers {
+  Accept: application/json
+  Locale: {{locale}}
+}
+
+docs {
+  summary:
+  - Delete a product collection image by its unique backend-generated image id.
+
+  endpoint:
+  - method: DELETE
+  - path: /product_collections/:id-or-slug/images/:image-id
+
+  path params:
+  - id-or-slug: Replace with target product collection identifier.
+  - image-id: Unique image id returned in the product collection `images` array.
+
+  behavior:
+  - Removes the matching entry from the product collection `images` collection.
+  - Returns `204 No Content` on success.
+  - Filesystem deletion is controlled by `VENDITIO_CATALOG_IMAGE_DELETE_FILES_FROM_FILESYSTEM`.
+}
