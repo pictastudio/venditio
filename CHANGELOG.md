@@ -2,6 +2,25 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.6.0 - 2026-04-29
+
+### What's Changed
+
+#### Features
+
+- **Product collection metadata, tags, and counts** - Product collections now persist a nullable `metadata` JSON payload, accept `tag_ids` in create and update requests with sync semantics, allow `tag_ids[]` filtering on the index endpoint, expose `include=tags`, and support `include=products_count` on index, show, store, and update responses.
+- **Catalog product-count includes and exact product id filters** - Brands and product categories now support `include=products_count`, while product index and product export endpoints accept `ids[]` for exact primary-key filtering across selected products.
+
+#### API & Tooling
+
+- **Docs and Bruno examples** - Expanded the API reference and Bruno requests to document product collection metadata and tag payloads, `products_count` includes on catalog resources, and `ids[]` filtering for product list and export flows. The docs now also call out `tag_ids` write payload support where it already existed on related catalog resources.
+
+#### Tests
+
+- Added feature coverage for product collection metadata persistence, tag syncing, product-count includes on brands/categories/collections, product `ids[]` filtering, and export filtering by exact product ids.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.5.0...v2.6.0
+
 ## v2.5.0 - 2026-04-28
 
 ### What's Changed
