@@ -13,7 +13,9 @@ class CreateProductCollection
     public function handle(array $payload): ProductCollection
     {
         $imagesProvided = array_key_exists('images', $payload);
+        $tagIdsProvided = array_key_exists('tag_ids', $payload);
         $images = Arr::pull($payload, 'images');
+        $tagIds = Arr::pull($payload, 'tag_ids', []);
 
         if ($imagesProvided) {
             CatalogImage::validatePayload($images, []);
@@ -27,6 +29,10 @@ class CreateProductCollection
             $collection->save();
         }
 
-        return $collection->refresh();
+        if ($tagIdsProvided) {
+            $collection->tags()->sync($tagIds ?? []);
+        }
+
+        return $collection->refresh()->load('tags');
     }
 }

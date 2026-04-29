@@ -20,6 +20,7 @@ params:query {
   ~exclude_active_scope: 0
   ~exclude_date_range_scope: 0
   ~id[]: 1
+  ~ids[]: 1
   ~parent_id: 1
   ~brand_id: 1
   ~brand_ids[]: 1
@@ -94,6 +95,7 @@ docs {
   - exclude_active_scope (boolean): Skip only the active global scope when available.
   - exclude_date_range_scope (boolean): Skip only the date range global scope when available.
   - id[] (integer[]): Filter by one or more resource IDs.
+  - ids[] (integer[]): Filter products by one or more product IDs.
   - parent_id (integer): Exact-match filter for parent_id.
   - brand_id (integer): Exact-match filter for brand_id.
   - brand_ids[] (integer[]): Match products whose brand_id is in this list.

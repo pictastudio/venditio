@@ -3,7 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use PictaStudio\Venditio\Models\{ProductCategory, Tag};
+use PictaStudio\Venditio\Models\{Product, ProductCategory, Tag};
 
 use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patch, patchJson, post, postJson};
 
@@ -50,20 +50,24 @@ it('serializes casted custom objects like path as strings', function () {
 it('updates a product category', function () {
     $category = ProductCategory::factory()->create([
         'name' => 'Old Name',
+        'metadata' => ['seo' => ['title' => 'Old title']],
         'sort_order' => 1,
     ]);
 
     patchJson(config('venditio.routes.api.v1.prefix') . "/product_categories/{$category->getKey()}", [
         'name' => 'New Name',
+        'metadata' => ['seo' => ['title' => 'New title']],
         'sort_order' => 2,
     ])->assertOk()
         ->assertJsonFragment([
             'name' => 'New Name',
+            'metadata' => ['seo' => ['title' => 'New title']],
             'sort_order' => 2,
         ]);
 
     assertDatabaseHas('product_categories', [
         'id' => $category->getKey(),
+        'metadata' => json_encode(['seo' => ['title' => 'New title']]),
         'sort_order' => 2,
     ]);
     assertDatabaseHas('translations', [
@@ -623,4 +627,51 @@ it('updates product category image sort_order without requiring a new upload', f
         ->and(data_get($category->images, '0.sort_order'))->toBe(5)
         ->and(data_get($category->images, '1.id'))->toBe('cover-image')
         ->and(data_get($category->images, '1.sort_order'))->toBe(30);
+});
+
+it('includes products count on product categories when requested', function () {
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $products = Product::factory()
+        ->count(2)
+        ->create([
+            'active' => true,
+            'visible_from' => null,
+            'visible_until' => null,
+        ]);
+
+    $category->products()->sync($products->map->getKey()->all());
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/product_categories?all=1&include=products_count')
+        ->assertOk()
+        ->assertJsonPath('0.id', $category->getKey())
+        ->assertJsonPath('0.products_count', 2);
+});
+
+it('includes products count on product category show only when requested', function () {
+    $category = ProductCategory::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $products = Product::factory()
+        ->count(3)
+        ->create([
+            'active' => true,
+            'visible_from' => null,
+            'visible_until' => null,
+        ]);
+
+    $category->products()->sync($products->map->getKey()->all());
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/product_categories/{$category->getKey()}")
+        ->assertOk()
+        ->assertJsonMissingPath('products_count');
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/product_categories/{$category->getKey()}?include=products_count")
+        ->assertOk()
+        ->assertJsonPath('products_count', 3);
 });

@@ -46,6 +46,68 @@ it('creates a product with categories', function () {
     ]);
 });
 
+it('creates a product with tags', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $tag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/products?include=tags', [
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Tagged Product',
+        'sku' => 'TAGGED-PRODUCT-OK',
+        'status' => ProductStatus::Published,
+        'tag_ids' => [$tag->getKey()],
+    ])->assertCreated()
+        ->assertJsonPath('tags.0.id', $tag->getKey());
+
+    assertDatabaseHas('taggables', [
+        'tag_id' => $tag->getKey(),
+        'taggable_type' => (new Product)->getMorphClass(),
+        'taggable_id' => $response->json('id'),
+    ]);
+});
+
+it('updates product tags using sync semantics', function () {
+    $firstTag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $secondTag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->tags()->sync([$firstTag->getKey()]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=tags", [
+        'tag_ids' => [$secondTag->getKey()],
+    ])->assertOk()
+        ->assertJsonPath('tags.0.id', $secondTag->getKey());
+
+    assertDatabaseMissing('taggables', [
+        'tag_id' => $firstTag->getKey(),
+        'taggable_type' => $product->getMorphClass(),
+        'taggable_id' => $product->getKey(),
+    ]);
+    assertDatabaseHas('taggables', [
+        'tag_id' => $secondTag->getKey(),
+        'taggable_type' => $product->getMorphClass(),
+        'taggable_id' => $product->getKey(),
+    ]);
+});
+
 it('creates a product with collections', function () {
     $brand = Brand::factory()->create();
     $taxClass = TaxClass::factory()->create();
@@ -662,6 +724,49 @@ it('validates products index brand_ids, category_ids, and collection_ids filters
         . '/products?brand_ids[]=999999&category_ids[]=999999&collection_ids[]=999999'
     )->assertUnprocessable()
         ->assertJsonValidationErrors(['brand_ids.0', 'category_ids.0', 'collection_ids.0']);
+});
+
+it('filters products index by ids array query param', function () {
+    $productA = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productB = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productC = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = getJson(
+        config('venditio.routes.api.v1.prefix')
+        . '/products?all=1&ids[]=' . $productA->getKey()
+        . '&ids[]=' . $productC->getKey()
+    )->assertOk();
+
+    $json = $response->json();
+    $items = is_array(data_get($json, 'data'))
+        ? data_get($json, 'data')
+        : $json;
+
+    $ids = collect($items)
+        ->pluck('id')
+        ->all();
+
+    expect($ids)->toEqualCanonicalizing([$productA->getKey(), $productC->getKey()])
+        ->not->toContain($productB->getKey());
+});
+
+it('validates products index ids filter', function () {
+    getJson(
+        config('venditio.routes.api.v1.prefix') . '/products?ids[]=999999'
+    )->assertUnprocessable()
+        ->assertJsonValidationErrors(['ids.0']);
 });
 
 it('filters products index by inventory price with operator', function () {

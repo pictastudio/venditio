@@ -69,6 +69,45 @@ it('validates requested columns on product excel export', function () {
         ->assertJsonValidationErrors(['columns.1']);
 });
 
+it('filters product excel export by ids', function () {
+    Excel::fake();
+
+    $productA = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productB = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productC = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    get(
+        config('venditio.routes.api.v1.prefix')
+        . '/exports/products?columns=id'
+        . '&ids[]=' . $productA->getKey()
+        . '&ids[]=' . $productC->getKey()
+        . '&filename=products-by-ids'
+    )->assertOk();
+
+    Excel::assertDownloaded('products-by-ids.xlsx', function (ProductsExport $export) use ($productA, $productB, $productC): bool {
+        $ids = $export->collection()
+            ->pluck('id')
+            ->all();
+
+        expect($ids)->toEqualCanonicalizing([$productA->getKey(), $productC->getKey()])
+            ->not->toContain($productB->getKey());
+
+        return true;
+    });
+});
+
 it('filters product excel export by multiple brands and categories', function () {
     Excel::fake();
 

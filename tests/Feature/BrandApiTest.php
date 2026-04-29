@@ -3,9 +3,9 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use PictaStudio\Venditio\Models\Brand;
+use PictaStudio\Venditio\Models\{Brand, Product, Tag};
 
-use function Pest\Laravel\{assertDatabaseHas, patch, patchJson, post, postJson};
+use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patch, patchJson, post, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -36,6 +36,62 @@ it('stores and exposes category-style catalog fields on brands', function () {
         'show_in_menu' => true,
         'in_evidence' => true,
         'sort_order' => 1,
+    ]);
+});
+
+it('stores a brand with tags', function () {
+    $tag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/brands?include=tags', [
+        'name' => 'Tagged Brand',
+        'active' => true,
+        'sort_order' => 1,
+        'tag_ids' => [$tag->getKey()],
+    ])->assertCreated()
+        ->assertJsonPath('tags.0.id', $tag->getKey());
+
+    assertDatabaseHas('taggables', [
+        'tag_id' => $tag->getKey(),
+        'taggable_type' => (new Brand)->getMorphClass(),
+        'taggable_id' => $response->json('id'),
+    ]);
+});
+
+it('updates brand tags using sync semantics', function () {
+    $firstTag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $secondTag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $brand = Brand::factory()->create([
+        'active' => true,
+    ]);
+
+    $brand->tags()->sync([$firstTag->getKey()]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/brands/{$brand->getKey()}?include=tags", [
+        'tag_ids' => [$secondTag->getKey()],
+    ])->assertOk()
+        ->assertJsonPath('tags.0.id', $secondTag->getKey());
+
+    assertDatabaseMissing('taggables', [
+        'tag_id' => $firstTag->getKey(),
+        'taggable_type' => $brand->getMorphClass(),
+        'taggable_id' => $brand->getKey(),
+    ]);
+    assertDatabaseHas('taggables', [
+        'tag_id' => $secondTag->getKey(),
+        'taggable_type' => $brand->getMorphClass(),
+        'taggable_id' => $brand->getKey(),
     ]);
 });
 
@@ -210,4 +266,47 @@ it('updates brand image sort_order without requiring a new upload', function () 
         ->and(data_get($brand->images, '0.sort_order'))->toBe(5)
         ->and(data_get($brand->images, '1.id'))->toBe('cover-image')
         ->and(data_get($brand->images, '1.sort_order'))->toBe(30);
+});
+
+it('includes products count on brands when requested', function () {
+    $brand = Brand::factory()->create(['active' => true]);
+    Product::factory()
+        ->count(2)
+        ->create([
+            'brand_id' => $brand->getKey(),
+            'active' => true,
+            'visible_from' => null,
+            'visible_until' => null,
+        ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/brands?all=1&include=products_count')
+        ->assertOk()
+        ->assertJsonPath('0.id', $brand->getKey())
+        ->assertJsonPath('0.products_count', 2);
+});
+
+it('includes products count on brand show only when requested', function () {
+    $brand = Brand::factory()->create(['active' => true]);
+    Product::factory()
+        ->count(3)
+        ->create([
+            'brand_id' => $brand->getKey(),
+            'active' => true,
+            'visible_from' => null,
+            'visible_until' => null,
+        ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/brands/{$brand->getKey()}")
+        ->assertOk()
+        ->assertJsonMissingPath('products_count');
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/brands/{$brand->getKey()}?include=products_count")
+        ->assertOk()
+        ->assertJsonPath('products_count', 3);
+});
+
+it('rejects unsupported brand includes', function () {
+    getJson(config('venditio.routes.api.v1.prefix') . '/brands?include=unknown')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['include.0']);
 });

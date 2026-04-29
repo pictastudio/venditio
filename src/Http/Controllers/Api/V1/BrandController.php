@@ -24,6 +24,7 @@ class BrandController extends Controller
         $includes = $this->resolveBrandIncludes();
         $filters = request()->except('include');
         $query = query('brand')->with($this->brandRelationsForIncludes($includes));
+        $this->loadBrandProductCountIfRequested($query, $includes);
         $this->applyBrandIndexRelationFilters($query, $filters);
 
         return BrandResource::collection(
@@ -39,7 +40,11 @@ class BrandController extends Controller
         $brand = app(CreateBrand::class)
             ->handle($request->validated());
 
-        return BrandResource::make($brand->refresh()->load($this->brandRelationsForIncludes($includes, true)));
+        $brand = $brand->refresh()->load($this->brandRelationsForIncludes($includes, true));
+
+        $this->loadBrandProductCountIfRequested($brand, $includes);
+
+        return BrandResource::make($brand);
     }
 
     public function show(Brand $brand): JsonResource
@@ -47,7 +52,10 @@ class BrandController extends Controller
         $this->authorizeIfConfigured('view', $brand);
         $includes = $this->resolveBrandIncludes();
 
-        return BrandResource::make($brand->loadMissing($this->brandRelationsForIncludes($includes, true)));
+        $brand->loadMissing($this->brandRelationsForIncludes($includes, true));
+        $this->loadBrandProductCountIfRequested($brand, $includes);
+
+        return BrandResource::make($brand);
     }
 
     public function update(UpdateBrandRequest $request, Brand $brand): JsonResource
@@ -58,7 +66,11 @@ class BrandController extends Controller
         $brand = app(UpdateBrand::class)
             ->handle($brand, $request->validated());
 
-        return BrandResource::make($brand->refresh()->load($this->brandRelationsForIncludes($includes, true)));
+        $brand = $brand->refresh()->load($this->brandRelationsForIncludes($includes, true));
+
+        $this->loadBrandProductCountIfRequested($brand, $includes);
+
+        return BrandResource::make($brand);
     }
 
     public function destroy(Brand $brand)
@@ -81,7 +93,7 @@ class BrandController extends Controller
 
     protected function resolveBrandIncludes(): array
     {
-        return $this->resolveIncludes($this->allowedIncludesWithDiscounts(['tags']));
+        return $this->resolveIncludes($this->allowedIncludesWithDiscounts(['tags', 'products_count']));
     }
 
     protected function brandRelationsForIncludes(array $includes, bool $includeTagsByDefault = false): array
@@ -122,5 +134,20 @@ class BrandController extends Controller
                 fn (Builder $tagsQuery) => $tagsQuery->whereKey($filters['tag_ids'])
             );
         }
+    }
+
+    protected function loadBrandProductCountIfRequested(Builder|Brand $target, array $includes): void
+    {
+        if (!in_array('products_count', $includes, true)) {
+            return;
+        }
+
+        if ($target instanceof Builder) {
+            $target->withCount('products');
+
+            return;
+        }
+
+        $target->loadCount('products');
     }
 }

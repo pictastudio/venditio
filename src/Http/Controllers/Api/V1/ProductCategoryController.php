@@ -32,6 +32,7 @@ class ProductCategoryController extends Controller
         $includes = $this->resolveProductCategoryIncludes();
         unset($filters['as_tree'], $filters['include']);
         $query = query('product_category')->with($this->productCategoryRelationsForIncludes($includes));
+        $this->loadProductCategoryProductCountIfRequested($query, $includes);
         $this->applyProductCategoryIndexRelationFilters($query, $filters);
 
         if ($asTree) {
@@ -66,7 +67,10 @@ class ProductCategoryController extends Controller
         $category = app(CreateProductCategory::class)
             ->handle($request->validated());
 
-        return ProductCategoryResource::make($category->load($this->productCategoryRelationsForIncludes($includes)));
+        $category->load($this->productCategoryRelationsForIncludes($includes));
+        $this->loadProductCategoryProductCountIfRequested($category, $includes);
+
+        return ProductCategoryResource::make($category);
     }
 
     public function show(ProductCategory $productCategory): JsonResource
@@ -74,7 +78,10 @@ class ProductCategoryController extends Controller
         $this->authorizeIfConfigured('view', $productCategory);
         $includes = $this->resolveProductCategoryIncludes();
 
-        return ProductCategoryResource::make($productCategory->load($this->productCategoryRelationsForIncludes($includes)));
+        $productCategory->load($this->productCategoryRelationsForIncludes($includes));
+        $this->loadProductCategoryProductCountIfRequested($productCategory, $includes);
+
+        return ProductCategoryResource::make($productCategory);
     }
 
     public function update(UpdateProductCategoryRequest $request, ProductCategory $productCategory)
@@ -85,7 +92,10 @@ class ProductCategoryController extends Controller
         $category = app(UpdateProductCategory::class)
             ->handle($productCategory, $request->validated());
 
-        return ProductCategoryResource::make($category->load($this->productCategoryRelationsForIncludes($includes)));
+        $category->load($this->productCategoryRelationsForIncludes($includes));
+        $this->loadProductCategoryProductCountIfRequested($category, $includes);
+
+        return ProductCategoryResource::make($category);
     }
 
     public function updateMultiple(UpdateMultipleProductCategoryRequest $request): JsonResource
@@ -144,7 +154,7 @@ class ProductCategoryController extends Controller
 
     protected function resolveProductCategoryIncludes(): array
     {
-        return $this->resolveIncludes($this->allowedIncludesWithDiscounts(['tags']));
+        return $this->resolveIncludes($this->allowedIncludesWithDiscounts(['tags', 'products_count']));
     }
 
     protected function productCategoryRelationsForIncludes(array $includes): array
@@ -185,5 +195,20 @@ class ProductCategoryController extends Controller
                 fn (Builder $tagsQuery) => $tagsQuery->whereKey($filters['tag_ids'])
             );
         }
+    }
+
+    protected function loadProductCategoryProductCountIfRequested(Builder|ProductCategory $target, array $includes): void
+    {
+        if (!in_array('products_count', $includes, true)) {
+            return;
+        }
+
+        if ($target instanceof Builder) {
+            $target->withCount('products');
+
+            return;
+        }
+
+        $target->loadCount('products');
     }
 }

@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\{BelongsToMany, MorphToMany};
 use PictaStudio\Translatable\Contracts\Translatable as TranslatableContract;
 use PictaStudio\Translatable\Translatable;
 use PictaStudio\Venditio\Models\Scopes\{Active, InDateRange};
@@ -40,6 +40,7 @@ class ProductCollection extends Model implements TranslatableContract
             'active' => 'boolean',
             'visible_from' => 'datetime:Y-m-d H:i:s',
             'visible_until' => 'datetime:Y-m-d H:i:s',
+            'metadata' => 'json',
             'images' => 'json',
         ];
     }
@@ -63,6 +64,12 @@ class ProductCollection extends Model implements TranslatableContract
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(resolve_model('product'), 'product_collection_product')
+            ->withTimestamps();
+    }
+
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(resolve_model('tag'), 'taggable', 'taggables')
             ->withTimestamps();
     }
 

@@ -11,7 +11,7 @@ patch {
 }
 
 params:query {
-  ~include: products,discounts,valid_discounts,expired_discounts
+  ~include: products,products_count,tags,discounts,valid_discounts,expired_discounts
 }
 
 params:path {
@@ -28,6 +28,12 @@ body:json {
   {
     "name": "Updated Summer Picks",
     "description": "Updated editorial copy",
+    "metadata": {
+      "seo": {
+        "title": "Updated Summer Picks"
+      }
+    },
+    "tag_ids": [1],
     "active": false
   }
 }
@@ -41,7 +47,7 @@ docs {
   - path: /product_collections/:id-or-slug
 
   query params:
-  - include (string|array): Optional includes: products, discounts, valid_discounts, expired_discounts.
+  - include (string|array): Optional includes: products, products_count, tags, discounts, valid_discounts, expired_discounts.
 
   path params:
   - id-or-slug: Replace with target resource identifier.
@@ -52,6 +58,9 @@ docs {
   - name
   - slug
   - description
+  - metadata (array)
+  - tag_ids (array)
+  - tag_ids.*
   - images (array|nullable)
   - images.*.id
   - images.*.file (file|image)

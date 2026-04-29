@@ -51,7 +51,7 @@ Additional supported filters:
 - `/return_reasons`: `code`, `name`, `description`, `is_active`
 - `/return_requests`: `order_id`, `user_id`, `return_reason_id`, `is_accepted`, `is_verified`
 - `as_tree` boolean on `/product_categories`
-- `/products`: `include_variants` boolean, `exclude_variants` boolean, `brand_ids[]`, `category_ids[]`, `collection_ids[]`, `price`, `price_operator` (`>`, `<`, `>=`, `<=`, `=`)
+- `/products`: `include_variants` boolean, `exclude_variants` boolean, `ids[]`, `brand_ids[]`, `category_ids[]`, `collection_ids[]`, `price`, `price_operator` (`>`, `<`, `>=`, `<=`, `=`)
   - supports `sort_by=price` with `sort_dir=asc|desc`
   - default behavior is controlled by `venditio.product.exclude_variants_from_index` (`true` by default)
   - when both are provided, `exclude_variants` takes precedence
@@ -61,7 +61,7 @@ Include parameters:
 - `/products`: `include=brand,categories,collections,discounts,valid_discounts,expired_discounts,product_type,tax_class,variants,variants_options_table,price_breakdown` (and `price_lists` only when `venditio.price_lists.enabled=true`)
   - `price_breakdown` adds `price_calculated.price_source` and `price_calculated.discounts_applied`, so admin UIs can show which base price source was selected and the ordered automatic discounts applied to the product preview
   - on `GET /products/{product}`, requesting `variants` for a product that is itself a variant exposes the variant set inside the `parent.variants` object
-- `/product_collections`: `include=products,discounts,valid_discounts,expired_discounts`
+- `/product_collections`: `include=products,products_count,tags,discounts,valid_discounts,expired_discounts`
 - `/brands`, `/product_categories`, `/product_types`, `/tags`, `/carts`, `/cart_lines`, `/orders`, `/order_lines`: `include=discounts,valid_discounts,expired_discounts`
   - `discounts` returns all non-deleted discounts scoped to that resource, including inactive, future, currently valid, and expired rows
   - `valid_discounts` returns date-valid active discounts only (`active=true`, `starts_at <= now`, and `ends_at` is null or in the future)
@@ -116,6 +116,10 @@ Credit-note-specific notes:
 - `POST /product_collections`
 - `PATCH /product_collections/{product_collection}`
 - `DELETE /product_collections/{product_collection}`
+
+Product categories and product collections accept a nullable `metadata` object for API-owned structured metadata such as SEO fields.
+
+Products, product categories, product collections, brands, and tags accept `tag_ids` in write payloads where supported; the IDs are synced to the resource through the `taggables` polymorphic association.
 
 Catalog image owners (`product_categories`, `brands`, `product_collections`, and `tags`) expose an `images` array. Each image item contains `id`, `type`, `src`, `alt`, `name`, `mimetype`, and `sort_order`. `type` accepts `thumb`, `cover`, or `null`; only one `thumb` and one `cover` are allowed per resource, while multiple `null` images are allowed and are stored as generic images.
 

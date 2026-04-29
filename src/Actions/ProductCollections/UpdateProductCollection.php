@@ -11,7 +11,9 @@ class UpdateProductCollection
     public function handle(ProductCollection $collection, array $payload): ProductCollection
     {
         $imagesProvided = array_key_exists('images', $payload);
+        $tagIdsProvided = array_key_exists('tag_ids', $payload);
         $images = Arr::pull($payload, 'images');
+        $tagIds = Arr::pull($payload, 'tag_ids', []);
 
         if ($imagesProvided) {
             $currentImages = CatalogImage::normalizeCollection($collection->getAttribute('images'));
@@ -23,6 +25,10 @@ class UpdateProductCollection
         $collection->fill($payload);
         $collection->save();
 
-        return $collection->refresh();
+        if ($tagIdsProvided) {
+            $collection->tags()->sync($tagIds ?? []);
+        }
+
+        return $collection->refresh()->load('tags');
     }
 }

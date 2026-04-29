@@ -11,7 +11,7 @@ post {
 }
 
 params:query {
-  ~include: products,discounts,valid_discounts,expired_discounts
+  ~include: products,products_count,tags,discounts,valid_discounts,expired_discounts
 }
 
 headers {
@@ -24,6 +24,12 @@ body:json {
   {
     "name": "Summer Picks",
     "description": "Editorial collection for summer products",
+    "metadata": {
+      "seo": {
+        "title": "Summer Picks"
+      }
+    },
+    "tag_ids": [1, 2],
     "active": true,
     "visible_from": "2026-06-01 00:00:00",
     "visible_until": "2026-08-31 23:59:59"
@@ -39,7 +45,7 @@ docs {
   - path: /product_collections
 
   query params:
-  - include (string|array): Optional includes: products, discounts, valid_discounts, expired_discounts.
+  - include (string|array): Optional includes: products, products_count, tags, discounts, valid_discounts, expired_discounts.
 
   path params:
   - none
@@ -50,6 +56,9 @@ docs {
   - name
   - slug
   - description
+  - metadata (array)
+  - tag_ids (array)
+  - tag_ids.*
   - images (array|nullable)
   - images.*.id
   - images.*.file (file|image)

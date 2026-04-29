@@ -135,6 +135,12 @@ class ExportController extends Controller
 
     protected function productIndexValidationRules(): array
     {
+        $productModel = app(resolve_model('product'));
+        $productTable = method_exists($productModel, 'getTableName')
+            ? $productModel->getTableName()
+            : $productModel->getTable();
+        $productKeyName = $productModel->getKeyName();
+
         $brandModel = app(resolve_model('brand'));
         $brandTable = method_exists($brandModel, 'getTableName')
             ? $brandModel->getTableName()
@@ -161,6 +167,15 @@ class ExportController extends Controller
             'exclude_variants' => [
                 'sometimes',
                 'boolean',
+            ],
+            'ids' => [
+                'sometimes',
+                'array',
+                'min:1',
+            ],
+            'ids.*' => [
+                'integer',
+                Rule::exists($productTable, $productKeyName),
             ],
             'brand_ids' => [
                 'sometimes',
@@ -203,6 +218,10 @@ class ExportController extends Controller
 
     protected function applyProductIndexRelationFilters(Builder $query, array &$filters): void
     {
+        if (isset($filters['ids']) && is_array($filters['ids'])) {
+            $query->whereKey($filters['ids']);
+        }
+
         if (isset($filters['brand_ids']) && is_array($filters['brand_ids'])) {
             $query->whereIn('brand_id', $filters['brand_ids']);
         }

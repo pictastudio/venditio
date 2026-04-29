@@ -7,6 +7,8 @@ use PictaStudio\Venditio\Support\CatalogImage;
 use PictaStudio\Venditio\Validations\Concerns\InteractsWithTranslatableRules;
 use PictaStudio\Venditio\Validations\Contracts\ProductCollectionValidationRules;
 
+use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
+
 class ProductCollectionValidation implements ProductCollectionValidationRules
 {
     use InteractsWithTranslatableRules;
@@ -17,6 +19,13 @@ class ProductCollectionValidation implements ProductCollectionValidationRules
             'name' => ['sometimes', 'filled', 'string', 'max:255'],
             'slug' => ['sometimes', 'filled', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'metadata' => ['nullable', 'array'],
+            'tag_ids' => ['nullable', 'array'],
+            'tag_ids.*' => [
+                'integer',
+                'distinct',
+                Rule::exists($this->tableFor('tag'), 'id'),
+            ],
             'images' => ['sometimes', 'nullable', 'array'],
             'images.*.id' => ['nullable', 'string', 'max:255'],
             'images.*.file' => ['sometimes', 'file', 'image'],
@@ -42,6 +51,13 @@ class ProductCollectionValidation implements ProductCollectionValidationRules
             'name' => ['sometimes', 'filled', 'string', 'max:255'],
             'slug' => ['sometimes', 'filled', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'metadata' => ['nullable', 'array'],
+            'tag_ids' => ['nullable', 'array'],
+            'tag_ids.*' => [
+                'integer',
+                'distinct',
+                Rule::exists($this->tableFor('tag'), 'id'),
+            ],
             'images' => ['sometimes', 'nullable', 'array'],
             'images.*.id' => ['nullable', 'string', 'max:255'],
             'images.*.file' => ['sometimes', 'file', 'image'],
@@ -59,5 +75,10 @@ class ProductCollectionValidation implements ProductCollectionValidationRules
                 'description' => ['sometimes', 'nullable', 'string'],
             ]),
         ];
+    }
+
+    private function tableFor(string $model): string
+    {
+        return (new (resolve_model($model)))->getTable();
     }
 }

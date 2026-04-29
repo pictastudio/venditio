@@ -4,9 +4,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Product, ProductCollection};
+use PictaStudio\Venditio\Models\{Product, ProductCollection, Tag};
 
-use function Pest\Laravel\{assertDatabaseHas, deleteJson, getJson, patch, patchJson, post, postJson};
+use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, deleteJson, getJson, patch, patchJson, post, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -14,6 +14,7 @@ it('creates a product collection', function () {
     $response = postJson(config('venditio.routes.api.v1.prefix') . '/product_collections', [
         'name' => 'Summer Picks',
         'description' => 'Collection description',
+        'metadata' => ['seo' => ['title' => 'Summer Picks']],
         'active' => true,
         'visible_from' => now()->subDay()->toDateTimeString(),
         'visible_until' => now()->addDay()->toDateTimeString(),
@@ -22,6 +23,7 @@ it('creates a product collection', function () {
             'name' => 'Summer Picks',
             'slug' => 'summer-picks',
             'description' => 'Collection description',
+            'metadata' => ['seo' => ['title' => 'Summer Picks']],
             'active' => true,
         ]);
 
@@ -29,6 +31,7 @@ it('creates a product collection', function () {
 
     assertDatabaseHas('product_collections', [
         'id' => $collectionId,
+        'metadata' => json_encode(['seo' => ['title' => 'Summer Picks']]),
         'active' => true,
     ]);
     assertDatabaseHas('translations', [
@@ -43,6 +46,7 @@ it('creates a product collection', function () {
 it('updates a product collection', function () {
     $collection = ProductCollection::factory()->create([
         'name' => 'Old Collection',
+        'metadata' => ['seo' => ['title' => 'Old title']],
         'active' => true,
         'visible_from' => null,
         'visible_until' => null,
@@ -51,16 +55,19 @@ it('updates a product collection', function () {
     patchJson(config('venditio.routes.api.v1.prefix') . "/product_collections/{$collection->getKey()}", [
         'name' => 'Updated Collection',
         'description' => 'Updated description',
+        'metadata' => ['seo' => ['title' => 'Updated title']],
         'active' => false,
     ])->assertOk()
         ->assertJsonFragment([
             'name' => 'Updated Collection',
             'description' => 'Updated description',
+            'metadata' => ['seo' => ['title' => 'Updated title']],
             'active' => false,
         ]);
 
     assertDatabaseHas('product_collections', [
         'id' => $collection->getKey(),
+        'metadata' => json_encode(['seo' => ['title' => 'Updated title']]),
         'active' => false,
     ]);
     assertDatabaseHas('translations', [
@@ -69,6 +76,63 @@ it('updates a product collection', function () {
         'locale' => app()->getLocale(),
         'attribute' => 'name',
         'value' => 'Updated Collection',
+    ]);
+});
+
+it('stores a product collection with tags', function () {
+    $tag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/product_collections?include=tags', [
+        'name' => 'Tagged collection',
+        'active' => true,
+        'tag_ids' => [$tag->getKey()],
+    ])->assertCreated()
+        ->assertJsonPath('tags.0.id', $tag->getKey());
+
+    assertDatabaseHas('taggables', [
+        'tag_id' => $tag->getKey(),
+        'taggable_type' => (new ProductCollection)->getMorphClass(),
+        'taggable_id' => $response->json('id'),
+    ]);
+});
+
+it('updates product collection tags using sync semantics', function () {
+    $firstTag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $secondTag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $collection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $collection->tags()->sync([$firstTag->getKey()]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/product_collections/{$collection->getKey()}?include=tags", [
+        'tag_ids' => [$secondTag->getKey()],
+    ])->assertOk()
+        ->assertJsonPath('tags.0.id', $secondTag->getKey());
+
+    assertDatabaseMissing('taggables', [
+        'tag_id' => $firstTag->getKey(),
+        'taggable_type' => $collection->getMorphClass(),
+        'taggable_id' => $collection->getKey(),
+    ]);
+    assertDatabaseHas('taggables', [
+        'tag_id' => $secondTag->getKey(),
+        'taggable_type' => $collection->getMorphClass(),
+        'taggable_id' => $collection->getKey(),
     ]);
 });
 
@@ -292,4 +356,51 @@ it('deletes a product collection', function () {
         ->assertNoContent();
 
     expect(ProductCollection::withTrashed()->find($collection->getKey())?->trashed())->toBeTrue();
+});
+
+it('includes products count on product collections when requested', function () {
+    $collection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $products = Product::factory()
+        ->count(2)
+        ->create([
+            'active' => true,
+            'visible_from' => null,
+            'visible_until' => null,
+        ]);
+
+    $collection->products()->sync($products->map->getKey()->all());
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/product_collections?all=1&include=products_count')
+        ->assertOk()
+        ->assertJsonPath('0.id', $collection->getKey())
+        ->assertJsonPath('0.products_count', 2);
+});
+
+it('includes products count on product collection show only when requested', function () {
+    $collection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $products = Product::factory()
+        ->count(3)
+        ->create([
+            'active' => true,
+            'visible_from' => null,
+            'visible_until' => null,
+        ]);
+
+    $collection->products()->sync($products->map->getKey()->all());
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/product_collections/{$collection->getKey()}")
+        ->assertOk()
+        ->assertJsonMissingPath('products_count');
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/product_collections/{$collection->getKey()}?include=products_count")
+        ->assertOk()
+        ->assertJsonPath('products_count', 3);
 });

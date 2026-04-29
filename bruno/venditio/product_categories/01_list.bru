@@ -50,7 +50,7 @@ params:query {
   ~is_active: 1
   ~as_tree: 1
   ~tag_ids[]: 1
-  ~include: tags,discounts,valid_discounts,expired_discounts
+  ~include: tags,products_count,discounts,valid_discounts,expired_discounts
 }
 
 headers {
@@ -107,7 +107,7 @@ docs {
   - is_active (boolean): Alias filter for active state.
   - as_tree (boolean): When true, returns categories as a hierarchical tree.
   - tag_ids[] (integer[]): Match categories assigned to at least one tag in this list.
-  - include (string|array): Optional includes: tags, discounts, valid_discounts, expired_discounts.
+  - include (string|array): Optional includes: tags, products_count, discounts, valid_discounts, expired_discounts.
 
   path params:
   - none
