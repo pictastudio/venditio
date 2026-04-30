@@ -3,12 +3,13 @@
 namespace PictaStudio\Venditio\Http\Requests\V1\ProductCollection;
 
 use Illuminate\Foundation\Http\FormRequest;
-use PictaStudio\Venditio\Http\Requests\V1\Concerns\InteractsWithTranslatableInput;
+use PictaStudio\Venditio\Http\Requests\V1\Concerns\{InteractsWithTranslatableInput, NormalizesMetadataInput};
 use PictaStudio\Venditio\Validations\Contracts\ProductCollectionValidationRules;
 
 class UpdateProductCollectionRequest extends FormRequest
 {
     use InteractsWithTranslatableInput;
+    use NormalizesMetadataInput;
 
     public function authorize(): bool
     {
@@ -22,6 +23,7 @@ class UpdateProductCollectionRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $this->normalizeMetadataInput();
         $this->prepareTranslatableInput();
         $this->prepareTranslatedSlugInput();
     }

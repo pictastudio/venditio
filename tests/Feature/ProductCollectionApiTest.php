@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Storage;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
 use PictaStudio\Venditio\Models\{Product, ProductCollection, Tag};
 
-use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, deleteJson, getJson, patch, patchJson, post, postJson};
+use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, deleteJson, getJson, patch, patchJson, post, postJson, putJson};
 
 uses(RefreshDatabase::class);
 
@@ -76,6 +76,56 @@ it('updates a product collection', function () {
         'locale' => app()->getLocale(),
         'attribute' => 'name',
         'value' => 'Updated Collection',
+    ]);
+});
+
+it('persists seo metadata on full product collection updates and stores empty strings as null', function () {
+    $collection = ProductCollection::factory()->create([
+        'name' => 'Old Collection',
+        'metadata' => null,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $metadata = [
+        'titolo' => 'wefwef',
+        'autore' => '',
+        'descrizione' => 'wefwf',
+        'robots' => '',
+        'open_graph_titolo' => '',
+        'open_graph_url' => '',
+        'open_graph_immagine' => '',
+        'open_graph_tipo' => '',
+        'twitter_card' => '',
+        'twitter_site' => '',
+        'twitter_creator' => '',
+        'twitter_titolo' => '',
+        'twitter_descrizione' => '',
+        'twitter_src' => '',
+    ];
+
+    putJson(config('venditio.routes.api.v1.prefix') . "/product_collections/{$collection->getKey()}?exclude_all_scopes=1", [
+        'id' => $collection->getKey(),
+        'name' => 'refe',
+        'slug' => 'refe',
+        'description' => null,
+        'images' => [],
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+        'created_at' => $collection->created_at?->toJSON(),
+        'metadata' => $metadata,
+    ])->assertOk()
+        ->assertJsonPath('metadata.titolo', 'wefwef')
+        ->assertJsonPath('metadata.autore', null)
+        ->assertJsonPath('metadata.twitter_src', null);
+
+    $expectedMetadata = array_map(fn (string $value): ?string => $value === '' ? null : $value, $metadata);
+
+    assertDatabaseHas('product_collections', [
+        'id' => $collection->getKey(),
+        'metadata' => json_encode($expectedMetadata),
     ]);
 });
 

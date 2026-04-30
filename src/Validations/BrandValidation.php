@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Validations;
 
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Support\CatalogImage;
-use PictaStudio\Venditio\Validations\Concerns\InteractsWithTranslatableRules;
+use PictaStudio\Venditio\Validations\Concerns\{InteractsWithTranslatableRules, ValidatesSeoMetadata};
 use PictaStudio\Venditio\Validations\Contracts\BrandValidationRules;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -12,6 +12,7 @@ use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 class BrandValidation implements BrandValidationRules
 {
     use InteractsWithTranslatableRules;
+    use ValidatesSeoMetadata;
 
     public function getStoreValidationRules(): array
     {
@@ -20,7 +21,7 @@ class BrandValidation implements BrandValidationRules
             'slug' => ['sometimes', 'filled', 'string', 'max:255'],
             'abstract' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
-            'metadata' => ['nullable', 'array'],
+            ...$this->seoMetadataValidationRules(),
             'images' => ['sometimes', 'nullable', 'array'],
             'images.*.id' => ['nullable', 'string', 'max:255'],
             'images.*.file' => ['sometimes', 'file', 'image'],
@@ -55,7 +56,7 @@ class BrandValidation implements BrandValidationRules
             'slug' => ['sometimes', 'filled', 'string', 'max:255'],
             'abstract' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
-            'metadata' => ['nullable', 'array'],
+            ...$this->seoMetadataValidationRules(),
             'images' => ['sometimes', 'nullable', 'array'],
             'images.*.id' => ['nullable', 'string', 'max:255'],
             'images.*.file' => ['sometimes', 'file', 'image'],

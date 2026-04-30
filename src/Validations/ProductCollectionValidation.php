@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Validations;
 
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Support\CatalogImage;
-use PictaStudio\Venditio\Validations\Concerns\InteractsWithTranslatableRules;
+use PictaStudio\Venditio\Validations\Concerns\{InteractsWithTranslatableRules, ValidatesSeoMetadata};
 use PictaStudio\Venditio\Validations\Contracts\ProductCollectionValidationRules;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -12,6 +12,7 @@ use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 class ProductCollectionValidation implements ProductCollectionValidationRules
 {
     use InteractsWithTranslatableRules;
+    use ValidatesSeoMetadata;
 
     public function getStoreValidationRules(): array
     {
@@ -19,7 +20,7 @@ class ProductCollectionValidation implements ProductCollectionValidationRules
             'name' => ['sometimes', 'filled', 'string', 'max:255'],
             'slug' => ['sometimes', 'filled', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'metadata' => ['nullable', 'array'],
+            ...$this->seoMetadataValidationRules(),
             'tag_ids' => ['nullable', 'array'],
             'tag_ids.*' => [
                 'integer',
@@ -51,7 +52,7 @@ class ProductCollectionValidation implements ProductCollectionValidationRules
             'name' => ['sometimes', 'filled', 'string', 'max:255'],
             'slug' => ['sometimes', 'filled', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'metadata' => ['nullable', 'array'],
+            ...$this->seoMetadataValidationRules(),
             'tag_ids' => ['nullable', 'array'],
             'tag_ids.*' => [
                 'integer',

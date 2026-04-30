@@ -4,7 +4,7 @@ namespace PictaStudio\Venditio\Validations;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rule;
-use PictaStudio\Venditio\Validations\Concerns\InteractsWithTranslatableRules;
+use PictaStudio\Venditio\Validations\Concerns\{InteractsWithTranslatableRules, ValidatesSeoMetadata};
 use PictaStudio\Venditio\Validations\Contracts\ProductValidationRules;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
@@ -12,6 +12,7 @@ use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 class ProductValidation implements ProductValidationRules
 {
     use InteractsWithTranslatableRules;
+    use ValidatesSeoMetadata;
 
     public function getStoreValidationRules(): array
     {
@@ -69,7 +70,7 @@ class ProductValidation implements ProductValidationRules
             'width' => ['nullable', 'numeric', 'min:0'],
             'height' => ['nullable', 'numeric', 'min:0'],
             'weight' => ['nullable', 'numeric', 'min:0'],
-            'metadata' => ['nullable', 'array'],
+            ...$this->seoMetadataValidationRules(),
             'category_ids' => ['nullable', 'array'],
             'category_ids.*' => [
                 'integer',
@@ -181,7 +182,7 @@ class ProductValidation implements ProductValidationRules
             'width' => ['nullable', 'numeric', 'min:0'],
             'height' => ['nullable', 'numeric', 'min:0'],
             'weight' => ['nullable', 'numeric', 'min:0'],
-            'metadata' => ['nullable', 'array'],
+            ...$this->seoMetadataValidationRules(),
             'category_ids' => ['nullable', 'array'],
             'category_ids.*' => [
                 'integer',
