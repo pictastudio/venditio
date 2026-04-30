@@ -2,6 +2,28 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.6.1 - 2026-04-30
+
+### v2.6.1 - 2026-04-30
+
+#### What's Changed
+
+##### Fixes
+
+- **SEO metadata normalization across catalog writes** - Brand, product, product category, product collection, and tag write requests now normalize empty-string `metadata` values to `null` before validation and persistence, keeping SEO-style metadata payloads consistent across update flows.
+- **SEO metadata field validation** - Catalog and product metadata payloads now validate the supported SEO fields such as `titolo`, `descrizione`, `open_graph_*`, and `twitter_*`, so invalid nested metadata shapes are rejected consistently instead of being stored unchecked.
+- **Product ids filter rollback** - Removed the temporary `ids[]` filter path from product index and product export handling so the supported API surface matches the documented filters.
+
+##### API & Tooling
+
+- **Docs and Bruno metadata examples** - Updated the API reference and Bruno create/update requests for brands, product categories, product collections, products, and tags to show the supported SEO metadata shape. The docs no longer advertise `ids[]` as a supported `/products` filter.
+
+##### Tests
+
+- Added feature coverage for metadata normalization and SEO metadata validation across catalog resources and products, plus regression coverage for full product collection updates that persist normalized metadata payloads.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.6.0...v2.6.1
+
 ## v2.6.0 - 2026-04-29
 
 ### v2.6.0 - 2026-04-29
