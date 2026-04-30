@@ -102,6 +102,26 @@ class TagValidation implements TagValidationRules
         ];
     }
 
+    public function getBulkUpdateValidationRules(): array
+    {
+        return [
+            'tags' => ['required', 'array', 'min:1'],
+            'tags.*.id' => [
+                'required',
+                'integer',
+                'distinct',
+                Rule::exists($this->tableFor('tag'), 'id'),
+            ],
+            'tags.*.parent_id' => [
+                'present',
+                'nullable',
+                'integer',
+                Rule::exists($this->tableFor('tag'), 'id'),
+            ],
+            'tags.*.sort_order' => ['required', 'integer', 'min:0'],
+        ];
+    }
+
     private function tableFor(string $model): string
     {
         return (new (resolve_model($model)))->getTable();

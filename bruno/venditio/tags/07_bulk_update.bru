@@ -1,0 +1,56 @@
+meta {
+  name: Bulk update tags
+  type: http
+  seq: 17
+}
+
+patch {
+  url: {{baseUrl}}/tags/bulk/update
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Locale: {{locale}}
+}
+
+body:json {
+  {
+    "tags": [
+      {
+        "id": 1,
+        "parent_id": null,
+        "sort_order": 1
+      },
+      {
+        "id": 2,
+        "parent_id": 1,
+        "sort_order": 1
+      }
+    ]
+  }
+}
+
+docs {
+  summary:
+  - Bulk update tags parent_id and sort_order.
+  - Sibling ordering is scoped per parent, so child branches can start sort_order numbering from 1 again.
+
+  endpoint:
+  - method: PATCH
+  - path: /tags/bulk/update
+
+  query params:
+  - none
+
+  path params:
+  - none
+
+  body:
+  - tags (array, required, min: 1)
+  - tags.*.id (integer, required, distinct)
+  - tags.*.parent_id (integer|null, required key)
+  - tags.*.sort_order (integer, required, min: 0)
+}

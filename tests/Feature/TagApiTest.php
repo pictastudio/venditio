@@ -424,3 +424,97 @@ it('orders tags by sort_order within each tree branch', function () {
         ->assertJsonPath('1.children.0.name', 'Root A Child Early')
         ->assertJsonPath('1.children.1.name', 'Root A Child Late');
 });
+
+it('bulk updates tag parent_id and sort_order', function () {
+    $root = Tag::factory()->create([
+        'name' => 'Root',
+        'sort_order' => 1,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $firstChild = Tag::factory()->create([
+        'name' => 'First Child',
+        'parent_id' => $root->getKey(),
+        'sort_order' => 10,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $secondChild = Tag::factory()->create([
+        'name' => 'Second Child',
+        'parent_id' => null,
+        'sort_order' => 20,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/tags/bulk/update', [
+        'tags' => [
+            [
+                'id' => $firstChild->getKey(),
+                'parent_id' => $root->getKey(),
+                'sort_order' => 30,
+            ],
+            [
+                'id' => $secondChild->getKey(),
+                'parent_id' => $root->getKey(),
+                'sort_order' => 5,
+            ],
+        ],
+    ])
+        ->assertOk()
+        ->assertJsonPath('0.id', $firstChild->getKey())
+        ->assertJsonPath('0.sort_order', 30)
+        ->assertJsonPath('1.id', $secondChild->getKey())
+        ->assertJsonPath('1.parent_id', $root->getKey())
+        ->assertJsonPath('1.sort_order', 5);
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/tags?as_tree=1')
+        ->assertOk()
+        ->assertJsonPath('0.name', 'Root')
+        ->assertJsonPath('0.children.0.name', 'Second Child')
+        ->assertJsonPath('0.children.1.name', 'First Child');
+
+    assertDatabaseHas('tags', [
+        'id' => $secondChild->getKey(),
+        'parent_id' => $root->getKey(),
+        'sort_order' => 5,
+    ]);
+});
+
+it('prevents circular references in bulk tag updates', function () {
+    $firstTag = Tag::factory()->create([
+        'sort_order' => 1,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $secondTag = Tag::factory()->create([
+        'parent_id' => $firstTag->getKey(),
+        'sort_order' => 2,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/tags/bulk/update', [
+        'tags' => [
+            [
+                'id' => $firstTag->getKey(),
+                'parent_id' => $secondTag->getKey(),
+                'sort_order' => 10,
+            ],
+            [
+                'id' => $secondTag->getKey(),
+                'parent_id' => $firstTag->getKey(),
+                'sort_order' => 20,
+            ],
+        ],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['tags.0.parent_id', 'tags.1.parent_id']);
+});

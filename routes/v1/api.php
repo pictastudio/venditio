@@ -25,6 +25,7 @@ Route::apiResource('product_categories', ProductCategoryController::class)->only
 Route::delete('product_categories/{productCategory}/images/{imageId}', [ProductCategoryController::class, 'destroyImage'])->name('product_categories.images.destroy');
 Route::apiResource('product_collections', ProductCollectionController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 Route::delete('product_collections/{productCollection}/images/{imageId}', [ProductCollectionController::class, 'destroyImage'])->name('product_collections.images.destroy');
+Route::patch('tags/bulk/update', [TagController::class, 'updateMultiple'])->name('tags.updateMultiple');
 Route::apiResource('tags', TagController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
 Route::delete('tags/{tag}/images/{imageId}', [TagController::class, 'destroyImage'])->name('tags.images.destroy');
 Route::apiResource('product_types', ProductTypeController::class)->only(['index', 'show', 'store', 'update', 'destroy']);

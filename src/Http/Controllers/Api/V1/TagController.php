@@ -4,11 +4,11 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\{Rule, ValidationException};
 use PictaStudio\Venditio\Actions\CatalogImages\DeleteCatalogImage;
-use PictaStudio\Venditio\Actions\Tags\{CreateTag, UpdateTag};
+use PictaStudio\Venditio\Actions\Tags\{CreateTag, UpdateMultipleTags, UpdateTag};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
-use PictaStudio\Venditio\Http\Requests\V1\Tag\{StoreTagRequest, UpdateTagRequest};
+use PictaStudio\Venditio\Http\Requests\V1\Tag\{StoreTagRequest, UpdateMultipleTagRequest, UpdateTagRequest};
 use PictaStudio\Venditio\Http\Resources\V1\TagResource;
 use PictaStudio\Venditio\Models\Tag;
 
@@ -79,6 +79,42 @@ class TagController extends Controller
             ->handle($tag, $request->validated());
 
         return TagResource::make($updatedTag->load($this->tagRelationsForIncludes($includes)));
+    }
+
+    public function updateMultiple(UpdateMultipleTagRequest $request): JsonResource
+    {
+        $validated = $request->validated();
+        $tagIds = collect($validated['tags'])
+            ->pluck('id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->all();
+
+        $tags = query('tag')
+            ->whereKey($tagIds)
+            ->get()
+            ->keyBy(fn (Tag $tag): int => (int) $tag->getKey());
+
+        if ($tags->count() !== count($tagIds)) {
+            $missingIds = collect($tagIds)
+                ->diff($tags->keys())
+                ->values()
+                ->all();
+
+            throw ValidationException::withMessages([
+                'tags' => [
+                    'Some tags are not available for update: ' . implode(', ', $missingIds),
+                ],
+            ]);
+        }
+
+        foreach ($tagIds as $tagId) {
+            $this->authorizeIfConfigured('update', $tags->get($tagId));
+        }
+
+        $updatedTags = app(UpdateMultipleTags::class)
+            ->handle($validated['tags']);
+
+        return TagResource::collection($updatedTags);
     }
 
     public function destroy(Tag $tag): JsonResponse

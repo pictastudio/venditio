@@ -2,4 +2,7 @@
 
 namespace PictaStudio\Venditio\Validations\Contracts;
 
-interface TagValidationRules extends ProvidesValidationRules {}
+interface TagValidationRules extends ProvidesValidationRules
+{
+    public function getBulkUpdateValidationRules(): array;
+}
