@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
+use PictaStudio\Venditio\Enums\{DiscountType, ProductMeasuringUnit, ProductStatus};
 use PictaStudio\Venditio\Models\{Brand, Country, CountryTaxClass, Currency, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductCollection, ProductType, ProductVariant, ProductVariantOption, Tag, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patchJson, postJson};
@@ -150,6 +150,25 @@ it('creates a product and generates sku when omitted', function () {
     assertDatabaseHas('products', [
         'id' => $productId,
         'sku' => config('venditio.product.sku_prefix') . '1',
+    ]);
+});
+
+it('assigns pieces as the default measuring unit when creating a product', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/products', [
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Product with default measuring unit',
+        'sku' => 'DEFAULT-MEASURING-UNIT-001',
+        'status' => ProductStatus::Published,
+    ])->assertCreated()
+        ->assertJsonPath('measuring_unit', ProductMeasuringUnit::Piece->value);
+
+    assertDatabaseHas('products', [
+        'id' => $response->json('id'),
+        'measuring_unit' => ProductMeasuringUnit::Piece->value,
     ]);
 });
 
@@ -1136,80 +1155,83 @@ it('always exposes price_calculated on product payloads', function () {
     getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}")
         ->assertOk()
         ->assertJsonPath('price_calculated.price', 42.5)
-        ->assertJsonPath('price_calculated.price_final', 42.5)
+        ->assertJsonPath('price_calculated.price_final', 51.85)
         ->assertJsonPath('price_calculated.purchase_price', 20)
         ->assertJsonPath('price_calculated.price_includes_tax', false)
+        ->assertJsonPath('price_calculated.tax_rate', 22)
+        ->assertJsonPath('price_calculated.price_final_taxable', 42.5)
+        ->assertJsonPath('price_calculated.price_final_tax', 9.35)
         ->assertJsonMissingPath('price_calculated.price_source')
         ->assertJsonMissingPath('price_calculated.discounts_applied');
 });
 
-// it('uses the country-iso-2 header when calculating product tax', function () {
-//     $taxClass = TaxClass::factory()->create();
-//     $currencyId = Currency::query()->firstOrCreate(
-//         ['code' => 'EUR'],
-//         ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
-//     )->getKey();
+it('uses the country-iso-2 header when calculating product tax', function () {
+    $taxClass = TaxClass::factory()->create();
+    $currencyId = Currency::query()->firstOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'EUR', 'exchange_rate' => 1, 'is_enabled' => true, 'is_default' => false]
+    )->getKey();
 
-//     $italy = Country::query()->create([
-//         'name' => 'Italy',
-//         'iso_2' => 'IT',
-//         'iso_3' => 'ITA',
-//         'phone_code' => '+39',
-//         'currency_id' => $currencyId,
-//         'flag_emoji' => 'it',
-//         'capital' => 'Rome',
-//         'native' => 'Italia',
-//     ]);
+    $italy = Country::query()->create([
+        'name' => 'Italy',
+        'iso_2' => 'IT',
+        'iso_3' => 'ITA',
+        'phone_code' => '+39',
+        'currency_id' => $currencyId,
+        'flag_emoji' => 'it',
+        'capital' => 'Rome',
+        'native' => 'Italia',
+    ]);
 
-//     $germany = Country::query()->create([
-//         'name' => 'Germany',
-//         'iso_2' => 'DE',
-//         'iso_3' => 'DEU',
-//         'phone_code' => '+49',
-//         'currency_id' => $currencyId,
-//         'flag_emoji' => 'de',
-//         'capital' => 'Berlin',
-//         'native' => 'Deutschland',
-//     ]);
+    $germany = Country::query()->create([
+        'name' => 'Germany',
+        'iso_2' => 'DE',
+        'iso_3' => 'DEU',
+        'phone_code' => '+49',
+        'currency_id' => $currencyId,
+        'flag_emoji' => 'de',
+        'capital' => 'Berlin',
+        'native' => 'Deutschland',
+    ]);
 
-//     CountryTaxClass::query()->create([
-//         'country_id' => $italy->getKey(),
-//         'tax_class_id' => $taxClass->getKey(),
-//         'rate' => 22,
-//     ]);
+    CountryTaxClass::query()->create([
+        'country_id' => $italy->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'rate' => 22,
+    ]);
 
-//     CountryTaxClass::query()->create([
-//         'country_id' => $germany->getKey(),
-//         'tax_class_id' => $taxClass->getKey(),
-//         'rate' => 10,
-//     ]);
+    CountryTaxClass::query()->create([
+        'country_id' => $germany->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'rate' => 10,
+    ]);
 
-//     $product = Product::factory()->create([
-//         'tax_class_id' => $taxClass->getKey(),
-//         'active' => true,
-//         'visible_from' => null,
-//         'visible_until' => null,
-//     ]);
+    $product = Product::factory()->create([
+        'tax_class_id' => $taxClass->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
 
-//     $product->inventory()->updateOrCreate([], [
-//         'price' => 100,
-//         'purchase_price' => 20,
-//         'price_includes_tax' => false,
-//     ]);
+    $product->inventory()->updateOrCreate([], [
+        'price' => 100,
+        'purchase_price' => 20,
+        'price_includes_tax' => false,
+    ]);
 
-//     getJson(
-//         config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}",
-//         ['country-iso-2' => 'DE']
-//     )
-//         ->assertOk()
-//         ->assertJsonPath('price_calculated.tax_rate', 10)
-//         ->assertJsonPath('price_calculated.price_taxable', 100)
-//         ->assertJsonPath('price_calculated.price_tax', 10)
-//         ->assertJsonPath('price_calculated.price_total', 110)
-//         ->assertJsonPath('price_calculated.price_final_taxable', 100)
-//         ->assertJsonPath('price_calculated.price_final_tax', 10)
-//         ->assertJsonPath('price_calculated.price_final_total', 110);
-// })->note('this test works when uncommenting the tax rate calculation in the ProductResource class');
+    getJson(
+        config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}",
+        ['country-iso-2' => 'DE']
+    )
+        ->assertOk()
+        ->assertJsonPath('price_calculated.tax_rate', 10)
+        ->assertJsonPath('price_calculated.price_taxable', 100)
+        ->assertJsonPath('price_calculated.price_tax', 10)
+        ->assertJsonPath('price_calculated.price_total', 110)
+        ->assertJsonPath('price_calculated.price_final', 110)
+        ->assertJsonPath('price_calculated.price_final_taxable', 100)
+        ->assertJsonPath('price_calculated.price_final_tax', 10);
+});
 
 it('calculates product price_calculated by applying automatic discounts', function () {
     $product = Product::factory()->create([
@@ -1243,7 +1265,7 @@ it('calculates product price_calculated by applying automatic discounts', functi
     getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}")
         ->assertOk()
         ->assertJsonPath('price_calculated.price', 100)
-        ->assertJsonPath('price_calculated.price_final', 90)
+        ->assertJsonPath('price_calculated.price_final', 109.8)
         ->assertJsonPath('price_calculated.purchase_price', 55)
         ->assertJsonPath('price_calculated.price_includes_tax', false)
         ->assertJsonMissingPath('price_calculated.discounts_applied');
@@ -1375,7 +1397,7 @@ it('includes collection scoped discounts in the product price breakdown', functi
     getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=price_breakdown")
         ->assertOk()
         ->assertJsonPath('price_calculated.price', 100)
-        ->assertJsonPath('price_calculated.price_final', 85)
+        ->assertJsonPath('price_calculated.price_final', 103.7)
         ->assertJsonPath('price_calculated.discounts_applied.0.code', 'COL15-BREAKDOWN')
         ->assertJsonPath('price_calculated.discounts_applied.0.discountable_type', $collection->getMorphClass())
         ->assertJsonPath('price_calculated.discounts_applied.0.discountable_id', $collection->getKey())
@@ -1428,7 +1450,7 @@ it('applies multiple propagated discounts to product price_final', function () {
     getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}")
         ->assertOk()
         ->assertJsonPath('price_calculated.price', 100)
-        ->assertJsonPath('price_calculated.price_final', 45);
+        ->assertJsonPath('price_calculated.price_final', 54.9);
 });
 
 it('stops discount propagation when stop_after_propagation is enabled', function () {
@@ -1475,7 +1497,7 @@ it('stops discount propagation when stop_after_propagation is enabled', function
     getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}")
         ->assertOk()
         ->assertJsonPath('price_calculated.price', 100)
-        ->assertJsonPath('price_calculated.price_final', 50);
+        ->assertJsonPath('price_calculated.price_final', 61);
 });
 
 it('filters products index by tags', function () {

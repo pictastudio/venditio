@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Storage;
 use PictaStudio\Venditio\Enums\ProductStatus;
 use PictaStudio\Venditio\Models\{Brand, Product, ProductCategory, ProductCollection, ProductType, Tag, TaxClass};
 
-use function Pest\Laravel\{assertDatabaseHas, getJson, patchJson, post, postJson};
+use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, deleteJson, getJson, patchJson, post, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -434,6 +434,53 @@ it('includes tags relation on brands api when requested', function () {
     getJson(config('venditio.routes.api.v1.prefix') . '/brands/' . $brand->getKey() . '?include=tags')
         ->assertOk()
         ->assertJsonPath('tags.0.id', $tag->getKey());
+});
+
+it('deletes a tag while clearing polymorphic associations and child parent links', function () {
+    $parent = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $child = Tag::factory()->create([
+        'parent_id' => $parent->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $relatedTag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $product = Product::factory()->create([
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->tags()->sync([$parent->getKey()]);
+    $child->tags()->sync([$parent->getKey()]);
+    $parent->tags()->sync([$relatedTag->getKey()]);
+
+    deleteJson(config('venditio.routes.api.v1.prefix') . '/tags/' . $parent->getKey())
+        ->assertNoContent();
+
+    assertDatabaseHas('tags', [
+        'id' => $parent->getKey(),
+    ]);
+    assertDatabaseHas('tags', [
+        'id' => $child->getKey(),
+        'parent_id' => null,
+    ]);
+    assertDatabaseMissing('taggables', [
+        'tag_id' => $parent->getKey(),
+    ]);
+    assertDatabaseMissing('taggables', [
+        'taggable_type' => $parent->getMorphClass(),
+        'taggable_id' => $parent->getKey(),
+    ]);
 });
 
 it('orders tags by sort_order within each tree branch', function () {

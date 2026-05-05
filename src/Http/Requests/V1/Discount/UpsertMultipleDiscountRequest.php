@@ -108,7 +108,17 @@ class UpsertMultipleDiscountRequest extends FormRequest
                     : null;
 
                 foreach (['starts_at', 'ends_at'] as $attribute) {
-                    if (!array_key_exists($attribute, $discountPayload) || blank($discountPayload[$attribute])) {
+                    if (!array_key_exists($attribute, $discountPayload)) {
+                        continue;
+                    }
+
+                    if ($attribute === 'starts_at' && $discountPayload[$attribute] === null) {
+                        $discountPayload[$attribute] = Date::now();
+
+                        continue;
+                    }
+
+                    if (blank($discountPayload[$attribute])) {
                         continue;
                     }
 

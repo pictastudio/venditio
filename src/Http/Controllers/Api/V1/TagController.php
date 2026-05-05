@@ -2,8 +2,9 @@
 
 namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\{JsonResponse, Response};
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\{Rule, ValidationException};
 use PictaStudio\Venditio\Actions\CatalogImages\DeleteCatalogImage;
 use PictaStudio\Venditio\Actions\Tags\{CreateTag, UpdateMultipleTags, UpdateTag};
@@ -117,11 +118,29 @@ class TagController extends Controller
         return TagResource::collection($updatedTags);
     }
 
-    public function destroy(Tag $tag): JsonResponse
+    public function destroy(Tag $tag): Response
     {
         $this->authorizeIfConfigured('delete', $tag);
 
-        $tag->delete();
+        DB::transaction(function () use ($tag): void {
+            $tagKey = $tag->getKey();
+            $tagMorphClass = $tag->getMorphClass();
+
+            DB::table('taggables')
+                ->where('tag_id', $tagKey)
+                ->orWhere(function ($query) use ($tagKey, $tagMorphClass): void {
+                    $query->where('taggable_type', $tagMorphClass)
+                        ->where('taggable_id', $tagKey);
+                })
+                ->delete();
+
+            query('tag')
+                ->withoutGlobalScopes()
+                ->where('parent_id', $tagKey)
+                ->update(['parent_id' => null]);
+
+            $tag->delete();
+        });
 
         return response()->noContent();
     }

@@ -273,6 +273,7 @@ return [
     'product' => [
         'status_enum' => Enums\ProductStatus::class,
         'measuring_unit_enum' => Enums\ProductMeasuringUnit::class,
+        'default_measuring_unit' => env('VENDITIO_PRODUCT_DEFAULT_MEASURING_UNIT', Enums\ProductMeasuringUnit::Piece->value),
         'sku_generator' => Generators\ProductSkuGenerator::class,
         'sku_prefix' => env('VENDITIO_PRODUCT_SKU_PREFIX', 'SW-'),
         'sku_counter_padding' => (int) env('VENDITIO_PRODUCT_SKU_COUNTER_PADDING', 0),
@@ -292,6 +293,19 @@ return [
         'images' => [
             'delete_files_from_filesystem' => env('VENDITIO_CATALOG_IMAGE_DELETE_FILES_FROM_FILESYSTEM', true),
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Taxes
+    |--------------------------------------------------------------------------
+    |
+    | Default tax rate used for API price previews when no country-specific
+    | tax-class rate is configured. Defaults to the Italian standard VAT rate.
+    |
+    */
+    'taxes' => [
+        'default_rate' => (float) env('VENDITIO_TAXES_DEFAULT_RATE', 22),
     ],
 
     /*

@@ -27,6 +27,10 @@ class CreateProduct
             $payload['sku'] = $this->productSkuGenerator->forProductPayload($payload);
         }
 
+        if (blank($payload['measuring_unit'] ?? null)) {
+            $payload['measuring_unit'] = config('venditio.product.default_measuring_unit');
+        }
+
         if (blank($payload['product_type_id'] ?? null)) {
             $defaultProductType = resolve_model('product_type')::withoutGlobalScope(Active::class)
                 ->where('is_default', true)

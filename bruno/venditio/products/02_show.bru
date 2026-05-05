@@ -43,6 +43,7 @@ docs {
   - exclude_all_scopes (boolean): Skip all global scopes for this request.
   - exclude_active_scope (boolean): Skip only the active global scope when available.
   - exclude_date_range_scope (boolean): Skip only the date range global scope when available.
+  - Note: price_calculated.price_final includes tax when the selected price does not include tax, using the country header rate or configured default tax rate.
 
   path params:
   - id-or-slug: Replace with target resource identifier.

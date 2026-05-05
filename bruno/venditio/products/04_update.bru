@@ -11,7 +11,7 @@ patch {
 }
 
 params:query {
-  ~include: variants,variants_options_table,brand,categories,collections,discounts,valid_discounts,expired_discounts,tags,product_type,tax_class,price_lists
+  ~include: variants,variants_options_table,brand,categories,collections,discounts,valid_discounts,expired_discounts,tags,product_type,tax_class,price_lists,price_breakdown
 }
 
 params:path {
@@ -67,7 +67,7 @@ docs {
   - path: /products/:id-or-slug
 
   query params:
-  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, collections, discounts, valid_discounts, expired_discounts, tags, product_type, tax_class, price_lists (if enabled).
+  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, collections, discounts, valid_discounts, expired_discounts, tags, product_type, tax_class, price_breakdown, price_lists (if enabled).
 
   path params:
   - id-or-slug: Replace with target resource identifier.
@@ -132,6 +132,7 @@ docs {
   - inventory.price
   - inventory.price_includes_tax
   - inventory.purchase_price
+  - Note: price_calculated.price_final includes tax when the selected price does not include tax, using the country header rate or configured default tax rate.
   - {locale}.name / name:{locale}
   - {locale}.slug / slug:{locale}
   - {locale}.description / description:{locale}

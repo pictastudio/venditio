@@ -100,25 +100,21 @@ class ProductResource extends JsonResource
         $baseUnitPrice = (float) ($resolved['unit_price'] ?? 0);
         $pricingPreview = $this->resolvePricingPreview($resolved, $request);
         $priceIncludesTax = (bool) ($resolved['price_includes_tax'] ?? false);
-        // $taxRate = app(ResolveTaxRate::class)->handle(
-        //     $this->resource->getAttribute('tax_class_id'),
-        //     countryIso2: $this->resolveCountryIso2Header($request),
-        // );
-        // $baseTaxBreakdown = $this->resolveTaxBreakdown($baseUnitPrice, $taxRate, $priceIncludesTax);
-        // $finalTaxBreakdown = $this->resolveTaxBreakdown($calculatedPriceFinal, $taxRate, $priceIncludesTax);
+        $taxRate = $this->resolveTaxRate($request);
+        $baseTaxBreakdown = $this->resolveTaxBreakdown($baseUnitPrice, $taxRate, $priceIncludesTax);
+        $finalTaxBreakdown = $this->resolveTaxBreakdown($pricingPreview['price_final'], $taxRate, $priceIncludesTax);
 
         $priceCalculated = [
             'price' => $baseUnitPrice,
-            'price_final' => $pricingPreview['price_final'],
+            'price_final' => $finalTaxBreakdown['total'],
             'purchase_price' => isset($resolved['purchase_price']) ? (float) $resolved['purchase_price'] : null,
             'price_includes_tax' => $priceIncludesTax,
-            // 'tax_rate' => $taxRate,
-            // 'price_taxable' => $baseTaxBreakdown['taxable'],
-            // 'price_tax' => $baseTaxBreakdown['tax'],
-            // 'price_total' => $baseTaxBreakdown['total'],
-            // 'price_final_taxable' => $finalTaxBreakdown['taxable'],
-            // 'price_final_tax' => $finalTaxBreakdown['tax'],
-            // 'price_final_total' => $finalTaxBreakdown['total'],
+            'tax_rate' => $taxRate,
+            'price_taxable' => $baseTaxBreakdown['taxable'],
+            'price_tax' => $baseTaxBreakdown['tax'],
+            'price_total' => $baseTaxBreakdown['total'],
+            'price_final_taxable' => $finalTaxBreakdown['taxable'],
+            'price_final_tax' => $finalTaxBreakdown['tax'],
             'price_list' => $resolved['price_list'] ?? null,
         ];
 
@@ -250,7 +246,8 @@ class ProductResource extends JsonResource
 
         $images = $this->resource->variants
             ->filter(fn ($variant): bool => (string) $variant->parent_id === (string) $productId)
-            ->filter(fn ($variant): bool => $variant->relationLoaded('variantOptions')
+            ->filter(
+                fn ($variant): bool => $variant->relationLoaded('variantOptions')
                 && $variant->variantOptions->contains(fn ($variantOption): bool => (
                     (string) $variantOption->getKey() === (string) $option->getKey()
                 ))
@@ -259,7 +256,8 @@ class ProductResource extends JsonResource
                 $variant->getAttribute('images'),
                 isImage: true
             ))
-            ->filter(fn (array $image): bool => (bool) Arr::get($image, 'shared_from_variant_option', false)
+            ->filter(
+                fn (array $image): bool => (bool) Arr::get($image, 'shared_from_variant_option', false)
                 && str_contains((string) Arr::get($image, 'src'), $pathFragment)
             )
             ->unique(fn (array $image): string => (string) Arr::get($image, 'src'))
@@ -295,6 +293,20 @@ class ProductResource extends JsonResource
         return is_string($countryIso2) && filled($countryIso2)
             ? $countryIso2
             : null;
+    }
+
+    private function resolveTaxRate(Request $request): float
+    {
+        $taxRate = app(ResolveTaxRate::class)->handle(
+            $this->resource->getAttribute('tax_class_id'),
+            countryIso2: $this->resolveCountryIso2Header($request),
+        );
+
+        if ($taxRate > 0) {
+            return $taxRate;
+        }
+
+        return (float) config('venditio.taxes.default_rate', 22);
     }
 
     /**

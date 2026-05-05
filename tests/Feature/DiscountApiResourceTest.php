@@ -189,6 +189,74 @@ it('sets starts_at to the current date when updating a discount with a null star
     }
 });
 
+it('sets starts_at to the current date when bulk updating a discount with a null starts_at', function () {
+    $currentDate = Date::parse('2026-04-21 12:34:56');
+    $discount = Discount::factory()->create([
+        'starts_at' => Date::parse('2026-04-18 08:00:00'),
+        'ends_at' => Date::parse('2026-04-30 08:00:00'),
+    ]);
+
+    Date::setTestNow($currentDate);
+
+    try {
+        $prefix = config('venditio.routes.api.v1.prefix');
+
+        postJson($prefix . '/discounts/bulk/upsert', [
+            'discounts' => [
+                [
+                    'id' => $discount->getKey(),
+                    'starts_at' => null,
+                ],
+            ],
+        ])->assertOk()
+            ->assertJsonPath('0.id', $discount->getKey())
+            ->assertJsonPath('0.starts_at', $currentDate->toDateTimeString());
+
+        assertDatabaseHas('discounts', [
+            'id' => $discount->getKey(),
+            'starts_at' => $currentDate->toDateTimeString(),
+        ]);
+    } finally {
+        Date::setTestNow();
+    }
+});
+
+it('sets starts_at to the current date when bulk creating a discount with a null starts_at', function () {
+    $currentDate = Date::parse('2026-04-21 12:34:56');
+    $product = Product::factory()->create([
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => now()->subDay(),
+        'visible_until' => now()->addDay(),
+    ]);
+
+    Date::setTestNow($currentDate);
+
+    try {
+        $prefix = config('venditio.routes.api.v1.prefix');
+
+        $response = postJson($prefix . '/discounts/bulk/upsert', [
+            'discounts' => [
+                [
+                    'discountable_type' => 'product',
+                    'discountable_id' => $product->getKey(),
+                    'type' => DiscountType::Percentage->value,
+                    'value' => 10,
+                    'starts_at' => null,
+                ],
+            ],
+        ])->assertOk()
+            ->assertJsonPath('0.starts_at', $currentDate->toDateTimeString());
+
+        assertDatabaseHas('discounts', [
+            'id' => $response->json('0.id'),
+            'starts_at' => $currentDate->toDateTimeString(),
+        ]);
+    } finally {
+        Date::setTestNow();
+    }
+});
+
 it('filters discount index by general discounts', function () {
     $generalDiscount = Discount::factory()->create([
         'discountable_type' => null,
