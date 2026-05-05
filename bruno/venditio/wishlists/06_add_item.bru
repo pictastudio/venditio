@@ -1,0 +1,52 @@
+meta {
+  name: Add wishlist item
+  type: http
+  seq: 96
+}
+
+post {
+  url: {{baseUrl}}/wishlists/:id-or-slug/items
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~include: product
+}
+
+params:path {
+  id-or-slug: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "product_id": 1,
+    "notes": "Buy on sale",
+    "sort_order": 10
+  }
+}
+
+docs {
+  summary:
+  - Add wishlist item
+
+  endpoint:
+  - method: POST
+  - path: /wishlists/:id-or-slug/items
+
+  query params:
+  - include (string|array): Optional includes: product.
+
+  path params:
+  - id-or-slug: Replace with target wishlist identifier.
+
+  body:
+  - product_id
+  - notes
+  - sort_order
+}

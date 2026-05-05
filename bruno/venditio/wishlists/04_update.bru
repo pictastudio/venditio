@@ -1,0 +1,60 @@
+meta {
+  name: Update wishlists
+  type: http
+  seq: 94
+}
+
+patch {
+  url: {{baseUrl}}/wishlists/:id-or-slug
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~include: user,items,items.product,products,products_count
+}
+
+params:path {
+  id-or-slug: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Updated wishlist",
+    "description": "Updated note",
+    "is_default": true,
+    "product_ids": [2, 3]
+  }
+}
+
+docs {
+  summary:
+  - Update wishlists
+
+  endpoint:
+  - method: PATCH
+  - path: /wishlists/:id-or-slug
+
+  query params:
+  - include (string|array): Optional includes: user, items, items.product, products, products_count.
+
+  path params:
+  - id-or-slug: Replace with target wishlist identifier.
+
+  body:
+  - JSON payload.
+  - Available fields:
+  - user_id
+  - name
+  - slug
+  - description
+  - is_default
+  - metadata (array)
+  - product_ids (array, sync semantics when present)
+  - product_ids.*
+}

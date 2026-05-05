@@ -84,6 +84,12 @@ class Tag extends Model implements TranslatableContract
             ->withTimestamps();
     }
 
+    public function productCollections(): MorphToMany
+    {
+        return $this->morphedByMany(resolve_model('product_collection'), 'taggable', 'taggables')
+            ->withTimestamps();
+    }
+
     public function tags(): MorphToMany
     {
         return $this->morphToMany(resolve_model('tag'), 'taggable', 'taggables')

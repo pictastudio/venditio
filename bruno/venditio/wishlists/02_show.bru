@@ -1,0 +1,42 @@
+meta {
+  name: Show wishlists
+  type: http
+  seq: 92
+}
+
+get {
+  url: {{baseUrl}}/wishlists/:id-or-slug
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~include: user,items,items.product,products,products_count
+}
+
+params:path {
+  id-or-slug: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Show wishlists
+
+  endpoint:
+  - method: GET
+  - path: /wishlists/:id-or-slug
+
+  query params:
+  - include (string|array): Optional includes: user, items, items.product, products, products_count.
+
+  path params:
+  - id-or-slug: Replace with target wishlist identifier.
+
+  body:
+  - none
+}

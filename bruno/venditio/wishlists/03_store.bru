@@ -1,0 +1,60 @@
+meta {
+  name: Store wishlists
+  type: http
+  seq: 93
+}
+
+post {
+  url: {{baseUrl}}/wishlists
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~include: user,items,items.product,products,products_count
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "user_id": 1,
+    "name": "Birthday ideas",
+    "description": "Products to buy later",
+    "is_default": true,
+    "metadata": {
+      "channel": "api"
+    },
+    "product_ids": [1, 2]
+  }
+}
+
+docs {
+  summary:
+  - Store wishlists
+
+  endpoint:
+  - method: POST
+  - path: /wishlists
+
+  query params:
+  - include (string|array): Optional includes: user, items, items.product, products, products_count.
+
+  path params:
+  - none
+
+  body:
+  - JSON payload.
+  - Available fields:
+  - user_id
+  - name
+  - slug
+  - description
+  - is_default
+  - metadata (array)
+  - product_ids (array)
+  - product_ids.*
+}

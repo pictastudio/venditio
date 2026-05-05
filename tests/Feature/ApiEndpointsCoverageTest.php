@@ -37,6 +37,7 @@ it('registers index endpoints for all exposed models', function () {
         '/shipping_statuses',
         '/shipping_zones',
         '/free_gifts',
+        '/wishlists',
         '/discounts',
         '/discount_applications',
         '/product_custom_fields',

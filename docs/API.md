@@ -41,6 +41,7 @@ Most index endpoints support:
 Additional supported filters:
 
 - `user_id` on `/carts`
+- `user_id` on `/wishlists`
 - `country_id` on `/regions`
 - `region_id` on `/provinces`
 - `province_id` on `/municipalities`
@@ -62,6 +63,7 @@ Include parameters:
   - `price_breakdown` adds `price_calculated.price_source` and `price_calculated.discounts_applied`, so admin UIs can show which base price source was selected and the ordered automatic discounts applied to the product preview
   - on `GET /products/{product}`, requesting `variants` for a product that is itself a variant exposes the variant set inside the `parent.variants` object
 - `/product_collections`: `include=products,products_count,tags,discounts,valid_discounts,expired_discounts`
+- `/wishlists`: `include=user,items,items.product,products,products_count`
 - `/brands`, `/product_categories`, `/product_types`, `/tags`, `/carts`, `/cart_lines`, `/orders`, `/order_lines`: `include=discounts,valid_discounts,expired_discounts`
   - `discounts` returns all non-deleted discounts scoped to that resource, including inactive, future, currently valid, and expired rows
   - `valid_discounts` returns date-valid active discounts only (`active=true`, `starts_at <= now`, and `ends_at` is null or in the future)
@@ -198,6 +200,19 @@ Catalog image owners (`product_categories`, `brands`, `product_collections`, and
 - `POST /cart_lines`
 - `PATCH /cart_lines/{cart_line}`
 - `DELETE /cart_lines/{cart_line}`
+
+### Wishlists
+
+- `GET /wishlists`
+- `GET /wishlists/{wishlist}`
+- `POST /wishlists`
+- `PATCH /wishlists/{wishlist}`
+- `DELETE /wishlists/{wishlist}`
+- `POST /wishlists/{wishlist}/items`
+- `PATCH /wishlists/{wishlist}/items/{wishlist_item}`
+- `DELETE /wishlists/{wishlist}/items/{wishlist_item}`
+
+Wishlists are named, user-owned product lists. Create and update payloads accept `product_ids`; when present on update, that array syncs the wishlist products. Item endpoints manage one product entry at a time and accept optional `notes` and `sort_order`.
 
 ### Orders
 

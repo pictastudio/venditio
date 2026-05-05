@@ -137,7 +137,14 @@ class TagController extends Controller
 
     protected function resolveTagIncludes(): array
     {
-        return $this->resolveIncludes($this->allowedIncludesWithDiscounts(['product_type']));
+        return $this->resolveIncludes($this->allowedIncludesWithDiscounts([
+            'product_type',
+            'products',
+            'brands',
+            'product_categories',
+            'product_collections',
+            'tags',
+        ]));
     }
 
     protected function tagRelationsForIncludes(array $includes): array
@@ -146,6 +153,26 @@ class TagController extends Controller
 
         if (in_array('product_type', $includes, true)) {
             $relations[] = 'productType';
+        }
+
+        if (in_array('products', $includes, true)) {
+            $relations[] = 'products';
+        }
+
+        if (in_array('brands', $includes, true)) {
+            $relations[] = 'brands';
+        }
+
+        if (in_array('product_categories', $includes, true)) {
+            $relations[] = 'productCategories';
+        }
+
+        if (in_array('product_collections', $includes, true)) {
+            $relations[] = 'productCollections';
+        }
+
+        if (in_array('tags', $includes, true)) {
+            $relations[] = 'tags';
         }
 
         return [

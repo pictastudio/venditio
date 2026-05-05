@@ -2,6 +2,31 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.7.0 - 2026-04-30
+
+### What's Changed
+
+#### Features
+
+- **Wishlist API** - Added full wishlist support with `GET /wishlists`, `GET /wishlists/{wishlist}`, `POST /wishlists`, `PATCH /wishlists/{wishlist}`, and `DELETE /wishlists/{wishlist}`, plus item-level endpoints to add, update, and remove wishlist products. Wishlists are user-owned, support `product_ids` sync semantics, optional metadata, `include=user,items,items.product,products,products_count`, `user_id` filtering, default-list enforcement per user, and dedicated wishlist lifecycle events.
+- **Bulk tag updates** - Added `PATCH /tags/bulk/update` so host apps can reorder tag trees and update `parent_id` / `sort_order` for multiple tags in one request.
+- **Expanded tag associations** - Tag create/update payloads now accept `product_ids`, `brand_ids`, `product_category_ids`, `product_collection_ids`, and `tag_ids`, with matching includes for `products`, `brands`, `product_categories`, `product_collections`, and `tags`. Product-type compatibility is enforced when attaching products to a typed tag.
+
+#### Fixes
+
+- **SEO metadata normalization and validation** - Brand, product, product category, product collection, and tag write requests now normalize empty-string SEO metadata values to `null` and validate the supported metadata keys consistently before persistence.
+- **Product ids filter rollback** - Removed the temporary `ids[]` filter path from product index and product export handling so the supported API surface matches the documented filters.
+
+#### API & Tooling
+
+- **Docs, config, and Bruno examples** - Expanded the API reference, DBML schema, configuration, and Bruno requests to document the new wishlist surface, bulk tag update endpoint, expanded tag association payloads/includes, and the supported SEO metadata shape for catalog resources and products.
+
+#### Tests
+
+- Added feature coverage for wishlist CRUD/item flows and policy gating, bulk tag updates, expanded tag associations and includes, product-type compatibility checks for tagged products, and SEO metadata normalization/validation.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.6.1...v2.7.0
+
 ## v2.6.1 - 2026-04-30
 
 ### What's Changed

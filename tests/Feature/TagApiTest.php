@@ -4,7 +4,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use PictaStudio\Venditio\Enums\ProductStatus;
-use PictaStudio\Venditio\Models\{Brand, Product, ProductCategory, ProductType, Tag, TaxClass};
+use PictaStudio\Venditio\Models\{Brand, Product, ProductCategory, ProductCollection, ProductType, Tag, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, getJson, patchJson, post, postJson};
 
@@ -277,7 +277,7 @@ it('propagates updated product_type_id from parent to children', function () {
     ]);
 });
 
-it('associates tags polymorphically to products, brands, product categories, and tags', function () {
+it('associates tags polymorphically to products, brands, product categories, product collections, and tags', function () {
     $taxClass = TaxClass::factory()->create();
 
     $tag = Tag::factory()->create([
@@ -306,6 +306,11 @@ it('associates tags polymorphically to products, brands, product categories, and
         'visible_from' => null,
         'visible_until' => null,
     ]);
+    $productCollection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
 
     patchJson(config('venditio.routes.api.v1.prefix') . '/products/' . $product->getKey(), [
         'tag_ids' => [$tag->getKey()],
@@ -316,6 +321,10 @@ it('associates tags polymorphically to products, brands, product categories, and
     ])->assertOk();
 
     patchJson(config('venditio.routes.api.v1.prefix') . '/product_categories/' . $productCategory->getKey(), [
+        'tag_ids' => [$tag->getKey()],
+    ])->assertOk();
+
+    patchJson(config('venditio.routes.api.v1.prefix') . '/product_collections/' . $productCollection->getKey(), [
         'tag_ids' => [$tag->getKey()],
     ])->assertOk();
 
@@ -343,8 +352,73 @@ it('associates tags polymorphically to products, brands, product categories, and
 
     assertDatabaseHas('taggables', [
         'tag_id' => $tag->getKey(),
+        'taggable_type' => $productCollection->getMorphClass(),
+        'taggable_id' => $productCollection->getKey(),
+    ]);
+
+    assertDatabaseHas('taggables', [
+        'tag_id' => $tag->getKey(),
         'taggable_type' => $taggableTag->getMorphClass(),
         'taggable_id' => $taggableTag->getKey(),
+    ]);
+});
+
+it('syncs tag associations to products brands categories and collections from the tag api', function () {
+    $taxClass = TaxClass::factory()->create();
+    $product = Product::factory()->create([
+        'tax_class_id' => $taxClass->getKey(),
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $brand = Brand::factory()->create();
+    $productCategory = ProductCategory::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $productCollection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = postJson(
+        config('venditio.routes.api.v1.prefix') . '/tags?include=products,brands,product_categories,product_collections',
+        [
+            'name' => 'Cross linked tag',
+            'sort_order' => 1,
+            'product_ids' => [$product->getKey()],
+            'brand_ids' => [$brand->getKey()],
+            'product_category_ids' => [$productCategory->getKey()],
+            'product_collection_ids' => [$productCollection->getKey()],
+        ]
+    )->assertCreated()
+        ->assertJsonPath('products.0.id', $product->getKey())
+        ->assertJsonPath('brands.0.id', $brand->getKey())
+        ->assertJsonPath('product_categories.0.id', $productCategory->getKey())
+        ->assertJsonPath('product_collections.0.id', $productCollection->getKey());
+
+    assertDatabaseHas('taggables', [
+        'tag_id' => $response->json('id'),
+        'taggable_type' => $product->getMorphClass(),
+        'taggable_id' => $product->getKey(),
+    ]);
+    assertDatabaseHas('taggables', [
+        'tag_id' => $response->json('id'),
+        'taggable_type' => $brand->getMorphClass(),
+        'taggable_id' => $brand->getKey(),
+    ]);
+    assertDatabaseHas('taggables', [
+        'tag_id' => $response->json('id'),
+        'taggable_type' => $productCategory->getMorphClass(),
+        'taggable_id' => $productCategory->getKey(),
+    ]);
+    assertDatabaseHas('taggables', [
+        'tag_id' => $response->json('id'),
+        'taggable_type' => $productCollection->getMorphClass(),
+        'taggable_id' => $productCollection->getKey(),
     ]);
 });
 

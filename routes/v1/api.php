@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CreditNoteController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, FreeGiftController, InventoryController, InvoiceController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductCollectionController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ReturnReasonController, ReturnRequestController, ShippingMethodController, ShippingMethodZoneController, ShippingStatusController, ShippingZoneController, TagController, TaxClassController};
+use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandController, CartController, CartLineController, CountryController, CountryTaxClassController, CreditNoteController, CurrencyController, DiscountApplicationController, DiscountController, ExportController, FreeGiftController, InventoryController, InvoiceController, MunicipalityController, OrderController, OrderLineController, PriceListController, PriceListPriceController, ProductCategoryController, ProductCollectionController, ProductController, ProductCustomFieldController, ProductTypeController, ProductVariantController, ProductVariantOptionController, ProvinceController, RegionController, ReturnReasonController, ReturnRequestController, ShippingMethodController, ShippingMethodZoneController, ShippingStatusController, ShippingZoneController, TagController, TaxClassController, WishlistController};
 
 /*
 |--------------------------------------------------------------------------
@@ -70,6 +70,10 @@ Route::apiResource('shipping_method_zones', ShippingMethodZoneController::class)
 Route::apiResource('shipping_statuses', ShippingStatusController::class);
 Route::apiResource('shipping_zones', ShippingZoneController::class);
 Route::apiResource('free_gifts', FreeGiftController::class);
+Route::post('wishlists/{wishlist}/items', [WishlistController::class, 'storeItem'])->name('wishlists.items.store');
+Route::patch('wishlists/{wishlist}/items/{wishlist_item}', [WishlistController::class, 'updateItem'])->name('wishlists.items.update');
+Route::delete('wishlists/{wishlist}/items/{wishlist_item}', [WishlistController::class, 'destroyItem'])->name('wishlists.items.destroy');
+Route::apiResource('wishlists', WishlistController::class);
 Route::post('discounts/bulk/upsert', [DiscountController::class, 'upsertMultiple'])->name('discounts.upsertMultiple');
 Route::apiResource('discounts', DiscountController::class);
 Route::apiResource('discount_applications', DiscountApplicationController::class);

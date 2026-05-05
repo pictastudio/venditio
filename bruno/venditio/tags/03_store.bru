@@ -11,7 +11,7 @@ post {
 }
 
 params:query {
-  ~include: product_type,discounts,valid_discounts,expired_discounts
+  ~include: product_type,products,brands,product_categories,product_collections,tags,discounts,valid_discounts,expired_discounts
 }
 
 headers {
@@ -45,6 +45,10 @@ body:json {
     "show_in_menu": true,
     "in_evidence": false,
     "sort_order": 1,
+    "product_ids": [1],
+    "brand_ids": [1],
+    "product_category_ids": [1],
+    "product_collection_ids": [1],
     "tag_ids": [2]
   }
 }
@@ -58,7 +62,7 @@ docs {
   - path: /tags
 
   query params:
-  - include (string|array): Optional includes: product_type, discounts, valid_discounts, expired_discounts.
+  - include (string|array): Optional includes: product_type, products, brands, product_categories, product_collections, tags, discounts, valid_discounts, expired_discounts.
 
   path params:
   - none
@@ -87,6 +91,14 @@ docs {
   - sort_order
   - visible_from
   - visible_until
+  - product_ids (array): polymorphic link to products.
+  - product_ids.*
+  - brand_ids (array): polymorphic link to brands.
+  - brand_ids.*
+  - product_category_ids (array): polymorphic link to product categories.
+  - product_category_ids.*
+  - product_collection_ids (array): polymorphic link to product collections.
+  - product_collection_ids.*
   - tag_ids (array): polymorphic link to child tags.
   - tag_ids.*
   - {locale}.name / name:{locale}

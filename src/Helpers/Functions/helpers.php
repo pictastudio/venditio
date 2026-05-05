@@ -19,7 +19,7 @@ if (!function_exists('resolve_model')) {
      *                         'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
      *                         'product_variant', 'product_variant_option', 'tag',
-     *                         'price_list', 'price_list_price'
+     *                         'price_list', 'price_list_price', 'wishlist', 'wishlist_item'
      */
     function resolve_model(string $model): string
     {
@@ -42,7 +42,7 @@ if (!function_exists('query')) {
      *                         'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
      *                         'product_variant', 'product_variant_option', 'tag',
-     *                         'price_list', 'price_list_price'
+     *                         'price_list', 'price_list_price', 'wishlist', 'wishlist_item'
      */
     function query(string $model): Builder
     {
@@ -65,7 +65,7 @@ if (!function_exists('get_fresh_model_instance')) {
      *                         'tax_class', 'user'.
      *                         'product_custom_field', 'product_type',
      *                         'product_variant', 'product_variant_option', 'tag',
-     *                         'price_list', 'price_list_price'
+     *                         'price_list', 'price_list_price', 'wishlist', 'wishlist_item'
      */
     function get_fresh_model_instance(string $model): Model
     {

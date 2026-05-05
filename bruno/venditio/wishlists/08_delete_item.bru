@@ -1,0 +1,40 @@
+meta {
+  name: Delete wishlist item
+  type: http
+  seq: 98
+}
+
+delete {
+  url: {{baseUrl}}/wishlists/:id-or-slug/items/:wishlist-item-id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id-or-slug: 
+  wishlist-item-id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Delete wishlist item
+
+  endpoint:
+  - method: DELETE
+  - path: /wishlists/:id-or-slug/items/:wishlist-item-id
+
+  query params:
+  - none
+
+  path params:
+  - id-or-slug: Replace with target wishlist identifier.
+  - wishlist-item-id: Replace with target wishlist item identifier.
+
+  body:
+  - none
+}

@@ -3,6 +3,7 @@
 namespace PictaStudio\Venditio\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use PictaStudio\Venditio\Models\Traits\{HasAddresses, HasDiscounts, HasHelperMethods, LogsActivity};
@@ -13,6 +14,7 @@ class User extends Authenticatable
 {
     use HasAddresses;
     use HasDiscounts;
+    use HasFactory;
     use HasHelperMethods;
     use LogsActivity;
 
@@ -36,6 +38,11 @@ class User extends Authenticatable
     public function returnRequests(): HasMany
     {
         return $this->hasMany(resolve_model('return_request'));
+    }
+
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(resolve_model('wishlist'));
     }
 
     protected function name(): Attribute

@@ -1,0 +1,52 @@
+meta {
+  name: Update wishlist item
+  type: http
+  seq: 97
+}
+
+patch {
+  url: {{baseUrl}}/wishlists/:id-or-slug/items/:wishlist-item-id
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~include: product
+}
+
+params:path {
+  id-or-slug: 
+  wishlist-item-id: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "notes": "Updated note",
+    "sort_order": 20
+  }
+}
+
+docs {
+  summary:
+  - Update wishlist item
+
+  endpoint:
+  - method: PATCH
+  - path: /wishlists/:id-or-slug/items/:wishlist-item-id
+
+  query params:
+  - include (string|array): Optional includes: product.
+
+  path params:
+  - id-or-slug: Replace with target wishlist identifier.
+  - wishlist-item-id: Replace with target wishlist item identifier.
+
+  body:
+  - notes
+  - sort_order
+}

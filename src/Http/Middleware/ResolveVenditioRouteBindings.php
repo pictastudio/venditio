@@ -86,6 +86,8 @@ class ResolveVenditioRouteBindings
             'shipping_zone' => 'shipping_zone',
             'tag' => 'tag',
             'tax_class' => 'tax_class',
+            'wishlist' => 'wishlist',
+            'wishlist_item' => 'wishlist_item',
         ];
     }
 }

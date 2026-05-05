@@ -30,6 +30,7 @@ class TagResource extends JsonResource
             'products' => ProductResource::collection($this->whenLoaded('products')),
             'brands' => BrandResource::collection($this->whenLoaded('brands')),
             'product_categories' => ProductCategoryResource::collection($this->whenLoaded('productCategories')),
+            'product_collections' => ProductCollectionResource::collection($this->whenLoaded('productCollections')),
             'tags' => self::collection($this->whenLoaded('tags')),
             'product_type' => ProductTypeResource::make($this->whenLoaded('productType')),
             'parent' => self::make($this->whenLoaded('parent')),

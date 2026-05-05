@@ -907,6 +907,25 @@ class Controller extends BaseController
                 'updated_at' => 'date',
                 'deleted_at' => 'date',
             ],
+            'wishlist' => [
+                'user_id' => 'integer',
+                'name' => 'string',
+                'slug' => 'string',
+                'description' => 'string',
+                'is_default' => 'boolean',
+                'created_at' => 'date',
+                'updated_at' => 'date',
+                'deleted_at' => 'date',
+            ],
+            'wishlist_item' => [
+                'wishlist_id' => 'integer',
+                'product_id' => 'integer',
+                'notes' => 'string',
+                'sort_order' => 'integer',
+                'created_at' => 'date',
+                'updated_at' => 'date',
+                'deleted_at' => 'date',
+            ],
             'user' => [],
         ];
     }
@@ -994,6 +1013,8 @@ class Controller extends BaseController
             'tag' => \PictaStudio\Venditio\Models\Tag::class,
             'tax_class' => \PictaStudio\Venditio\Models\TaxClass::class,
             'user' => \PictaStudio\Venditio\Models\User::class,
+            'wishlist' => \PictaStudio\Venditio\Models\Wishlist::class,
+            'wishlist_item' => \PictaStudio\Venditio\Models\WishlistItem::class,
         ];
     }
 

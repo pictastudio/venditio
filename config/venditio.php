@@ -82,6 +82,8 @@ return [
         'shipping_method' => Models\ShippingMethod::class,
         'shipping_method_zone' => Models\ShippingMethodZone::class,
         'shipping_zone' => Models\ShippingZone::class,
+        'wishlist' => Models\Wishlist::class,
+        'wishlist_item' => Models\WishlistItem::class,
     ],
 
     /*
@@ -115,6 +117,21 @@ return [
         Validations\Contracts\ProductVariantOptionValidationRules::class => Validations\ProductVariantOptionValidation::class,
         Validations\Contracts\PriceListValidationRules::class => Validations\PriceListValidation::class,
         Validations\Contracts\PriceListPriceValidationRules::class => Validations\PriceListPriceValidation::class,
+        Validations\Contracts\WishlistValidationRules::class => Validations\WishlistValidation::class,
+        Validations\Contracts\WishlistItemValidationRules::class => Validations\WishlistItemValidation::class,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Wishlists
+    |--------------------------------------------------------------------------
+    |
+    */
+    'wishlists' => [
+        'tables' => [
+            'wishlists' => env('VENDITIO_WISHLISTS_TABLE', 'wishlists'),
+            'wishlist_items' => env('VENDITIO_WISHLIST_ITEMS_TABLE', 'wishlist_items'),
+        ],
     ],
 
     /*

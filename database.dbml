@@ -581,6 +581,42 @@ Table products {
   }
 }
 
+Table wishlists {
+  id bigint [pk, increment, not null]
+  user_id bigint [not null, ref: > users.id]
+  name varchar(255) [not null]
+  slug varchar(255) [not null]
+  description text
+  is_default boolean [not null, default: false]
+  metadata json
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  deleted_at datetime
+
+  Indexes {
+    (user_id, slug) [unique]
+    user_id
+    is_default
+  }
+}
+
+Table wishlist_items {
+  id bigint [pk, increment, not null]
+  wishlist_id bigint [not null, ref: > wishlists.id]
+  product_id bigint [not null, ref: > products.id]
+  notes text
+  sort_order int [not null, default: 0]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  deleted_at datetime
+
+  Indexes {
+    (wishlist_id, product_id) [unique]
+    wishlist_id
+    product_id
+  }
+}
+
 Table provinces {
   id bigint [pk, increment, not null]
   region_id bigint [not null, ref: > regions.id]
