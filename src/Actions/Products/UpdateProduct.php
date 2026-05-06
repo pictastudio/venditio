@@ -24,6 +24,7 @@ class UpdateProduct
         $inventoryPayload = Arr::pull($payload, 'inventory');
         $imagesProvided = array_key_exists('images', $payload);
         $filesProvided = array_key_exists('files', $payload);
+        $sharedMediaUpdates = [];
 
         if ($tagIdsProvided) {
             $this->validateTagProductTypeCompatibility(
@@ -33,9 +34,11 @@ class UpdateProduct
         }
 
         $product->fill(
-            $this->prepareMediaPayload($product, $payload, $imagesProvided, $filesProvided)
+            $this->prepareMediaPayload($product, $payload, $imagesProvided, $filesProvided, $sharedMediaUpdates)
         );
         $product->save();
+
+        $this->propagateSharedVariantOptionMediaUpdates($product, $sharedMediaUpdates);
 
         if ($categoryIdsProvided) {
             $product->categories()->sync($categoryIds ?? []);
@@ -94,7 +97,8 @@ class UpdateProduct
         Product $product,
         array $payload,
         bool $imagesProvided,
-        bool $filesProvided
+        bool $filesProvided,
+        array &$sharedMediaUpdates
     ): array {
         $currentMedia = ProductMedia::normalizeProductMedia(
             $product->getAttribute('images'),
@@ -132,7 +136,8 @@ class UpdateProduct
                 'images',
                 $currentMedia['images'],
                 true,
-                $usedMediaIds
+                $usedMediaIds,
+                $sharedMediaUpdates
             );
         }
 
@@ -143,7 +148,8 @@ class UpdateProduct
                 'files',
                 $currentMedia['files'],
                 false,
-                $usedMediaIds
+                $usedMediaIds,
+                $sharedMediaUpdates
             );
         }
 
@@ -156,7 +162,8 @@ class UpdateProduct
         string $folder,
         array $currentItems,
         bool $isImage,
-        array &$usedMediaIds
+        array &$usedMediaIds,
+        array &$sharedMediaUpdates
     ): ?array {
         if ($items === null) {
             return null;
@@ -174,6 +181,13 @@ class UpdateProduct
                 /** @var array<string, mixed> $existingItem */
                 $existingItem = $currentItemsById[$mediaId];
                 $currentItemsById[$mediaId] = ProductMedia::mergeItem($existingItem, $item, $isImage);
+                $this->trackSharedVariantOptionMediaUpdate(
+                    $existingItem,
+                    $currentItemsById[$mediaId],
+                    $folder,
+                    $isImage,
+                    $sharedMediaUpdates
+                );
 
                 continue;
             }
@@ -200,6 +214,97 @@ class UpdateProduct
         }
 
         return array_values($currentItemsById);
+    }
+
+    private function trackSharedVariantOptionMediaUpdate(
+        array $existingItem,
+        array $updatedItem,
+        string $folder,
+        bool $isImage,
+        array &$sharedMediaUpdates
+    ): void {
+        if (!(bool) Arr::get($existingItem, 'shared_from_variant_option', false)) {
+            return;
+        }
+
+        $src = Arr::get($existingItem, 'src');
+
+        if (!is_string($src) || blank($src)) {
+            return;
+        }
+
+        $metadata = Arr::only($updatedItem, [
+            'name',
+            'alt',
+            'mimetype',
+            'sort_order',
+            'active',
+            ...($isImage ? ['thumbnail'] : []),
+        ]);
+
+        $sharedMediaUpdates[] = [
+            'folder' => $folder,
+            'is_image' => $isImage,
+            'src' => $src,
+            'metadata' => $metadata,
+        ];
+    }
+
+    private function propagateSharedVariantOptionMediaUpdates(Product $updatedProduct, array $updates): void
+    {
+        if ($updates === []) {
+            return;
+        }
+
+        $productModelClass = resolve_model('product');
+
+        $productModelClass::withoutGlobalScopes()
+            ->whereKeyNot($updatedProduct->getKey())
+            ->get(['id', 'images', 'files'])
+            ->each(function (Product $product) use ($updates): void {
+                $media = ProductMedia::normalizeProductMedia(
+                    $product->getAttribute('images'),
+                    $product->getAttribute('files')
+                );
+                $changed = false;
+
+                foreach ($updates as $update) {
+                    $folder = (string) Arr::get($update, 'folder');
+                    $isImage = (bool) Arr::get($update, 'is_image');
+                    $src = Arr::get($update, 'src');
+                    $metadata = Arr::get($update, 'metadata', []);
+
+                    if (!is_string($src) || !is_array($metadata) || !array_key_exists($folder, $media)) {
+                        continue;
+                    }
+
+                    $media[$folder] = collect($media[$folder])
+                        ->map(function (array $item) use ($src, $metadata, $isImage, &$changed): array {
+                            if (
+                                Arr::get($item, 'src') !== $src
+                                || !(bool) Arr::get($item, 'shared_from_variant_option', false)
+                            ) {
+                                return $item;
+                            }
+
+                            $changed = true;
+
+                            return ProductMedia::mergeItem($item, $metadata, $isImage);
+                        })
+                        ->values()
+                        ->all();
+                }
+
+                if (!$changed) {
+                    return;
+                }
+
+                $product->forceFill([
+                    'images' => $media['images'],
+                    'files' => $media['files'],
+                ]);
+                $product->save();
+            });
     }
 
     /**

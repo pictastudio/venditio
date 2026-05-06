@@ -17,7 +17,7 @@ class FreeGiftFactory extends Factory
             'mode' => FreeGiftMode::Automatic,
             'selection_mode' => FreeGiftSelectionMode::Multiple,
             'allow_decline' => false,
-            'active' => true,
+            'active' => false,
             'starts_at' => now()->subHour(),
             'ends_at' => now()->addDay(),
             'minimum_cart_subtotal' => null,

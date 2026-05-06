@@ -310,6 +310,84 @@ it('updates existing product media metadata without requiring a new file upload'
         ->and(data_get($product->files, '0.active'))->toBeFalse();
 });
 
+it('updates variant-specific image metadata without touching other variants', function () {
+    $parent = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $firstVariant = Product::factory()->create([
+        'parent_id' => $parent->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+        'images' => [
+            [
+                'id' => 'variant-image-1',
+                'name' => 'Old variant image',
+                'alt' => 'Old variant alt',
+                'mimetype' => 'image/jpeg',
+                'sort_order' => 4,
+                'active' => true,
+                'thumbnail' => false,
+                'shared_from_variant_option' => false,
+                'src' => 'products/variant-image-1.jpg',
+            ],
+        ],
+    ]);
+
+    $secondVariant = Product::factory()->create([
+        'parent_id' => $parent->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+        'images' => [
+            [
+                'id' => 'variant-image-2',
+                'name' => 'Other variant image',
+                'alt' => 'Other variant alt',
+                'mimetype' => 'image/jpeg',
+                'sort_order' => 2,
+                'active' => true,
+                'thumbnail' => false,
+                'shared_from_variant_option' => false,
+                'src' => 'products/variant-image-2.jpg',
+            ],
+        ],
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/products/{$firstVariant->getKey()}", [
+        'images' => [
+            [
+                'id' => 'variant-image-1',
+                'name' => 'Updated variant image',
+                'alt' => 'Updated variant alt',
+                'sort_order' => 1,
+                'thumbnail' => true,
+            ],
+        ],
+    ])->assertOk()
+        ->assertJsonPath('images.0.id', 'variant-image-1')
+        ->assertJsonPath('images.0.name', 'Updated variant image')
+        ->assertJsonPath('images.0.alt', 'Updated variant alt')
+        ->assertJsonPath('images.0.sort_order', 1)
+        ->assertJsonPath('images.0.thumbnail', true)
+        ->assertJsonPath('images.0.shared_from_variant_option', false);
+
+    $firstVariant->refresh();
+    $secondVariant->refresh();
+
+    expect(data_get($firstVariant->images, '0.name'))->toBe('Updated variant image')
+        ->and(data_get($firstVariant->images, '0.alt'))->toBe('Updated variant alt')
+        ->and(data_get($firstVariant->images, '0.sort_order'))->toBe(1)
+        ->and(data_get($firstVariant->images, '0.thumbnail'))->toBeTrue()
+        ->and(data_get($firstVariant->images, '0.shared_from_variant_option'))->toBeFalse()
+        ->and(data_get($secondVariant->images, '0.name'))->toBe('Other variant image')
+        ->and(data_get($secondVariant->images, '0.alt'))->toBe('Other variant alt')
+        ->and(data_get($secondVariant->images, '0.sort_order'))->toBe(2);
+});
+
 it('returns product media ordered by sort_order and filters inactive entries by the product active query params', function () {
     $product = Product::factory()->create([
         'active' => true,

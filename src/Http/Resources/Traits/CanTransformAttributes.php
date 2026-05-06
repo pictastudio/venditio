@@ -89,6 +89,10 @@ trait CanTransformAttributes
     {
         $model = $this->resource;
 
+        if ($value === null) {
+            return null;
+        }
+
         if (!$model->hasCast($key)) {
             return $this->normalizeCustomObjectAttribute($value);
         }

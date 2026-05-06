@@ -1,0 +1,62 @@
+meta {
+  name: Store free_gifts
+  type: http
+  seq: 125
+}
+
+post {
+  url: {{baseUrl}}/free_gifts
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~include: qualifyingUsers,qualifyingProducts,giftProducts
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Draft gift",
+    "mode": "manual"
+  }
+}
+
+docs {
+  summary:
+  - Store free_gifts
+
+  endpoint:
+  - method: POST
+  - path: /free_gifts
+
+  query params:
+  - include (string|array): Optional includes: qualifyingUsers, qualifyingProducts, giftProducts.
+
+  path params:
+  - none
+
+  body:
+  - JSON payload.
+  - Required fields: name, mode.
+  - Available fields:
+  - name
+  - mode
+  - selection_mode
+  - allow_decline
+  - active
+  - starts_at
+  - ends_at
+  - minimum_cart_subtotal
+  - maximum_cart_subtotal
+  - minimum_cart_quantity
+  - maximum_cart_quantity
+  - product_match_mode
+  - qualifying_user_ids
+  - qualifying_product_ids
+  - gift_product_ids
+}

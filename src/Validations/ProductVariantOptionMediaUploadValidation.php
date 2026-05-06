@@ -14,6 +14,7 @@ class ProductVariantOptionMediaUploadValidation implements ProductVariantOptionM
             'images.*.alt' => ['nullable', 'string', 'max:255'],
             'images.*.name' => ['nullable', 'string', 'max:255'],
             'images.*.mimetype' => ['nullable', 'string', 'max:255'],
+            'images.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'images.*.active' => ['nullable', 'boolean'],
             'images.*.thumbnail' => ['nullable', 'boolean'],
             'files' => ['sometimes', 'nullable', 'array'],
@@ -21,6 +22,7 @@ class ProductVariantOptionMediaUploadValidation implements ProductVariantOptionM
             'files.*.alt' => ['nullable', 'string', 'max:255'],
             'files.*.name' => ['nullable', 'string', 'max:255'],
             'files.*.mimetype' => ['nullable', 'string', 'max:255'],
+            'files.*.sort_order' => ['nullable', 'integer', 'min:0'],
             'files.*.active' => ['nullable', 'boolean'],
             'files.*.thumbnail' => ['prohibited'],
         ];

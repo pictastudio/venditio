@@ -113,6 +113,36 @@ it('creates and shows free gift campaigns with related ids and resources', funct
         ->assertJsonPath('qualifying_products.0.id', $qualifyingProduct->getKey());
 });
 
+it('creates inactive free gift campaigns with campaign defaults', function () {
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $response = postJson($prefix . '/free_gifts', [
+        'name' => 'Draft Gift',
+        'mode' => FreeGiftMode::Manual->value,
+    ])->assertCreated()
+        ->assertJsonPath('name', 'Draft Gift')
+        ->assertJsonPath('selection_mode', FreeGiftSelectionMode::Single->value)
+        ->assertJsonPath('product_match_mode', FreeGiftProductMatchMode::Any->value)
+        ->assertJsonPath('active', false)
+        ->assertJsonPath('minimum_cart_subtotal', null)
+        ->assertJsonPath('maximum_cart_subtotal', null)
+        ->assertJsonPath('minimum_cart_quantity', null)
+        ->assertJsonPath('maximum_cart_quantity', null)
+        ->assertJsonPath('gift_product_ids', []);
+
+    assertDatabaseHas('free_gifts', [
+        'id' => $response->json('id'),
+        'name' => 'Draft Gift',
+        'selection_mode' => FreeGiftSelectionMode::Single->value,
+        'product_match_mode' => FreeGiftProductMatchMode::Any->value,
+        'active' => false,
+        'minimum_cart_subtotal' => null,
+        'maximum_cart_subtotal' => null,
+        'minimum_cart_quantity' => null,
+        'maximum_cart_quantity' => null,
+    ]);
+});
+
 it('updates free gift campaigns by syncing related ids and supports deletion', function () {
     $oldUser = createAdminFreeGiftUser('old-free-gift-user@example.test');
     $newUser = createAdminFreeGiftUser('new-free-gift-user@example.test');

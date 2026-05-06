@@ -111,7 +111,7 @@ class UploadProductVariantOptionMedia
                     'alt' => Arr::get($item, 'alt'),
                     'name' => Arr::get($item, 'name'),
                     'mimetype' => Arr::get($item, 'mimetype', $file->getMimeType()),
-                    'sort_order' => $index,
+                    'sort_order' => ProductMedia::resolveSortOrder(Arr::get($item, 'sort_order'), $index),
                     'active' => ProductMedia::resolveBoolean(Arr::get($item, 'active'), true),
                     'shared_from_variant_option' => true,
                     ...($isImage ? [
@@ -143,13 +143,16 @@ class UploadProductVariantOptionMedia
 
         return collect($items)
             ->map(function (array $item) use (&$usedIds, &$nextSortOrder, $isImage): array {
+                $sortOrder = ProductMedia::resolveSortOrder(Arr::get($item, 'sort_order'), $nextSortOrder);
+                $nextSortOrder++;
+
                 return [
                     'id' => ProductMedia::generateUniqueId($usedIds),
                     'src' => Arr::get($item, 'src'),
                     'alt' => Arr::get($item, 'alt'),
                     'name' => Arr::get($item, 'name'),
                     'mimetype' => Arr::get($item, 'mimetype'),
-                    'sort_order' => $nextSortOrder++,
+                    'sort_order' => $sortOrder,
                     'active' => ProductMedia::resolveBoolean(Arr::get($item, 'active'), true),
                     'shared_from_variant_option' => true,
                     ...($isImage ? [

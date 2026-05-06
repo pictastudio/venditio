@@ -92,12 +92,15 @@ class ProductController extends Controller
 
         $includes = $this->resolveProductIncludes();
         $result = $action->execute($product, $request->validated('variants'));
-        $created = $result['created']->load($this->productRelationsForIncludes($includes));
+        $created = $result['created'];
+        $restored = $result['restored'];
+        $variants = $created->merge($restored)->load($this->productRelationsForIncludes($includes));
 
         return response()->json([
-            'data' => ProductResource::collection($created),
+            'data' => ProductResource::collection($variants),
             'meta' => [
                 'created' => $created->count(),
+                'restored' => $restored->count(),
                 'skipped' => count($result['skipped']),
                 'total' => $result['total'],
             ],

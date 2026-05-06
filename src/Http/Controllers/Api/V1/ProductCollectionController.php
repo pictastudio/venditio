@@ -5,7 +5,8 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\{Rule, ValidationException};
 use PictaStudio\Venditio\Actions\CatalogImages\DeleteCatalogImage;
 use PictaStudio\Venditio\Actions\ProductCollections\{CreateProductCollection, UpdateProductCollection};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
@@ -79,6 +80,26 @@ class ProductCollectionController extends Controller
     public function destroy(ProductCollection $productCollection)
     {
         $this->authorizeIfConfigured('delete', $productCollection);
+
+        $force = request()->boolean('force');
+
+        if (!$force && $productCollection->products()->withoutGlobalScopes()->exists()) {
+            throw ValidationException::withMessages([
+                'products' => [
+                    'This product collection has connected products. Use force=1 to delete it and detach related products.',
+                ],
+            ]);
+        }
+
+        if ($force) {
+            DB::transaction(function () use ($productCollection): void {
+                $productCollection->products()->detach();
+                $productCollection->tags()->detach();
+                $productCollection->delete();
+            });
+
+            return response()->noContent();
+        }
 
         $productCollection->delete();
 

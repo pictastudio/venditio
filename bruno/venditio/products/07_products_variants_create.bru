@@ -53,4 +53,12 @@ docs {
   body:
   - JSON payload. See body:json in this request for an example.
   - Note: generated variants inherit parent collections when `venditio.product_variants.copy_collections` is enabled.
+  - Note: generated variants inherit the parent product tax class and inventory pricing fields (`price`, `purchase_price`, `price_includes_tax`).
+  - Note: if a matching variant combination exists but is soft-deleted, it is restored instead of duplicated.
+
+  response:
+  - meta.created: Number of newly created variants.
+  - meta.restored: Number of soft-deleted variants restored.
+  - meta.skipped: Number of active variant combinations already present.
+  - meta.total: Number of requested combinations.
 }

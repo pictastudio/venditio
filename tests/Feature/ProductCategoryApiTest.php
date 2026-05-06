@@ -5,7 +5,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use PictaStudio\Venditio\Models\{Product, ProductCategory, Tag};
 
-use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, getJson, patch, patchJson, post, postJson};
+use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, deleteJson, getJson, patch, patchJson, post, postJson};
 
 uses(RefreshDatabase::class);
 
@@ -196,6 +196,65 @@ it('includes tags relation on product categories api when requested', function (
     getJson(config('venditio.routes.api.v1.prefix') . '/product_categories/' . $category->getKey() . '?include=tags')
         ->assertOk()
         ->assertJsonPath('tags.0.id', $tag->getKey());
+});
+
+it('rejects deleting a product category with connected products unless forced', function () {
+    $category = ProductCategory::factory()->create();
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $category->products()->sync([$product->getKey()]);
+
+    deleteJson(config('venditio.routes.api.v1.prefix') . '/product_categories/' . $category->getKey())
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['products']);
+
+    assertDatabaseHas('product_category_product', [
+        'product_category_id' => $category->getKey(),
+        'product_id' => $product->getKey(),
+    ]);
+});
+
+it('force deletes a product category and clears related pivots', function () {
+    $category = ProductCategory::factory()->create();
+    $child = ProductCategory::factory()->create([
+        'parent_id' => $category->getKey(),
+    ]);
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $tag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $category->products()->sync([$product->getKey()]);
+    $category->tags()->sync([$tag->getKey()]);
+
+    deleteJson(config('venditio.routes.api.v1.prefix') . '/product_categories/' . $category->getKey() . '?force=1')
+        ->assertNoContent();
+
+    expect(ProductCategory::withTrashed()->find($category->getKey())?->trashed())->toBeTrue();
+
+    assertDatabaseMissing('product_category_product', [
+        'product_category_id' => $category->getKey(),
+        'product_id' => $product->getKey(),
+    ]);
+    assertDatabaseMissing('taggables', [
+        'tag_id' => $tag->getKey(),
+        'taggable_type' => $category->getMorphClass(),
+        'taggable_id' => $category->getKey(),
+    ]);
+    assertDatabaseHas('product_categories', [
+        'id' => $child->getKey(),
+        'parent_id' => null,
+    ]);
 });
 
 it('returns product categories as a tree when as_tree is true', function () {

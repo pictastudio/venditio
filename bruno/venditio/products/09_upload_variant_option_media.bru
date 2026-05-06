@@ -23,10 +23,14 @@ headers {
 
 body:multipart-form {
   images[0][file]: @file(/absolute/path/to/image.jpg)
+  images[0][name]: Red front
   images[0][alt]: Red front
+  images[0][sort_order]: 0
   images[0][thumbnail]: true
   files[0][file]: @file(/absolute/path/to/manual.pdf)
+  files[0][name]: Red manual
   files[0][alt]: Red manual
+  files[0][sort_order]: 0
 }
 
 docs {
@@ -48,6 +52,7 @@ docs {
   - images.*.alt
   - images.*.name
   - images.*.mimetype
+  - images.*.sort_order
   - images.*.active
   - images.*.thumbnail
   - files (array)
@@ -55,6 +60,7 @@ docs {
   - files.*.alt
   - files.*.name
   - files.*.mimetype
+  - files.*.sort_order
   - files.*.active
 
   behavior:

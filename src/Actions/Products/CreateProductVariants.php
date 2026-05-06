@@ -107,12 +107,23 @@ class CreateProductVariants
         $existingSignatures = $this->getExistingSignatures($product);
 
         $created = new Collection;
+        $restored = new Collection;
         $skipped = [];
 
         foreach ($combinations as $combination) {
             $signature = $this->signatureFor($combination);
 
             if (isset($existingSignatures[$signature])) {
+                $existingVariant = $existingSignatures[$signature];
+
+                if ($existingVariant->trashed()) {
+                    $variant = $this->restoreVariantProduct($product, $existingVariant, $combination);
+                    $restored->push($variant);
+                    $existingSignatures[$signature] = $variant;
+
+                    continue;
+                }
+
                 $skipped[] = $signature;
 
                 continue;
@@ -120,11 +131,12 @@ class CreateProductVariants
 
             $variant = $this->createVariantProduct($product, $combination);
             $created->push($variant);
-            $existingSignatures[$signature] = true;
+            $existingSignatures[$signature] = $variant;
         }
 
         return [
             'created' => $created,
+            'restored' => $restored,
             'skipped' => $skipped,
             'total' => count($combinations),
         ];
@@ -161,7 +173,7 @@ class CreateProductVariants
                     ->sort()
                     ->implode('-');
 
-                return [$signature => true];
+                return [$signature => $variant];
             })
             ->all();
     }
@@ -189,6 +201,24 @@ class CreateProductVariants
         $variant = $product->newInstance($attributes);
         $variant->save();
 
+        $this->syncVariantRelations($product, $variant, $options);
+        $this->copyInventoryPricing($product, $variant);
+
+        return $variant->refresh();
+    }
+
+    private function restoreVariantProduct(Product $product, Product $variant, array $options): Product
+    {
+        $variant->restoreQuietly();
+
+        $this->syncVariantRelations($product, $variant, $options);
+        $this->copyInventoryPricing($product, $variant);
+
+        return $variant->refresh();
+    }
+
+    private function syncVariantRelations(Product $product, Product $variant, array $options): void
+    {
         if (config('venditio.product_variants.copy_categories', true)) {
             $categoryTable = $product->categories()->getRelated()->getTable();
             $variant->categories()->sync($product->categories()->pluck("{$categoryTable}.id")->all());
@@ -200,8 +230,31 @@ class CreateProductVariants
         }
 
         $variant->variantOptions()->sync(collect($options)->pluck('id')->all());
+    }
 
-        return $variant->refresh();
+    private function copyInventoryPricing(Product $product, Product $variant): void
+    {
+        $sourceInventory = $product->inventory()->first();
+
+        if (!$sourceInventory) {
+            return;
+        }
+
+        $variantInventory = $variant->inventory()
+            ->withoutGlobalScopes()
+            ->firstOrCreate([
+                'product_id' => $variant->getKey(),
+            ]);
+
+        if (method_exists($variantInventory, 'trashed') && $variantInventory->trashed()) {
+            $variantInventory->restore();
+        }
+
+        $variantInventory->forceFill([
+            'price' => $sourceInventory->price,
+            'purchase_price' => $sourceInventory->purchase_price,
+            'price_includes_tax' => $sourceInventory->price_includes_tax,
+        ])->save();
     }
 
     private function buildVariantName(Product $product, array $options): string

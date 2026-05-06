@@ -5,6 +5,7 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\{Rule, ValidationException};
 use PictaStudio\Venditio\Actions\CatalogImages\DeleteCatalogImage;
 use PictaStudio\Venditio\Actions\ProductCategories\{CreateProductCategory, UpdateMultipleProductCategories, UpdateProductCategory};
@@ -137,6 +138,34 @@ class ProductCategoryController extends Controller
     public function destroy(ProductCategory $productCategory)
     {
         $this->authorizeIfConfigured('delete', $productCategory);
+
+        $force = request()->boolean('force');
+
+        if (!$force && $productCategory->products()->withoutGlobalScopes()->exists()) {
+            throw ValidationException::withMessages([
+                'products' => [
+                    'This product category has connected products. Use force=1 to delete it and detach related products.',
+                ],
+            ]);
+        }
+
+        if ($force) {
+            DB::transaction(function () use ($productCategory): void {
+                $categoryKey = $productCategory->getKey();
+
+                $productCategory->products()->detach();
+                $productCategory->tags()->detach();
+
+                query('product_category')
+                    ->withoutGlobalScopes()
+                    ->where('parent_id', $categoryKey)
+                    ->update(['parent_id' => null]);
+
+                $productCategory->delete();
+            });
+
+            return response()->noContent();
+        }
 
         $productCategory->delete();
 

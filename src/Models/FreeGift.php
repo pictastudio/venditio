@@ -3,8 +3,8 @@
 namespace PictaStudio\Venditio\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\{BelongsToMany, HasMany};
 use Illuminate\Database\Eloquent\{Model, SoftDeletes};
+use Illuminate\Database\Eloquent\Relations\{BelongsToMany, HasMany};
 use PictaStudio\Venditio\Enums\{FreeGiftMode, FreeGiftProductMatchMode, FreeGiftSelectionMode};
 use PictaStudio\Venditio\Models\Traits\{HasHelperMethods, LogsActivity};
 
@@ -22,6 +22,10 @@ class FreeGift extends Model
         'created_at',
         'updated_at',
         'deleted_at',
+    ];
+
+    protected $attributes = [
+        'active' => false,
     ];
 
     protected function casts(): array

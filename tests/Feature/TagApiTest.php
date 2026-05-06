@@ -436,7 +436,33 @@ it('includes tags relation on brands api when requested', function () {
         ->assertJsonPath('tags.0.id', $tag->getKey());
 });
 
-it('deletes a tag while clearing polymorphic associations and child parent links', function () {
+it('rejects deleting a tag with connected products unless forced', function () {
+    $tag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $product = Product::factory()->create([
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->tags()->sync([$tag->getKey()]);
+
+    deleteJson(config('venditio.routes.api.v1.prefix') . '/tags/' . $tag->getKey())
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['products']);
+
+    assertDatabaseHas('taggables', [
+        'tag_id' => $tag->getKey(),
+        'taggable_type' => $product->getMorphClass(),
+        'taggable_id' => $product->getKey(),
+    ]);
+});
+
+it('force deletes a tag while clearing polymorphic associations and child parent links', function () {
     $parent = Tag::factory()->create([
         'active' => true,
         'visible_from' => null,
@@ -464,7 +490,7 @@ it('deletes a tag while clearing polymorphic associations and child parent links
     $child->tags()->sync([$parent->getKey()]);
     $parent->tags()->sync([$relatedTag->getKey()]);
 
-    deleteJson(config('venditio.routes.api.v1.prefix') . '/tags/' . $parent->getKey())
+    deleteJson(config('venditio.routes.api.v1.prefix') . '/tags/' . $parent->getKey() . '?force=1')
         ->assertNoContent();
 
     assertDatabaseHas('tags', [

@@ -10,6 +10,10 @@ delete {
   auth: inherit
 }
 
+params:query {
+  ~force: 0
+}
+
 params:path {
   id-or-slug: 
 }
@@ -29,7 +33,8 @@ docs {
   - path: /tags/:id-or-slug
 
   query params:
-  - none
+  - force (boolean): Optional. When true, deletes even if products are connected and clears related taggable rows.
+  - Without force, deleting a tag with connected products returns a validation error on `products`.
   - Note: deleting a tag clears taggable associations and releases direct child tags from the deleted parent.
 
   path params:

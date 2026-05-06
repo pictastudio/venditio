@@ -408,6 +408,68 @@ it('deletes a product collection', function () {
     expect(ProductCollection::withTrashed()->find($collection->getKey())?->trashed())->toBeTrue();
 });
 
+it('rejects deleting a product collection with connected products unless forced', function () {
+    $collection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $product = Product::factory()->create([
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $collection->products()->sync([$product->getKey()]);
+
+    deleteJson(config('venditio.routes.api.v1.prefix') . '/product_collections/' . $collection->getKey())
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['products']);
+
+    assertDatabaseHas('product_collection_product', [
+        'product_collection_id' => $collection->getKey(),
+        'product_id' => $product->getKey(),
+    ]);
+});
+
+it('force deletes a product collection and clears related pivots', function () {
+    $collection = ProductCollection::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $product = Product::factory()->create([
+        'status' => ProductStatus::Published,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $tag = Tag::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $collection->products()->sync([$product->getKey()]);
+    $collection->tags()->sync([$tag->getKey()]);
+
+    deleteJson(config('venditio.routes.api.v1.prefix') . '/product_collections/' . $collection->getKey() . '?force=1')
+        ->assertNoContent();
+
+    expect(ProductCollection::withTrashed()->find($collection->getKey())?->trashed())->toBeTrue();
+
+    assertDatabaseMissing('product_collection_product', [
+        'product_collection_id' => $collection->getKey(),
+        'product_id' => $product->getKey(),
+    ]);
+    assertDatabaseMissing('taggables', [
+        'tag_id' => $tag->getKey(),
+        'taggable_type' => $collection->getMorphClass(),
+        'taggable_id' => $collection->getKey(),
+    ]);
+});
+
 it('includes products count on product collections when requested', function () {
     $collection = ProductCollection::factory()->create([
         'active' => true,

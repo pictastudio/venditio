@@ -1,0 +1,38 @@
+meta {
+  name: Delete free_gifts
+  type: http
+  seq: 127
+}
+
+delete {
+  url: {{baseUrl}}/free_gifts/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id:
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Delete free_gifts
+
+  endpoint:
+  - method: DELETE
+  - path: /free_gifts/:id
+
+  query params:
+  - none
+
+  path params:
+  - id: Replace with target resource identifier.
+
+  body:
+  - none
+}

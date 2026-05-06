@@ -12,10 +12,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('mode', 20)->comment('automatic, manual');
-            $table->string('selection_mode', 20)->comment('single, multiple');
+            $table->string('selection_mode', 20)->default('single')->comment('single, multiple');
             $table->boolean('allow_decline')->default(false);
-            $table->boolean('active')->default(true);
-            $table->dateTime('starts_at');
+            $table->boolean('active')->default(false);
+            $table->dateTime('starts_at')->useCurrent();
             $table->dateTime('ends_at')->nullable();
             $table->decimal('minimum_cart_subtotal', 10, 2)->nullable();
             $table->decimal('maximum_cart_subtotal', 10, 2)->nullable();

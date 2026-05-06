@@ -1,0 +1,66 @@
+meta {
+  name: Update free_gifts
+  type: http
+  seq: 126
+}
+
+patch {
+  url: {{baseUrl}}/free_gifts/:id
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~include: qualifyingUsers,qualifyingProducts,giftProducts
+}
+
+params:path {
+  id:
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Active gift",
+    "active": true,
+    "gift_product_ids": [1]
+  }
+}
+
+docs {
+  summary:
+  - Update free_gifts
+
+  endpoint:
+  - method: PATCH
+  - path: /free_gifts/:id
+
+  query params:
+  - include (string|array): Optional includes: qualifyingUsers, qualifyingProducts, giftProducts.
+
+  path params:
+  - id: Replace with target resource identifier.
+
+  body:
+  - JSON payload.
+  - Available fields:
+  - name
+  - mode
+  - selection_mode
+  - allow_decline
+  - active
+  - starts_at
+  - ends_at
+  - minimum_cart_subtotal
+  - maximum_cart_subtotal
+  - minimum_cart_quantity
+  - maximum_cart_quantity
+  - product_match_mode
+  - qualifying_user_ids
+  - qualifying_product_ids
+  - gift_product_ids
+}

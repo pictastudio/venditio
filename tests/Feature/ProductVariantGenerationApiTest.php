@@ -68,6 +68,58 @@ it('generates product variants from variant options', function () {
     expect($variant->variantOptions()->count())->toBe(2);
 });
 
+it('copies tax class and inventory pricing to generated variants', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $productType = ProductType::factory()->create();
+
+    $colorVariant = ProductVariant::factory()->create([
+        'product_type_id' => $productType->getKey(),
+        'name' => 'Color',
+    ]);
+    $red = ProductVariantOption::factory()->create([
+        'product_variant_id' => $colorVariant->getKey(),
+        'name' => 'red',
+    ]);
+
+    $product = Product::factory()->create([
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'product_type_id' => $productType->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $product->inventory()->update([
+        'price' => 123.45,
+        'purchase_price' => 67.89,
+        'price_includes_tax' => false,
+    ]);
+
+    postJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}/variants", [
+        'variants' => [
+            [
+                'variant_id' => $colorVariant->getKey(),
+                'option_ids' => [$red->getKey()],
+            ],
+        ],
+    ])->assertCreated()
+        ->assertJsonPath('meta.created', 1)
+        ->assertJsonPath('meta.restored', 0)
+        ->assertJsonPath('meta.skipped', 0);
+
+    $variant = Product::query()
+        ->withoutGlobalScopes()
+        ->where('parent_id', $product->getKey())
+        ->with('inventory')
+        ->firstOrFail();
+
+    expect($variant->tax_class_id)->toBe($taxClass->getKey())
+        ->and((float) $variant->inventory->price)->toBe(123.45)
+        ->and((float) $variant->inventory->purchase_price)->toBe(67.89)
+        ->and((bool) $variant->inventory->price_includes_tax)->toBeFalse();
+});
+
 it('skips existing variant combinations', function () {
     $brand = Brand::factory()->create();
     $taxClass = TaxClass::factory()->create();
@@ -114,7 +166,73 @@ it('skips existing variant combinations', function () {
     ])->assertCreated();
 
     expect($response->json('meta.created'))->toBe(0);
+    expect($response->json('meta.restored'))->toBe(0);
     expect($response->json('meta.skipped'))->toBe(2);
+});
+
+it('restores soft deleted variants instead of creating duplicates', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $productType = ProductType::factory()->create();
+
+    $colorVariant = ProductVariant::factory()->create([
+        'product_type_id' => $productType->getKey(),
+        'name' => 'Color',
+    ]);
+    $red = ProductVariantOption::factory()->create([
+        'product_variant_id' => $colorVariant->getKey(),
+        'name' => 'red',
+    ]);
+
+    $product = Product::factory()->create([
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'product_type_id' => $productType->getKey(),
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    postJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}/variants", [
+        'variants' => [
+            [
+                'variant_id' => $colorVariant->getKey(),
+                'option_ids' => [$red->getKey()],
+            ],
+        ],
+    ])->assertCreated();
+
+    $deletedVariant = Product::query()
+        ->withoutGlobalScopes()
+        ->where('parent_id', $product->getKey())
+        ->firstOrFail();
+    $deletedVariantId = $deletedVariant->getKey();
+    $deletedVariant->delete();
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}/variants", [
+        'variants' => [
+            [
+                'variant_id' => $colorVariant->getKey(),
+                'option_ids' => [$red->getKey()],
+            ],
+        ],
+    ])->assertCreated()
+        ->assertJsonPath('meta.created', 0)
+        ->assertJsonPath('meta.restored', 1)
+        ->assertJsonPath('meta.skipped', 0)
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonCount(1, 'data');
+
+    expect($response->json('data.0.id'))->toBe($deletedVariantId);
+
+    $restoredVariant = Product::query()
+        ->withoutGlobalScopes()
+        ->whereKey($deletedVariantId)
+        ->firstOrFail();
+
+    expect($restoredVariant->trashed())->toBeFalse()
+        ->and(Product::query()->withoutGlobalScopes()->where('parent_id', $product->getKey())->count())->toBe(1)
+        ->and(Product::query()->where('parent_id', $product->getKey())->count())->toBe(1);
 });
 
 it('creates only new combinations when adding options later', function () {

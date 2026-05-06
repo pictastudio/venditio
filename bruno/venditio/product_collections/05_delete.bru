@@ -10,6 +10,10 @@ delete {
   auth: inherit
 }
 
+params:query {
+  ~force: 0
+}
+
 params:path {
   id-or-slug: 
 }
@@ -29,7 +33,8 @@ docs {
   - path: /product_collections/:id-or-slug
 
   query params:
-  - none
+  - force (boolean): Optional. When true, deletes even if products are connected and clears related product/tag pivot rows.
+  - Without force, deleting a product collection with connected products returns a validation error on `products`.
 
   path params:
   - id-or-slug: Replace with target resource identifier.

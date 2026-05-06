@@ -122,6 +122,14 @@ class TagController extends Controller
     {
         $this->authorizeIfConfigured('delete', $tag);
 
+        if (!request()->boolean('force') && $tag->products()->withoutGlobalScopes()->exists()) {
+            throw ValidationException::withMessages([
+                'products' => [
+                    'This tag has connected products. Use force=1 to delete it and detach related products.',
+                ],
+            ]);
+        }
+
         DB::transaction(function () use ($tag): void {
             $tagKey = $tag->getKey();
             $tagMorphClass = $tag->getMorphClass();

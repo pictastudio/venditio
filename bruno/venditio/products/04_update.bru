@@ -54,7 +54,17 @@ body:json {
       "reorder_lead_days": 12,
       "manage_stock": false,
       "price": 34.99
-    }
+    },
+    "images": [
+      {
+        "id": "existing-image-id",
+        "name": "T-shirt front",
+        "alt": "Front view of the T-shirt",
+        "sort_order": 1,
+        "thumbnail": true,
+        "active": true
+      }
+    ]
   }
 }
 
@@ -140,4 +150,5 @@ docs {
   - Note: file uploads require multipart/form-data.
   - Note: if `mimetype` is omitted, the backend fills it from the uploaded file.
   - Note: if `id` is provided, the item updates an existing media entry and `file` must be omitted.
+  - Note: metadata updates for shared variant-option media are propagated to matching media copies with the same source.
 }

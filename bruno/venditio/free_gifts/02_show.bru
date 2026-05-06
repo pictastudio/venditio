@@ -1,0 +1,42 @@
+meta {
+  name: Show free_gifts
+  type: http
+  seq: 124
+}
+
+get {
+  url: {{baseUrl}}/free_gifts/:id
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~include: qualifyingUsers,qualifyingProducts,giftProducts
+}
+
+params:path {
+  id:
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+}
+
+docs {
+  summary:
+  - Show free_gifts
+
+  endpoint:
+  - method: GET
+  - path: /free_gifts/:id
+
+  query params:
+  - include (string|array): Optional includes: qualifyingUsers, qualifyingProducts, giftProducts.
+
+  path params:
+  - id: Replace with target resource identifier.
+
+  body:
+  - none
+}
