@@ -5,6 +5,7 @@ namespace PictaStudio\Venditio\Http\Controllers\Api\V1;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use PictaStudio\Venditio\Actions\Products\{CreateProduct, CreateProductVariants, DeleteProductMedia, UpdateProduct, UploadProductVariantOptionMedia};
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
@@ -86,6 +87,49 @@ class ProductController extends Controller
         return ProductResource::collection($variants);
     }
 
+    public function relatedProducts(Product $product): JsonResource|JsonResponse
+    {
+        $this->authorizeIfConfigured('view', $product);
+
+        $includes = $this->resolveProductIncludes();
+        $filters = request()->except('include');
+
+        $productModel = app(resolve_model('product'));
+        $productTable = method_exists($productModel, 'getTableName')
+            ? $productModel->getTableName()
+            : $productModel->getTable();
+        $productKeyName = $productModel->getKeyName();
+        $pivotTable = 'product_related_products';
+
+        $query = query('product')
+            ->whereIn(
+                $productTable . '.' . $productKeyName,
+                fn ($subQuery) => $subQuery
+                    ->select('related_product_id')
+                    ->from($pivotTable)
+                    ->where('product_id', $product->getKey())
+            )
+            ->with($this->productRelationsForIncludes($includes))
+            ->orderBy(
+                DB::table($pivotTable)
+                    ->select('sort_order')
+                    ->whereColumn('related_product_id', $productTable . '.' . $productKeyName)
+                    ->where('product_id', $product->getKey())
+                    ->limit(1)
+            );
+
+        $this->applyProductIndexRelationFilters($query, $filters);
+
+        $relatedProducts = $this->applyBaseFilters(
+            $query,
+            $filters,
+            'product',
+            $this->productIndexValidationRules()
+        );
+
+        return ProductResource::collection($relatedProducts);
+    }
+
     public function createVariants(GenerateProductVariantsRequest $request, Product $product, CreateProductVariants $action): JsonResponse
     {
         $this->authorizeIfConfigured('update', $product);
@@ -162,6 +206,7 @@ class ProductController extends Controller
             'brand',
             'categories',
             'collections',
+            'related_products',
             'price_breakdown',
             'tags',
             'product_type',
@@ -196,6 +241,45 @@ class ProductController extends Controller
 
         if ($includesCollection->contains('collections')) {
             $relations[] = 'collections';
+        }
+
+        if ($includesCollection->contains('related_products')) {
+            $relations[] = 'relatedProducts.variantOptions.productVariant';
+            $relations[] = 'relatedProducts.variantOptions.variantProducts';
+            $relations[] = 'relatedProducts.inventory';
+
+            if ($includesCollection->contains('brand')) {
+                $relations[] = 'relatedProducts.brand';
+            }
+
+            if ($includesCollection->contains('categories')) {
+                $relations[] = 'relatedProducts.categories';
+            }
+
+            if ($includesCollection->contains('collections')) {
+                $relations[] = 'relatedProducts.collections';
+            }
+
+            $relations = [
+                ...$relations,
+                ...$this->discountRelationsForIncludes($includes, 'relatedProducts'),
+            ];
+
+            if ($includesCollection->contains('tags')) {
+                $relations[] = 'relatedProducts.tags';
+            }
+
+            if ($includesCollection->contains('product_type')) {
+                $relations[] = 'relatedProducts.productType';
+            }
+
+            if ($includesCollection->contains('tax_class')) {
+                $relations[] = 'relatedProducts.taxClass';
+            }
+
+            if (config('venditio.price_lists.enabled', false)) {
+                $relations[] = 'relatedProducts.priceListPrices.priceList';
+            }
         }
 
         $relations = [

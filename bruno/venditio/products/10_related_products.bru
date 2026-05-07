@@ -1,0 +1,54 @@
+meta {
+  name: List related products
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/products/:id-or-slug/related_products
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~all: 0
+  ~page: 1
+  ~per_page: 30
+  ~sort_by: id
+  ~sort_dir: asc
+  ~include: variants,variants_options_table,brand,categories,collections,discounts,valid_discounts,expired_discounts,tags,product_type,tax_class,price_lists,price_breakdown
+}
+
+params:path {
+  id-or-slug: 
+}
+
+headers {
+  Accept: application/json
+  Content-Type: application/json
+  Locale: {{locale}}
+  Country-ISO-2: {{countryIso2}}
+}
+
+docs {
+  summary:
+  - List related products
+
+  endpoint:
+  - method: GET
+  - path: /products/:id-or-slug/related_products
+
+  query params:
+  - all (boolean): Return all related products without pagination.
+  - page (integer): Page number used when all is false.
+  - per_page (integer): Items per page (bounded by API config).
+  - sort_by (string): Sort field. Allowed: id and filterable product columns.
+  - sort_dir (string): Sort direction: asc or desc.
+  - include (string|array): Optional product includes for each related product.
+
+  path params:
+  - id-or-slug: Replace with target product identifier.
+
+  body:
+  - none
+}

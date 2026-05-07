@@ -491,6 +491,19 @@ Table product_collection_product {
   updated_at datetime [not null]
 }
 
+Table product_related_products {
+  id bigint [pk, increment, not null]
+  product_id bigint [not null, ref: > products.id]
+  related_product_id bigint [not null, ref: > products.id]
+  sort_order int [not null, default: 0]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+
+  Indexes {
+    (product_id, related_product_id) [unique]
+  }
+}
+
 Table product_configuration {
   id bigint [pk, increment, not null]
   product_id bigint [not null, ref: > products.id]

@@ -21,6 +21,7 @@ class CreateProduct
         $categoryIds = Arr::pull($payload, 'category_ids', []);
         $collectionIds = Arr::pull($payload, 'collection_ids', []);
         $tagIds = Arr::pull($payload, 'tag_ids', []);
+        $relatedProductIds = Arr::pull($payload, 'related_product_ids', []);
         $inventoryPayload = Arr::pull($payload, 'inventory');
 
         if (blank($payload['sku'] ?? null)) {
@@ -70,6 +71,10 @@ class CreateProduct
             $product->tags()->sync($tagIds);
         }
 
+        if (!empty($relatedProductIds)) {
+            $this->syncRelatedProducts($product, $relatedProductIds);
+        }
+
         if (is_array($inventoryPayload)) {
             if (!array_key_exists('price', $inventoryPayload)) {
                 $inventoryPayload['price'] = 0;
@@ -79,6 +84,20 @@ class CreateProduct
         }
 
         return $product->refresh()->load(['inventory', 'variantOptions']);
+    }
+
+    private function syncRelatedProducts(Product $product, array $relatedProductIds): void
+    {
+        $syncPayload = collect($relatedProductIds)
+            ->map(fn (mixed $id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->mapWithKeys(fn (int $id, int $index): array => [
+                $id => ['sort_order' => $index],
+            ])
+            ->all();
+
+        $product->relatedProducts()->sync($syncPayload);
     }
 
     private function validateTagProductTypeCompatibility(array $tagIds, mixed $productTypeId): void

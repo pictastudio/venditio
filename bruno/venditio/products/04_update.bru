@@ -11,7 +11,7 @@ patch {
 }
 
 params:query {
-  ~include: variants,variants_options_table,brand,categories,collections,discounts,valid_discounts,expired_discounts,tags,product_type,tax_class,price_lists,price_breakdown
+  ~include: variants,variants_options_table,brand,categories,collections,related_products,discounts,valid_discounts,expired_discounts,tags,product_type,tax_class,price_lists,price_breakdown
 }
 
 params:path {
@@ -31,6 +31,7 @@ body:json {
     "status": "published",
     "category_ids": [1, 2],
     "collection_ids": [1, 2],
+    "related_product_ids": [2, 3],
     "tag_ids": [1, 3],
     "metadata": {
       "titolo": "T-shirt v2",
@@ -77,7 +78,7 @@ docs {
   - path: /products/:id-or-slug
 
   query params:
-  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, collections, discounts, valid_discounts, expired_discounts, tags, product_type, tax_class, price_breakdown, price_lists (if enabled).
+  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, collections, related_products, discounts, valid_discounts, expired_discounts, tags, product_type, tax_class, price_breakdown, price_lists (if enabled).
 
   path params:
   - id-or-slug: Replace with target resource identifier.
@@ -129,6 +130,8 @@ docs {
   - category_ids.*
   - collection_ids (array)
   - collection_ids.*
+  - related_product_ids (array)
+  - related_product_ids.*
   - tag_ids (array)
   - tag_ids.*
   - inventory (object)

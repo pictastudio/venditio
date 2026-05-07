@@ -47,6 +47,7 @@ class ProductResource extends JsonResource
             'parent' => self::make($this->whenLoaded('parent')),
             'categories' => ProductCategoryResource::collection($this->whenLoaded('categories')),
             'collections' => ProductCollectionResource::collection($this->whenLoaded('collections')),
+            'related_products' => self::collection($this->whenLoaded('relatedProducts')),
             'tags' => TagResource::collection($this->whenLoaded('tags')),
             'price_lists_relation' => PriceListResource::collection($this->whenLoaded('priceLists')),
             'price_list_prices' => PriceListPriceResource::collection($this->whenLoaded('priceListPrices')),

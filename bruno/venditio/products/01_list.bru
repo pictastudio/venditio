@@ -66,7 +66,7 @@ params:query {
   ~exclude_variants: 1
   ~price: 10
   ~price_operator: >=
-  ~include: variants,variants_options_table,brand,categories,collections,discounts,valid_discounts,expired_discounts,tags,product_type,tax_class,price_lists,price_breakdown
+  ~include: variants,variants_options_table,brand,categories,collections,related_products,discounts,valid_discounts,expired_discounts,tags,product_type,tax_class,price_lists,price_breakdown
 }
 
 headers {
@@ -141,7 +141,7 @@ docs {
   - price (number): Filter products by inventory price value.
   - price_operator (string): Operator used with price. Allowed: >, <, >=, <=, =.
   - sort_by=price (string): Sort products by related inventory price.
-  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, collections, discounts, valid_discounts, expired_discounts, tags, product_type, tax_class, price_breakdown, price_lists (if enabled).
+  - include (string|array): Optional includes: variants, variants_options_table, brand, categories, collections, related_products, discounts, valid_discounts, expired_discounts, tags, product_type, tax_class, price_breakdown, price_lists (if enabled).
   - Note: price_calculated.price_final includes tax when the selected price does not include tax, using the country header rate or configured default tax rate.
 
   path params:

@@ -15,6 +15,7 @@ use PictaStudio\Venditio\Http\Controllers\Api\V1\{AddressController, BrandContro
 */
 
 Route::apiResource('products', ProductController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+Route::get('products/{product}/related_products', [ProductController::class, 'relatedProducts'])->name('products.relatedProducts');
 Route::get('products/{product}/variants', [ProductController::class, 'variants'])->name('products.variants');
 Route::post('products/{product}/variants', [ProductController::class, 'createVariants'])->name('products.createVariants');
 Route::delete('products/{product}/media/{mediaId}', [ProductController::class, 'destroyMedia'])->name('products.media.destroy');

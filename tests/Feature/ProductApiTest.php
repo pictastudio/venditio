@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PictaStudio\Venditio\Enums\{DiscountType, ProductMeasuringUnit, ProductStatus};
 use PictaStudio\Venditio\Models\{Brand, Country, CountryTaxClass, Currency, Inventory, PriceList, PriceListPrice, Product, ProductCategory, ProductCollection, ProductType, ProductVariant, ProductVariantOption, Tag, TaxClass};
 
@@ -342,6 +343,152 @@ it('updates product collections when provided', function () {
         'product_id' => $product->getKey(),
         'product_collection_id' => $otherCollection->getKey(),
     ]);
+});
+
+it('creates a product with related products', function () {
+    $brand = Brand::factory()->create();
+    $taxClass = TaxClass::factory()->create();
+    $firstRelatedProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $secondRelatedProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $response = postJson(config('venditio.routes.api.v1.prefix') . '/products?include=related_products', [
+        'brand_id' => $brand->getKey(),
+        'tax_class_id' => $taxClass->getKey(),
+        'name' => 'Product with related products',
+        'sku' => 'RELATED-PRODUCTS-001',
+        'status' => ProductStatus::Published,
+        'related_product_ids' => [
+            $secondRelatedProduct->getKey(),
+            $firstRelatedProduct->getKey(),
+            $secondRelatedProduct->getKey(),
+        ],
+    ])->assertCreated()
+        ->assertJsonPath('related_products.0.id', $secondRelatedProduct->getKey())
+        ->assertJsonPath('related_products.1.id', $firstRelatedProduct->getKey());
+
+    $productId = $response->json('id');
+    $table = 'product_related_products';
+
+    expect(DB::table($table)->where('product_id', $productId)->count())->toBe(2);
+
+    assertDatabaseHas($table, [
+        'product_id' => $productId,
+        'related_product_id' => $secondRelatedProduct->getKey(),
+        'sort_order' => 0,
+    ]);
+    assertDatabaseHas($table, [
+        'product_id' => $productId,
+        'related_product_id' => $firstRelatedProduct->getKey(),
+        'sort_order' => 1,
+    ]);
+});
+
+it('syncs and clears related products when updating a product', function () {
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $firstRelatedProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $secondRelatedProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->relatedProducts()->sync([
+        $firstRelatedProduct->getKey() => ['sort_order' => 0],
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=related_products", [
+        'related_product_ids' => [$secondRelatedProduct->getKey()],
+    ])->assertOk()
+        ->assertJsonPath('related_products.0.id', $secondRelatedProduct->getKey());
+
+    $table = 'product_related_products';
+
+    assertDatabaseMissing($table, [
+        'product_id' => $product->getKey(),
+        'related_product_id' => $firstRelatedProduct->getKey(),
+    ]);
+    assertDatabaseHas($table, [
+        'product_id' => $product->getKey(),
+        'related_product_id' => $secondRelatedProduct->getKey(),
+        'sort_order' => 0,
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=related_products", [
+        'related_product_ids' => [],
+    ])->assertOk()
+        ->assertJsonPath('related_products', []);
+
+    expect(DB::table($table)->where('product_id', $product->getKey())->count())->toBe(0);
+});
+
+it('rejects self related products when updating a product', function () {
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    patchJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}", [
+        'related_product_ids' => [$product->getKey()],
+    ])->assertUnprocessable()
+        ->assertJsonValidationErrors(['related_product_ids']);
+});
+
+it('lists related products for a product', function () {
+    $product = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $firstRelatedProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $secondRelatedProduct = Product::factory()->create([
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+
+    $product->relatedProducts()->sync([
+        $secondRelatedProduct->getKey() => ['sort_order' => 0],
+        $firstRelatedProduct->getKey() => ['sort_order' => 1],
+    ]);
+
+    $response = getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}/related_products?per_page=10")
+        ->assertOk();
+
+    expect(collect($response->json('data'))->pluck('id')->all())
+        ->toBe([
+            $secondRelatedProduct->getKey(),
+            $firstRelatedProduct->getKey(),
+        ]);
+
+    $sortedResponse = getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}/related_products?per_page=10&sort_by=id&sort_dir=asc")
+        ->assertOk();
+
+    expect(collect($sortedResponse->json('data'))->pluck('id')->all())
+        ->toBe([
+            $firstRelatedProduct->getKey(),
+            $secondRelatedProduct->getKey(),
+        ]);
 });
 
 it('creates a product with qty_for_unit', function () {

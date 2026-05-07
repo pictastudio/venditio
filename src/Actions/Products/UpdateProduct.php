@@ -20,6 +20,8 @@ class UpdateProduct
         $collectionIds = Arr::pull($payload, 'collection_ids', []);
         $tagIdsProvided = array_key_exists('tag_ids', $payload);
         $tagIds = Arr::pull($payload, 'tag_ids', []);
+        $relatedProductIdsProvided = array_key_exists('related_product_ids', $payload);
+        $relatedProductIds = Arr::pull($payload, 'related_product_ids', []);
         $inventoryProvided = array_key_exists('inventory', $payload);
         $inventoryPayload = Arr::pull($payload, 'inventory');
         $imagesProvided = array_key_exists('images', $payload);
@@ -52,6 +54,10 @@ class UpdateProduct
             $product->tags()->sync($tagIds ?? []);
         }
 
+        if ($relatedProductIdsProvided) {
+            $this->syncRelatedProducts($product, $relatedProductIds ?? []);
+        }
+
         if ($inventoryProvided && is_array($inventoryPayload)) {
             $product->inventory()->updateOrCreate(
                 ['product_id' => $product->getKey()],
@@ -60,6 +66,22 @@ class UpdateProduct
         }
 
         return $product->refresh()->load(['inventory', 'variantOptions']);
+    }
+
+    private function syncRelatedProducts(Product $product, array $relatedProductIds): void
+    {
+        $productKey = (int) $product->getKey();
+        $syncPayload = collect($relatedProductIds)
+            ->map(fn (mixed $id): int => (int) $id)
+            ->reject(fn (int $id): bool => $id === $productKey)
+            ->unique()
+            ->values()
+            ->mapWithKeys(fn (int $id, int $index): array => [
+                $id => ['sort_order' => $index],
+            ])
+            ->all();
+
+        $product->relatedProducts()->sync($syncPayload);
     }
 
     private function validateTagProductTypeCompatibility(array $tagIds, mixed $productTypeId): void

@@ -128,6 +128,19 @@ class Product extends Model implements TranslatableContract
             ->withTimestamps();
     }
 
+    public function relatedProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            static::class,
+            'product_related_products',
+            'product_id',
+            'related_product_id'
+        )
+            ->withPivot('sort_order')
+            ->withTimestamps()
+            ->orderByPivot('sort_order');
+    }
+
     public function tags(): MorphToMany
     {
         return $this->morphToMany(resolve_model('tag'), 'taggable', 'taggables')
