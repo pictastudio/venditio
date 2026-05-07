@@ -74,6 +74,7 @@ class ProductResource extends JsonResource
                                 'name' => $priceListPrice->priceList?->name,
                                 'code' => $priceListPrice->priceList?->code,
                                 'active' => (bool) ($priceListPrice->priceList?->active ?? true),
+                                'allow_discounts' => (bool) ($priceListPrice->priceList?->allow_discounts ?? true),
                                 'description' => $priceListPrice->priceList?->description,
                                 'metadata' => $priceListPrice->priceList?->metadata,
                             ]
@@ -101,6 +102,9 @@ class ProductResource extends JsonResource
         $baseUnitPrice = (float) ($resolved['unit_price'] ?? 0);
         $pricingPreview = $this->resolvePricingPreview($resolved, $request);
         $priceIncludesTax = (bool) ($resolved['price_includes_tax'] ?? false);
+        $priceList = is_array($resolved['price_list'] ?? null)
+            ? $this->normalizePriceListSummary($resolved['price_list'])
+            : null;
         $taxRate = $this->resolveTaxRate($request);
         $baseTaxBreakdown = $this->resolveTaxBreakdown($baseUnitPrice, $taxRate, $priceIncludesTax);
         $finalTaxBreakdown = $this->resolveTaxBreakdown($pricingPreview['price_final'], $taxRate, $priceIncludesTax);
@@ -116,7 +120,7 @@ class ProductResource extends JsonResource
             'price_total' => $baseTaxBreakdown['total'],
             'price_final_taxable' => $finalTaxBreakdown['taxable'],
             'price_final_tax' => $finalTaxBreakdown['tax'],
-            'price_list' => $resolved['price_list'] ?? null,
+            'price_list' => $priceList,
         ];
 
         if ($shouldIncludePriceBreakdown) {
@@ -130,6 +134,9 @@ class ProductResource extends JsonResource
     protected function resolvePricingPreview(array $resolved, Request $request): array
     {
         $unitPrice = (float) ($resolved['unit_price'] ?? 0);
+        $priceList = is_array($resolved['price_list'] ?? null)
+            ? $this->normalizePriceListSummary($resolved['price_list'])
+            : null;
         $cartLineModelClass = resolve_model('cart_line');
         /** @var Model $previewLine */
         $previewLine = new $cartLineModelClass;
@@ -141,7 +148,7 @@ class ProductResource extends JsonResource
             'purchase_price' => $resolved['purchase_price'] ?? null,
             'product_data' => [
                 'pricing' => [
-                    'price_list' => $resolved['price_list'] ?? null,
+                    'price_list' => $priceList,
                     'price_source' => $this->resolvePriceSource($resolved),
                 ],
                 'price_calculated' => [
@@ -149,7 +156,7 @@ class ProductResource extends JsonResource
                     'price_final' => $unitPrice,
                     'purchase_price' => isset($resolved['purchase_price']) ? (float) $resolved['purchase_price'] : null,
                     'price_includes_tax' => (bool) ($resolved['price_includes_tax'] ?? false),
-                    'price_list' => $resolved['price_list'] ?? null,
+                    'price_list' => $priceList,
                     'price_source' => $this->resolvePriceSource($resolved),
                 ],
             ],
@@ -273,7 +280,7 @@ class ProductResource extends JsonResource
         $providedPriceSource = $resolved['price_source'] ?? null;
 
         if (is_array($providedPriceSource)) {
-            return $providedPriceSource;
+            return $this->normalizePriceSource($providedPriceSource);
         }
 
         $priceList = $resolved['price_list'] ?? null;
@@ -283,8 +290,31 @@ class ProductResource extends JsonResource
             'unit_price' => (float) ($resolved['unit_price'] ?? 0),
             'purchase_price' => isset($resolved['purchase_price']) ? (float) $resolved['purchase_price'] : null,
             'price_includes_tax' => (bool) ($resolved['price_includes_tax'] ?? false),
-            'price_list' => is_array($priceList) ? $priceList : null,
+            'allow_discounts' => true,
+            'price_list' => is_array($priceList) ? $this->normalizePriceListSummary($priceList) : null,
         ];
+    }
+
+    private function normalizePriceSource(array $priceSource): array
+    {
+        if (($priceSource['type'] ?? null) !== 'price_list') {
+            $priceSource['allow_discounts'] = (bool) ($priceSource['allow_discounts'] ?? true);
+
+            return $priceSource;
+        }
+
+        $priceSource['price_list'] = is_array($priceSource['price_list'] ?? null)
+            ? $this->normalizePriceListSummary($priceSource['price_list'])
+            : null;
+
+        return $priceSource;
+    }
+
+    private function normalizePriceListSummary(array $priceList): array
+    {
+        $priceList['allow_discounts'] = (bool) ($priceList['allow_discounts'] ?? true);
+
+        return $priceList;
     }
 
     private function resolveCountryIso2Header(Request $request): ?string

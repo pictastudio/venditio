@@ -4,12 +4,17 @@ namespace PictaStudio\Venditio\Actions\ProductCategories;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use PictaStudio\Venditio\Actions\Tree\RebuildTreePaths;
 use PictaStudio\Venditio\Models\ProductCategory;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
 class UpdateMultipleProductCategories
 {
+    public function __construct(
+        private readonly RebuildTreePaths $treePaths,
+    ) {}
+
     public function handle(array $categories): Collection
     {
         return DB::transaction(function () use ($categories): Collection {
@@ -61,24 +66,10 @@ class UpdateMultipleProductCategories
                     continue;
                 }
 
-                $this->rebuildSubtreePaths($category);
+                $this->treePaths->rebuild($category);
             }
 
             return $updatedCategories;
         });
-    }
-
-    private function rebuildSubtreePaths(ProductCategory $category): void
-    {
-        $category->refresh();
-        $category->assignPath();
-        $category->saveQuietly();
-
-        $category->load('children');
-
-        foreach ($category->children as $child) {
-            /** @var ProductCategory $child */
-            $this->rebuildSubtreePaths($child);
-        }
     }
 }

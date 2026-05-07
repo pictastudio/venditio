@@ -63,6 +63,7 @@ Include parameters:
   - `price_breakdown` adds `price_calculated.price_source` and `price_calculated.discounts_applied`, so admin UIs can show which base price source was selected and the ordered automatic discounts applied to the product preview
   - on `GET /products/{product}`, requesting `variants` for a product that is itself a variant exposes the variant set inside the `parent.variants` object
 - `/product_collections`: `include=products,products_count,tags,discounts,valid_discounts,expired_discounts`
+- `/price_list_prices`: `include=product`
 - `/wishlists`: `include=user,items,items.product,products,products_count`
 - `/brands`, `/product_categories`, `/product_types`, `/tags`, `/carts`, `/cart_lines`, `/orders`, `/order_lines`: `include=discounts,valid_discounts,expired_discounts`
   - `discounts` returns all non-deleted discounts scoped to that resource, including inactive, future, currently valid, and expired rows
@@ -433,6 +434,8 @@ Discount list filters:
 - `DELETE /price_list_prices/{price_list_price}`
 
 If `venditio.price_lists.enabled=false`, these endpoints return `404`.
+
+Price lists expose `allow_discounts` (boolean, default `true`). When `false`, product prices resolved from that price list do not receive automatic line discounts and are excluded from cart/order total discount-code calculations.
 
 ## Variant Workflow Example
 

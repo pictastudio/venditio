@@ -2,6 +2,31 @@
 
 All notable changes to `venditio` will be documented in this file.
 
+## v2.8.0 - 2026-05-07
+
+### What's Changed
+
+#### Features
+
+- **Related products API** - Added related-product management for products, including storage, validation, resource output, API docs, DBML schema coverage, Bruno requests, and feature tests.
+- **Price-list discount eligibility** - Added `allow_discounts` to price lists and resolved pricing snapshots so host apps can exclude protected price-list prices from automatic line discounts and cart/order total discount-code calculations.
+- **Price-list price product includes** - Added `include=product` support on price-list price list, show, store, update, and bulk upsert responses.
+
+#### Fixes
+
+- **Cart product resolution with host scopes** - Cart line product lookup now bypasses host global scopes while reapplying package-level purchasability constraints, allowing unmanaged zero-stock products to be purchased when inventory stock management is disabled.
+- **Tree path rebuilding** - Product category and tag bulk updates and deletes now rebuild descendant paths when nodes move or children are released to the root.
+
+#### API & Tooling
+
+- **Docs, schema, and Bruno examples** - Updated the API reference, DBML schema, and Bruno collection for related products, price-list discount eligibility, and price-list price product includes.
+
+#### Tests
+
+- Added feature coverage for related products, price-list discount opt-outs, price-list price product includes, cart product resolution with host scopes, and tree path rebuilding for categories and tags.
+
+**Full Changelog**: https://github.com/pictastudio/venditio/compare/v2.7.0...v2.8.0
+
 ## v2.7.0 - 2026-04-30
 
 ### What's Changed

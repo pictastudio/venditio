@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PictaStudio\Venditio\Contracts\ProductPriceResolverInterface;
+use PictaStudio\Venditio\Enums\DiscountType;
 use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, PriceList, PriceListPrice, Product, TaxClass};
 
 use function Pest\Laravel\{assertDatabaseHas, assertDatabaseMissing, deleteJson, getJson, patchJson, postJson};
@@ -75,6 +76,7 @@ it('provides full crud for global price lists when feature is enabled', function
         'name' => 'B2B',
         'code' => 'B2B',
         'active' => true,
+        'allow_discounts' => false,
     ])->assertCreated();
 
     $priceListId = $created->json('id');
@@ -84,6 +86,7 @@ it('provides full crud for global price lists when feature is enabled', function
         'name' => 'B2B',
         'code' => 'B2B',
         'active' => true,
+        'allow_discounts' => false,
     ]);
 
     getJson($prefix . '/price_lists?all=1')
@@ -91,19 +94,23 @@ it('provides full crud for global price lists when feature is enabled', function
         ->assertJsonFragment([
             'id' => $priceListId,
             'name' => 'B2B',
+            'allow_discounts' => false,
         ]);
 
     patchJson($prefix . '/price_lists/' . $priceListId, [
         'name' => 'B2B Updated',
         'active' => false,
+        'allow_discounts' => true,
     ])->assertOk()
         ->assertJsonPath('name', 'B2B Updated')
-        ->assertJsonPath('active', false);
+        ->assertJsonPath('active', false)
+        ->assertJsonPath('allow_discounts', true);
 
     assertDatabaseHas('price_lists', [
         'id' => $priceListId,
         'name' => 'B2B Updated',
         'active' => false,
+        'allow_discounts' => true,
     ]);
 
     deleteJson($prefix . '/price_lists/' . $priceListId)->assertNoContent();
@@ -111,6 +118,23 @@ it('provides full crud for global price lists when feature is enabled', function
     assertDatabaseMissing('price_lists', [
         'id' => $priceListId,
         'deleted_at' => null,
+    ]);
+});
+
+it('defaults price lists to allowing discounts', function () {
+    config()->set('venditio.price_lists.enabled', true);
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $priceListId = postJson($prefix . '/price_lists', [
+        'name' => 'Retail',
+        'code' => 'RETAIL',
+    ])->assertCreated()
+        ->assertJsonPath('allow_discounts', true)
+        ->json('id');
+
+    assertDatabaseHas('price_lists', [
+        'id' => $priceListId,
+        'allow_discounts' => true,
     ]);
 });
 
@@ -141,13 +165,18 @@ it('provides full crud for product prices attached to price lists', function () 
         'is_default' => true,
     ]);
 
-    getJson($prefix . '/price_list_prices?all=1&product_id=' . $product->getKey())
+    getJson($prefix . '/price_list_prices?all=1&product_id=' . $product->getKey() . '&include=product')
         ->assertOk()
+        ->assertJsonPath('0.product.id', $product->getKey())
         ->assertJsonFragment([
             'id' => $priceListPriceId,
             'product_id' => $product->getKey(),
             'price_list_id' => $priceList->getKey(),
         ]);
+
+    getJson($prefix . '/price_list_prices/' . $priceListPriceId . '?include=product')
+        ->assertOk()
+        ->assertJsonPath('product.id', $product->getKey());
 
     patchJson($prefix . '/price_list_prices/' . $priceListPriceId, [
         'price' => 79.90,
@@ -336,7 +365,9 @@ it('uses the default price list price in cart line pricing when enabled', functi
         ->assertOk()
         ->assertJsonPath('price_calculated.price', 95)
         ->assertJsonPath('price_calculated.price_final', 95)
+        ->assertJsonPath('price_calculated.price_list.allow_discounts', true)
         ->assertJsonPath('price_lists.0.price_list.name', 'Retail')
+        ->assertJsonPath('price_lists.0.price_list.allow_discounts', true)
         ->assertJsonPath('price_lists.1.price_list.name', 'Wholesale');
 
     $cartId = postJson(config('venditio.routes.api.v1.prefix') . '/carts', [
@@ -349,7 +380,47 @@ it('uses the default price list price in cart line pricing when enabled', functi
     getJson(config('venditio.routes.api.v1.prefix') . '/carts/' . $cartId)
         ->assertOk()
         ->assertJsonPath('lines.0.unit_price', 95)
-        ->assertJsonPath('lines.0.product_data.pricing.price_list.name', 'Wholesale');
+        ->assertJsonPath('lines.0.product_data.pricing.price_list.name', 'Wholesale')
+        ->assertJsonPath('lines.0.product_data.pricing.price_list.allow_discounts', true);
+});
+
+it('suppresses product price breakdown discounts when the resolved price list disallows discounts', function () {
+    config()->set('venditio.price_lists.enabled', true);
+
+    $product = pl_createProduct(inventoryPrice: 150);
+    $priceList = PriceList::factory()->create([
+        'name' => 'Protected',
+        'code' => 'PROTECTED',
+        'allow_discounts' => false,
+    ]);
+
+    $priceListPrice = PriceListPrice::factory()->create([
+        'product_id' => $product->getKey(),
+        'price_list_id' => $priceList->getKey(),
+        'price' => 100,
+        'price_includes_tax' => true,
+        'is_default' => true,
+    ]);
+
+    $product->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'name' => 'Product 10%',
+        'code' => 'PRD10-PROTECTED',
+        'active' => true,
+        'starts_at' => now()->subMinute(),
+        'ends_at' => now()->addDay(),
+    ]);
+
+    getJson(config('venditio.routes.api.v1.prefix') . "/products/{$product->getKey()}?include=price_breakdown,price_lists")
+        ->assertOk()
+        ->assertJsonPath('price_calculated.price', 100)
+        ->assertJsonPath('price_calculated.price_final', 100)
+        ->assertJsonPath('price_calculated.price_list.allow_discounts', false)
+        ->assertJsonPath('price_calculated.price_source.price_list_price_id', $priceListPrice->getKey())
+        ->assertJsonPath('price_calculated.price_source.price_list.allow_discounts', false)
+        ->assertJsonPath('price_calculated.discounts_applied', [])
+        ->assertJsonPath('price_lists.0.price_list.allow_discounts', false);
 });
 
 it('allows host applications to override price resolver behavior', function () {

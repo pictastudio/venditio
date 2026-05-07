@@ -14,6 +14,10 @@ params:path {
   id: 
 }
 
+params:query {
+  ~include: product
+}
+
 headers {
   Accept: application/json
   Content-Type: application/json
@@ -28,7 +32,7 @@ docs {
   - path: /price_list_prices/:id
 
   query params:
-  - none
+  - include (string|array): Optional includes: product.
 
   path params:
   - id: Replace with target resource identifier.

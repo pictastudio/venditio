@@ -219,9 +219,16 @@ it('rejects deleting a product category with connected products unless forced', 
 });
 
 it('force deletes a product category and clears related pivots', function () {
-    $category = ProductCategory::factory()->create();
+    $category = ProductCategory::factory()->create([
+        'sort_order' => 1,
+    ]);
     $child = ProductCategory::factory()->create([
         'parent_id' => $category->getKey(),
+        'sort_order' => 2,
+    ]);
+    $grandchild = ProductCategory::factory()->create([
+        'parent_id' => $child->getKey(),
+        'sort_order' => 3,
     ]);
     $product = Product::factory()->create([
         'active' => true,
@@ -255,6 +262,17 @@ it('force deletes a product category and clears related pivots', function () {
         'id' => $child->getKey(),
         'parent_id' => null,
     ]);
+
+    $child->refresh();
+    $grandchild->refresh();
+
+    expect((string) $child->path)->toBe((string) $child->getKey())
+        ->and((string) $grandchild->path)->toBe($child->getKey() . '.' . $grandchild->getKey());
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/product_categories?as_tree=1')
+        ->assertOk()
+        ->assertJsonPath('0.id', $child->getKey())
+        ->assertJsonPath('0.children.0.id', $grandchild->getKey());
 });
 
 it('returns product categories as a tree when as_tree is true', function () {
@@ -517,6 +535,7 @@ it('uploads category images as a typed images collection on update', function ()
         'visible_from' => null,
         'visible_until' => null,
     ]);
+    $uploadDatePath = now()->format('Y/m/d');
 
     patch(
         config('venditio.routes.api.v1.prefix') . '/product_categories/' . $category->getKey(),
@@ -549,9 +568,9 @@ it('uploads category images as a typed images collection on update', function ()
     expect($category->images)->toBeArray()->toHaveCount(2)
         ->and(data_get($thumb, 'type'))->toBe('thumb')
         ->and(data_get($cover, 'type'))->toBe('cover')
-        ->and(str_starts_with((string) data_get($thumb, 'src'), 'product_categories/' . $category->getKey() . '/thumb/'))
+        ->and(str_starts_with((string) data_get($thumb, 'src'), 'product_categories/' . $category->getKey() . '/thumb/' . $uploadDatePath . '/'))
         ->toBeTrue()
-        ->and(str_starts_with((string) data_get($cover, 'src'), 'product_categories/' . $category->getKey() . '/cover/'))
+        ->and(str_starts_with((string) data_get($cover, 'src'), 'product_categories/' . $category->getKey() . '/cover/' . $uploadDatePath . '/'))
         ->toBeTrue();
 
     Storage::disk('public')->assertExists((string) data_get($thumb, 'src'));
@@ -607,6 +626,7 @@ it('allows multiple product category images with null type', function () {
         'visible_from' => null,
         'visible_until' => null,
     ]);
+    $uploadDatePath = now()->format('Y/m/d');
 
     patch(
         config('venditio.routes.api.v1.prefix') . '/product_categories/' . $category->getKey(),
@@ -632,8 +652,8 @@ it('allows multiple product category images with null type', function () {
     $category->refresh();
 
     expect($category->images)->toHaveCount(2)
-        ->and(str_starts_with((string) data_get($category->images, '0.src'), 'product_categories/' . $category->getKey() . '/images/'))->toBeTrue()
-        ->and(str_starts_with((string) data_get($category->images, '1.src'), 'product_categories/' . $category->getKey() . '/images/'))->toBeTrue();
+        ->and(str_starts_with((string) data_get($category->images, '0.src'), 'product_categories/' . $category->getKey() . '/images/' . $uploadDatePath . '/'))->toBeTrue()
+        ->and(str_starts_with((string) data_get($category->images, '1.src'), 'product_categories/' . $category->getKey() . '/images/' . $uploadDatePath . '/'))->toBeTrue();
 });
 
 it('updates product category image sort_order without requiring a new upload', function () {

@@ -10,6 +10,10 @@ post {
   auth: inherit
 }
 
+params:query {
+  ~include: product
+}
+
 headers {
   Accept: application/json
   Content-Type: application/json
@@ -38,7 +42,7 @@ docs {
   - path: /price_list_prices
 
   query params:
-  - none
+  - include (string|array): Optional includes: product.
 
   path params:
   - none
@@ -49,6 +53,6 @@ docs {
   - Example for product_id=1: then create with price_list_id=2 and price=15.99.
   - Keep only one default by setting is_default=true on the preferred record.
   - Constraint: product_id + price_list_id must be unique.
-  - Verify with GET /price_list_prices?product_id=1&all=1.
+  - Verify with GET /price_list_prices?product_id=1&all=1&include=product.
   - Verify with GET /products/:id-or-slug?include=price_lists.
 }

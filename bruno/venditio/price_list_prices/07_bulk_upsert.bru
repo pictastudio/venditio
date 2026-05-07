@@ -10,6 +10,10 @@ post {
   auth: inherit
 }
 
+params:query {
+  ~include: product
+}
+
 headers {
   Accept: application/json
   Content-Type: application/json
@@ -53,7 +57,7 @@ docs {
   - path: /price_list_prices/bulk/upsert
 
   query params:
-  - none
+  - include (string|array): Optional includes: product.
 
   path params:
   - none

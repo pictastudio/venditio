@@ -190,6 +190,42 @@ it('skips stock validation and movements when inventory stock management is disa
         ->and($product->inventory->stock_available)->toBe(2);
 });
 
+it('allows cart creation for out-of-stock products when inventory stock management is disabled', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupStockTaxEnvironment($taxClass);
+
+    $user = User::query()->create([
+        'first_name' => 'Anna',
+        'last_name' => 'Neri',
+        'email' => 'anna-stock-disabled-zero@example.test',
+        'phone' => '123456789',
+    ]);
+
+    $product = createStockProduct($taxClass, 0, 0, false);
+
+    $cart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'user_id' => $user->getKey(),
+            'user_first_name' => $user->first_name,
+            'user_last_name' => $user->last_name,
+            'user_email' => $user->email,
+            'lines' => [
+                ['product_id' => $product->getKey(), 'qty' => 5],
+            ],
+        ])
+    )->load('lines');
+
+    $product->inventory->refresh();
+
+    expect($cart->getKey())->not->toBeNull()
+        ->and($cart->lines)->toHaveCount(1)
+        ->and($cart->lines->first()->qty)->toBe(5)
+        ->and($product->inventory->manage_stock)->toBeFalse()
+        ->and($product->inventory->stock)->toBe(0)
+        ->and($product->inventory->stock_reserved)->toBe(0)
+        ->and($product->inventory->stock_available)->toBe(0);
+});
+
 it('dispatches a `low stock` event with the expected data when `stock` goes below `stock_min`', function () {
     Event::fake([ProductStockBelowMinimum::class]);
 

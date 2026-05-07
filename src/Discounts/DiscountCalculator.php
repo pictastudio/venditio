@@ -20,6 +20,20 @@ class DiscountCalculator implements DiscountCalculatorInterface
     {
         $unitPrice = (float) $line->getAttribute('unit_price');
         $qty = max(1, (int) ($line->getAttribute('qty') ?? 1));
+
+        if (!$this->lineAllowsDiscounts($line)) {
+            $line->fill([
+                'discount_id' => null,
+                'discount_code' => null,
+                'discount_amount' => 0,
+                'unit_discount' => 0,
+                'unit_final_price' => round(max(0, $unitPrice), 2),
+            ]);
+            $this->syncCalculatedPriceSnapshot($line, round(max(0, $unitPrice), 2), collect(), $qty, $unitPrice);
+
+            return $line;
+        }
+
         $appliedDiscounts = $this->resolveApplicableDiscounts($line, $context, $unitPrice);
         $primaryDiscount = $appliedDiscounts->first()['discount'] ?? null;
         $totalUnitDiscount = round((float) $appliedDiscounts->sum('amount'), 2);
@@ -57,6 +71,39 @@ class DiscountCalculator implements DiscountCalculatorInterface
         data_set($productData, 'price_calculated.discounts_applied', $this->toDiscountSnapshot($appliedDiscounts, $qty, $unitPrice));
         data_set($productData, 'price_calculated.price_final', $unitFinalPrice);
         $line->setAttribute('product_data', $productData);
+    }
+
+    private function lineAllowsDiscounts(Model $line): bool
+    {
+        $productData = $line->getAttribute('product_data');
+
+        if (!is_array($productData)) {
+            return true;
+        }
+
+        $allowDiscounts = data_get(
+            $productData,
+            'price_calculated.price_source.price_list.allow_discounts',
+            data_get(
+                $productData,
+                'pricing.price_source.price_list.allow_discounts',
+                data_get(
+                    $productData,
+                    'price_calculated.price_list.allow_discounts',
+                    data_get(
+                        $productData,
+                        'pricing.price_list.allow_discounts',
+                        data_get(
+                            $productData,
+                            'price_calculated.price_source.allow_discounts',
+                            data_get($productData, 'pricing.price_source.allow_discounts', true)
+                        )
+                    )
+                )
+            )
+        );
+
+        return filter_var($allowDiscounts, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
     }
 
     private function toDiscountSnapshot(Collection $appliedDiscounts, int $qty, float $startingUnitPrice): array

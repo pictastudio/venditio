@@ -20,7 +20,8 @@ class PriceListPriceController extends Controller
         $this->ensureFeatureIsEnabled();
         $this->authorizeIfConfigured('viewAny', resolve_model('price_list_price'));
 
-        $filters = request()->all();
+        $includes = $this->resolvePriceListPriceIncludes();
+        $filters = request()->except('include');
 
         $this->validateData($filters, [
             'product_id' => ['sometimes', 'integer', Rule::exists((new (resolve_model('product')))->getTable(), 'id')],
@@ -38,7 +39,7 @@ class PriceListPriceController extends Controller
                         isset($filters['price_list_id']),
                         fn ($builder) => $builder->where('price_list_id', (int) $filters['price_list_id'])
                     )
-                    ->with('priceList'),
+                    ->with($this->priceListPriceRelationsForIncludes($includes)),
                 $filters,
                 'price_list_price'
             )
@@ -53,7 +54,9 @@ class PriceListPriceController extends Controller
         $priceListPrice = query('price_list_price')->create($request->validated());
         $this->normalizeDefaultForProduct($priceListPrice);
 
-        return PriceListPriceResource::make($priceListPrice->refresh()->load('priceList'));
+        return PriceListPriceResource::make(
+            $priceListPrice->refresh()->load($this->priceListPriceRelationsForIncludes($this->resolvePriceListPriceIncludes()))
+        );
     }
 
     public function show(PriceListPrice $priceListPrice): JsonResource
@@ -61,7 +64,9 @@ class PriceListPriceController extends Controller
         $this->ensureFeatureIsEnabled();
         $this->authorizeIfConfigured('view', $priceListPrice);
 
-        return PriceListPriceResource::make($priceListPrice->load('priceList'));
+        return PriceListPriceResource::make(
+            $priceListPrice->load($this->priceListPriceRelationsForIncludes($this->resolvePriceListPriceIncludes()))
+        );
     }
 
     public function update(UpdatePriceListPriceRequest $request, PriceListPrice $priceListPrice): JsonResource
@@ -74,7 +79,9 @@ class PriceListPriceController extends Controller
 
         $this->normalizeDefaultForProduct($priceListPrice);
 
-        return PriceListPriceResource::make($priceListPrice->refresh()->load('priceList'));
+        return PriceListPriceResource::make(
+            $priceListPrice->refresh()->load($this->priceListPriceRelationsForIncludes($this->resolvePriceListPriceIncludes()))
+        );
     }
 
     public function upsertMultiple(UpsertMultiplePriceListPriceRequest $request): JsonResource
@@ -144,7 +151,9 @@ class PriceListPriceController extends Controller
         $upsertedPrices = app(UpsertMultiplePriceListPrices::class)
             ->handle($prices->all());
 
-        return PriceListPriceResource::collection($upsertedPrices->load('priceList'));
+        return PriceListPriceResource::collection(
+            $upsertedPrices->load($this->priceListPriceRelationsForIncludes($this->resolvePriceListPriceIncludes()))
+        );
     }
 
     public function destroy(PriceListPrice $priceListPrice)
@@ -177,5 +186,21 @@ class PriceListPriceController extends Controller
     private function priceTupleKey(int $productId, int $priceListId): string
     {
         return $productId . ':' . $priceListId;
+    }
+
+    private function resolvePriceListPriceIncludes(): array
+    {
+        return $this->resolveIncludes(['product']);
+    }
+
+    private function priceListPriceRelationsForIncludes(array $includes): array
+    {
+        $relations = ['priceList'];
+
+        if (in_array('product', $includes, true)) {
+            $relations[] = 'product';
+        }
+
+        return $relations;
     }
 }

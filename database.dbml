@@ -433,6 +433,7 @@ Table price_lists {
   name varchar(255) [not null]
   code varchar(255) [unique]
   active boolean [not null, default: true]
+  allow_discounts boolean [not null, default: true]
   description varchar(255)
   metadata json
   created_at datetime [not null]

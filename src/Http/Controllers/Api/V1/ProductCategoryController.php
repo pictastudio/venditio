@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\{Rule, ValidationException};
 use PictaStudio\Venditio\Actions\CatalogImages\DeleteCatalogImage;
 use PictaStudio\Venditio\Actions\ProductCategories\{CreateProductCategory, UpdateMultipleProductCategories, UpdateProductCategory};
+use PictaStudio\Venditio\Actions\Tree\RebuildTreePaths;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\ProductCategory\{StoreProductCategoryRequest, UpdateMultipleProductCategoryRequest, UpdateProductCategoryRequest};
 use PictaStudio\Venditio\Http\Resources\V1\ProductCategoryResource;
@@ -135,7 +136,7 @@ class ProductCategoryController extends Controller
         return ProductCategoryResource::collection($updatedCategories);
     }
 
-    public function destroy(ProductCategory $productCategory)
+    public function destroy(ProductCategory $productCategory, RebuildTreePaths $treePaths)
     {
         $this->authorizeIfConfigured('delete', $productCategory);
 
@@ -150,16 +151,11 @@ class ProductCategoryController extends Controller
         }
 
         if ($force) {
-            DB::transaction(function () use ($productCategory): void {
-                $categoryKey = $productCategory->getKey();
-
+            DB::transaction(function () use ($productCategory, $treePaths): void {
                 $productCategory->products()->detach();
                 $productCategory->tags()->detach();
 
-                query('product_category')
-                    ->withoutGlobalScopes()
-                    ->where('parent_id', $categoryKey)
-                    ->update(['parent_id' => null]);
+                $treePaths->releaseChildrenToRoot($productCategory);
 
                 $productCategory->delete();
             });

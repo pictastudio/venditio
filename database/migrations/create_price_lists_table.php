@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('code')->nullable()->unique();
             $table->boolean('active')->default(true);
+            $table->boolean('allow_discounts')->default(true);
             $table->string('description')->nullable();
             $table->json('metadata')->nullable();
             $table->datetimes();

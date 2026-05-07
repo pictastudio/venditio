@@ -4,12 +4,17 @@ namespace PictaStudio\Venditio\Actions\Tags;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use PictaStudio\Venditio\Actions\Tree\RebuildTreePaths;
 use PictaStudio\Venditio\Models\Tag;
 
 use function PictaStudio\Venditio\Helpers\Functions\resolve_model;
 
 class UpdateMultipleTags
 {
+    public function __construct(
+        private readonly RebuildTreePaths $treePaths,
+    ) {}
+
     public function handle(array $tags): Collection
     {
         return DB::transaction(function () use ($tags): Collection {
@@ -66,7 +71,7 @@ class UpdateMultipleTags
                     continue;
                 }
 
-                $this->rebuildSubtreePaths($tag);
+                $this->treePaths->rebuild($tag);
             }
 
             return $updatedTags;
@@ -95,20 +100,6 @@ class UpdateMultipleTags
             $child->saveQuietly();
 
             $this->propagateProductTypeToChildren($child->refresh());
-        }
-    }
-
-    private function rebuildSubtreePaths(Tag $tag): void
-    {
-        $tag->refresh();
-        $tag->assignPath();
-        $tag->saveQuietly();
-
-        $tag->load('children');
-
-        foreach ($tag->children as $child) {
-            /** @var Tag $child */
-            $this->rebuildSubtreePaths($child);
         }
     }
 }

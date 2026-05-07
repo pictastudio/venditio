@@ -35,11 +35,17 @@ class CartTotalDiscountCalculator implements CartTotalDiscountCalculatorInterfac
             return $this->emptyResult();
         }
 
-        if (!$this->belongsToResolvedDiscountables($discount, $lines, $context)) {
+        $eligibleLines = $this->discountableLines($lines);
+
+        if ($eligibleLines->isEmpty()) {
             return $this->emptyResult();
         }
 
-        $baseAmount = $this->resolveBaseAmount($target, $lines);
+        if (!$this->belongsToResolvedDiscountables($discount, $eligibleLines, $context)) {
+            return $this->emptyResult();
+        }
+
+        $baseAmount = $this->resolveBaseAmount($target, $eligibleLines);
 
         if (!$this->meetsMinimumOrderTotal($discount, $baseAmount)) {
             return $this->emptyResult();
@@ -158,5 +164,45 @@ class CartTotalDiscountCalculator implements CartTotalDiscountCalculatorInterfac
             'discount_amount' => 0.0,
             'free_shipping' => false,
         ];
+    }
+
+    private function discountableLines(Collection $lines): Collection
+    {
+        return $lines
+            ->filter(fn (mixed $line) => $line instanceof Model && $this->lineAllowsDiscounts($line))
+            ->values();
+    }
+
+    private function lineAllowsDiscounts(Model $line): bool
+    {
+        $productData = $line->getAttribute('product_data');
+
+        if (!is_array($productData)) {
+            return true;
+        }
+
+        $allowDiscounts = data_get(
+            $productData,
+            'price_calculated.price_source.price_list.allow_discounts',
+            data_get(
+                $productData,
+                'pricing.price_source.price_list.allow_discounts',
+                data_get(
+                    $productData,
+                    'price_calculated.price_list.allow_discounts',
+                    data_get(
+                        $productData,
+                        'pricing.price_list.allow_discounts',
+                        data_get(
+                            $productData,
+                            'price_calculated.price_source.allow_discounts',
+                            data_get($productData, 'pricing.price_source.allow_discounts', true)
+                        )
+                    )
+                )
+            )
+        );
+
+        return filter_var($allowDiscounts, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
     }
 }

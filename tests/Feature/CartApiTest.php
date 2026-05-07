@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\{BelongsToMany, HasMany, HasOne};
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -52,7 +54,7 @@ function setupCartTaxEnvironment(TaxClass $taxClass): void
     ]);
 }
 
-function createCartProduct(TaxClass $taxClass, float $price = 100): Product
+function createCartProduct(TaxClass $taxClass, float $price = 100, int $stock = 100, bool $manageStock = true): Product
 {
     $product = Product::factory()->create([
         'tax_class_id' => $taxClass->getKey(),
@@ -63,10 +65,11 @@ function createCartProduct(TaxClass $taxClass, float $price = 100): Product
     ]);
 
     $product->inventory()->updateOrCreate([], [
-        'stock' => 100,
+        'stock' => $stock,
         'stock_reserved' => 0,
-        'stock_available' => 100,
+        'stock_available' => $stock,
         'stock_min' => 0,
+        'manage_stock' => $manageStock,
         'price' => $price,
         'price_includes_tax' => false,
         'purchase_price' => null,
@@ -114,6 +117,60 @@ it('creates a cart through api with lines', function () {
         ->assertJsonPath('lines.0.qty', 2);
 });
 
+it('creates a cart through api for out-of-stock products when inventory stock management is disabled', function () {
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+    $product = createCartProduct($taxClass, stock: 0, manageStock: false);
+    $user = createUserForCart('user-create-cart-stock-disabled-zero@example.test');
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    $response = postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 2],
+        ],
+    ])->assertCreated();
+
+    $product->inventory->refresh();
+
+    expect($response->json('id'))->not->toBeNull()
+        ->and($response->json('lines.0.product_id'))->toBe($product->getKey())
+        ->and($response->json('lines.0.qty'))->toBe(2)
+        ->and($product->inventory->manage_stock)->toBeFalse()
+        ->and($product->inventory->stock)->toBe(0)
+        ->and($product->inventory->stock_reserved)->toBe(0)
+        ->and($product->inventory->stock_available)->toBe(0);
+});
+
+it('creates a cart when a host product availability scope hides unmanaged zero-stock products', function () {
+    config()->set('venditio.models.product', CartProductWithStockAvailabilityScope::class);
+
+    $taxClass = TaxClass::factory()->create();
+    setupCartTaxEnvironment($taxClass);
+    $product = createCartProduct($taxClass, stock: 0, manageStock: false);
+    $user = createUserForCart('user-create-cart-host-stock-scope@example.test');
+
+    expect(CartProductWithStockAvailabilityScope::query()->find($product->getKey()))->toBeNull();
+
+    $prefix = config('venditio.routes.api.v1.prefix');
+
+    postJson($prefix . '/carts', [
+        'user_id' => $user->getKey(),
+        'user_first_name' => $user->first_name,
+        'user_last_name' => $user->last_name,
+        'user_email' => $user->email,
+        'lines' => [
+            ['product_id' => $product->getKey(), 'qty' => 2],
+        ],
+    ])->assertCreated()
+        ->assertJsonPath('lines.0.product_id', $product->getKey())
+        ->assertJsonPath('lines.0.qty', 2);
+});
+
 it('copies inventory currency_id into cart lines', function () {
     $taxClass = TaxClass::factory()->create();
     setupCartTaxEnvironment($taxClass);
@@ -153,6 +210,74 @@ it('copies inventory currency_id into cart lines', function () {
         ->value('currency_id'))
         ->toBe($lineCurrencyId);
 });
+
+class CartProductWithStockAvailabilityScope extends Product
+{
+    protected $table = 'products';
+
+    protected static function booted(): void
+    {
+        parent::booted();
+
+        static::addGlobalScope('stock_available', function (Builder $builder): void {
+            $builder->whereHas('inventory', function (Builder $query): void {
+                $query->where('stock_available', '>', 0);
+            });
+        });
+    }
+
+    public function getAttribute($key): mixed
+    {
+        if ($key === 'name') {
+            return parent::getAttribute($key) ?? 'Scoped Product';
+        }
+
+        return parent::getAttribute($key);
+    }
+
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(config('venditio.models.product_category'), 'product_category_product', 'product_id', 'product_category_id')
+            ->withTimestamps();
+    }
+
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(config('venditio.models.product_collection'), 'product_collection_product', 'product_id', 'product_collection_id')
+            ->withTimestamps();
+    }
+
+    public function inventory(): HasOne
+    {
+        return $this->hasOne(config('venditio.models.inventory'), 'product_id');
+    }
+
+    public function priceLists(): BelongsToMany
+    {
+        return $this->belongsToMany(config('venditio.models.price_list'), 'price_list_prices', 'product_id', 'price_list_id')
+            ->withPivot([
+                'id',
+                'price',
+                'purchase_price',
+                'price_includes_tax',
+                'is_default',
+                'metadata',
+                'created_at',
+                'updated_at',
+            ]);
+    }
+
+    public function priceListPrices(): HasMany
+    {
+        return $this->hasMany(config('venditio.models.price_list_price'), 'product_id');
+    }
+
+    public function variantOptions(): BelongsToMany
+    {
+        return $this->belongsToMany(config('venditio.models.product_variant_option'), 'product_configuration', 'product_id', 'product_variant_option_id')
+            ->withTimestamps();
+    }
+}
 
 it('uses the billing address country tax rate when calculating cart line VAT', function () {
     $taxClass = TaxClass::factory()->create();

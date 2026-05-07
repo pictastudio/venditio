@@ -4,8 +4,9 @@ namespace PictaStudio\Venditio\Pipelines\CartLine\Pipes;
 
 use Closure;
 use Exception;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\{Builder, Model};
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use PictaStudio\Venditio\Contracts\ProductPriceResolverInterface;
 use PictaStudio\Venditio\Dto\Contracts\CartLineDtoContract;
@@ -58,7 +59,8 @@ class FillProductInformations
     {
         $productId = $cartLineDto->getPurchasableModelId();
 
-        return query('product')
+        $query = query('product')
+            ->withoutGlobalScopes()
             ->with([
                 'inventory',
                 'categories',
@@ -69,7 +71,49 @@ class FillProductInformations
                 'parent',
                 'priceListPrices.priceList',
             ])
-            ->firstWhere('id', $productId);
+            ->whereKey($productId);
+
+        $this->applyPurchasableProductConstraints($query);
+
+        $product = $query->first();
+
+        if (!$product instanceof Model) {
+            throw ValidationException::withMessages([
+                'lines' => ["Product [{$productId}] is not available for cart lines."],
+            ]);
+        }
+
+        return $product;
+    }
+
+    private function applyPurchasableProductConstraints(Builder $query): void
+    {
+        $model = $query->getModel();
+        $table = $model->getTable();
+
+        if (method_exists($model, 'getDeletedAtColumn') && Schema::hasColumn($table, $model->getDeletedAtColumn())) {
+            $query->whereNull($model->getQualifiedDeletedAtColumn());
+        }
+
+        if (Schema::hasColumn($table, 'active')) {
+            $query->where($table . '.active', true);
+        }
+
+        if (method_exists($model, 'scopeActiveStatuses')) {
+            $model->scopeActiveStatuses($query);
+        }
+
+        if (Schema::hasColumn($table, 'visible_from')) {
+            $query->where(fn (Builder $query): Builder => $query
+                ->whereNull($table . '.visible_from')
+                ->orWhere($table . '.visible_from', '<=', now()));
+        }
+
+        if (Schema::hasColumn($table, 'visible_until')) {
+            $query->where(fn (Builder $query): Builder => $query
+                ->whereNull($table . '.visible_until')
+                ->orWhere($table . '.visible_until', '>=', now()));
+        }
     }
 
     private function resolveCurrencyIdForProduct(Model $product): int

@@ -37,6 +37,7 @@ it('creates tags and supports product_type include and filter', function () {
 
 it('stores tag images as a catalog images collection', function () {
     Storage::fake('public');
+    $uploadDatePath = now()->format('Y/m/d');
 
     $response = post(
         config('venditio.routes.api.v1.prefix') . '/tags',
@@ -74,8 +75,8 @@ it('stores tag images as a catalog images collection', function () {
     $genericImages = collect($tag->images)->where('type', null)->values();
 
     expect($tag->images)->toBeArray()->toHaveCount(3)
-        ->and(str_starts_with((string) data_get($thumb, 'src'), 'tags/' . $tag->getKey() . '/thumb/'))->toBeTrue()
-        ->and(str_starts_with((string) data_get($genericImages->first(), 'src'), 'tags/' . $tag->getKey() . '/images/'))->toBeTrue();
+        ->and(str_starts_with((string) data_get($thumb, 'src'), 'tags/' . $tag->getKey() . '/thumb/' . $uploadDatePath . '/'))->toBeTrue()
+        ->and(str_starts_with((string) data_get($genericImages->first(), 'src'), 'tags/' . $tag->getKey() . '/images/' . $uploadDatePath . '/'))->toBeTrue();
 
     Storage::disk('public')->assertExists((string) data_get($thumb, 'src'));
     Storage::disk('public')->assertExists((string) data_get($genericImages->first(), 'src'));
@@ -464,17 +465,27 @@ it('rejects deleting a tag with connected products unless forced', function () {
 
 it('force deletes a tag while clearing polymorphic associations and child parent links', function () {
     $parent = Tag::factory()->create([
+        'sort_order' => 1,
         'active' => true,
         'visible_from' => null,
         'visible_until' => null,
     ]);
     $child = Tag::factory()->create([
         'parent_id' => $parent->getKey(),
+        'sort_order' => 2,
+        'active' => true,
+        'visible_from' => null,
+        'visible_until' => null,
+    ]);
+    $grandchild = Tag::factory()->create([
+        'parent_id' => $child->getKey(),
+        'sort_order' => 3,
         'active' => true,
         'visible_from' => null,
         'visible_until' => null,
     ]);
     $relatedTag = Tag::factory()->create([
+        'sort_order' => 50,
         'active' => true,
         'visible_from' => null,
         'visible_until' => null,
@@ -507,6 +518,17 @@ it('force deletes a tag while clearing polymorphic associations and child parent
         'taggable_type' => $parent->getMorphClass(),
         'taggable_id' => $parent->getKey(),
     ]);
+
+    $child->refresh();
+    $grandchild->refresh();
+
+    expect((string) $child->path)->toBe((string) $child->getKey())
+        ->and((string) $grandchild->path)->toBe($child->getKey() . '.' . $grandchild->getKey());
+
+    getJson(config('venditio.routes.api.v1.prefix') . '/tags?as_tree=1')
+        ->assertOk()
+        ->assertJsonPath('0.id', $child->getKey())
+        ->assertJsonPath('0.children.0.id', $grandchild->getKey());
 });
 
 it('orders tags by sort_order within each tree branch', function () {

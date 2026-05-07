@@ -101,6 +101,7 @@ it('uploads brand images as a typed images collection on update', function () {
     $brand = Brand::factory()->create([
         'active' => true,
     ]);
+    $uploadDatePath = now()->format('Y/m/d');
 
     patch(
         config('venditio.routes.api.v1.prefix') . '/brands/' . $brand->getKey(),
@@ -133,9 +134,9 @@ it('uploads brand images as a typed images collection on update', function () {
     expect($brand->images)->toBeArray()->toHaveCount(2)
         ->and(data_get($thumb, 'type'))->toBe('thumb')
         ->and(data_get($cover, 'type'))->toBe('cover')
-        ->and(str_starts_with((string) data_get($thumb, 'src'), 'brands/' . $brand->getKey() . '/thumb/'))
+        ->and(str_starts_with((string) data_get($thumb, 'src'), 'brands/' . $brand->getKey() . '/thumb/' . $uploadDatePath . '/'))
         ->toBeTrue()
-        ->and(str_starts_with((string) data_get($cover, 'src'), 'brands/' . $brand->getKey() . '/cover/'))
+        ->and(str_starts_with((string) data_get($cover, 'src'), 'brands/' . $brand->getKey() . '/cover/' . $uploadDatePath . '/'))
         ->toBeTrue();
 
     Storage::disk('public')->assertExists((string) data_get($thumb, 'src'));
@@ -189,6 +190,7 @@ it('allows multiple brand images with null type', function () {
     $brand = Brand::factory()->create([
         'active' => true,
     ]);
+    $uploadDatePath = now()->format('Y/m/d');
 
     patch(
         config('venditio.routes.api.v1.prefix') . '/brands/' . $brand->getKey(),
@@ -214,8 +216,8 @@ it('allows multiple brand images with null type', function () {
     $brand->refresh();
 
     expect($brand->images)->toHaveCount(2)
-        ->and(str_starts_with((string) data_get($brand->images, '0.src'), 'brands/' . $brand->getKey() . '/images/'))->toBeTrue()
-        ->and(str_starts_with((string) data_get($brand->images, '1.src'), 'brands/' . $brand->getKey() . '/images/'))->toBeTrue();
+        ->and(str_starts_with((string) data_get($brand->images, '0.src'), 'brands/' . $brand->getKey() . '/images/' . $uploadDatePath . '/'))->toBeTrue()
+        ->and(str_starts_with((string) data_get($brand->images, '1.src'), 'brands/' . $brand->getKey() . '/images/' . $uploadDatePath . '/'))->toBeTrue();
 });
 
 it('updates brand image sort_order without requiring a new upload', function () {

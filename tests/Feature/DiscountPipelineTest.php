@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use PictaStudio\Venditio\Dto\{CartDto, OrderDto};
 use PictaStudio\Venditio\Enums\{DiscountType, ProductStatus};
-use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, DiscountApplication, Product, ProductCategory, ProductCollection, TaxClass, User};
+use PictaStudio\Venditio\Models\{Country, CountryTaxClass, Currency, DiscountApplication, PriceList, PriceListPrice, Product, ProductCategory, ProductCollection, TaxClass, User};
 use PictaStudio\Venditio\Pipelines\Cart\{CartCreationPipeline, CartUpdatePipeline};
 use PictaStudio\Venditio\Pipelines\Order\OrderCreationPipeline;
 
@@ -433,6 +433,186 @@ it('applies cart total discount code at checkout', function () {
         ->and((float) $cart->sub_total)->toBe(244.0)
         ->and((float) $cart->discount_amount)->toBe(24.4)
         ->and((float) $cart->total_final)->toBe(219.6);
+});
+
+it('skips line discounts for cart and order lines resolved from price lists that disallow discounts', function () {
+    config()->set('venditio.price_lists.enabled', true);
+
+    $taxClass = TaxClass::factory()->create();
+    setupTaxEnvironment($taxClass);
+
+    $product = createProduct(150, $taxClass);
+    $priceList = PriceList::factory()->create([
+        'name' => 'Protected',
+        'allow_discounts' => false,
+    ]);
+
+    PriceListPrice::factory()->create([
+        'product_id' => $product->getKey(),
+        'price_list_id' => $priceList->getKey(),
+        'price' => 100,
+        'price_includes_tax' => false,
+        'is_default' => true,
+    ]);
+
+    $product->discounts()->create([
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'PRD10-PROTECTED-LINE',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+    ]);
+
+    $cart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'lines' => [
+                [
+                    'product_id' => $product->getKey(),
+                    'qty' => 2,
+                ],
+            ],
+        ])
+    )->load('lines');
+
+    $cartLine = $cart->lines->first();
+
+    expect((float) $cartLine->unit_price)->toBe(100.0)
+        ->and((float) $cartLine->unit_discount)->toBe(0.0)
+        ->and((float) $cartLine->discount_amount)->toBe(0.0)
+        ->and($cartLine->discount_code)->toBeNull()
+        ->and((float) data_get($cartLine->product_data, 'price_calculated.price_final'))->toBe(100.0)
+        ->and(data_get($cartLine->product_data, 'price_calculated.discounts_applied'))->toBe([]);
+
+    $order = OrderCreationPipeline::make()->run(OrderDto::fromCart($cart))->load('lines');
+    $orderLine = $order->lines->first();
+
+    expect((float) $orderLine->unit_discount)->toBe(0.0)
+        ->and((float) $orderLine->discount_amount)->toBe(0.0)
+        ->and($orderLine->discount_code)->toBeNull();
+});
+
+it('applies cart total discount codes only to lines that allow discounts', function () {
+    config()->set('venditio.price_lists.enabled', true);
+
+    $taxClass = TaxClass::factory()->create();
+    setupTaxEnvironment($taxClass);
+
+    $protectedProduct = createProduct(150, $taxClass);
+    $eligibleProduct = createProduct(150, $taxClass);
+    $protectedPriceList = PriceList::factory()->create([
+        'name' => 'Protected',
+        'allow_discounts' => false,
+    ]);
+    $eligiblePriceList = PriceList::factory()->create([
+        'name' => 'Eligible',
+        'allow_discounts' => true,
+    ]);
+
+    PriceListPrice::factory()->create([
+        'product_id' => $protectedProduct->getKey(),
+        'price_list_id' => $protectedPriceList->getKey(),
+        'price' => 100,
+        'price_includes_tax' => false,
+        'is_default' => true,
+    ]);
+    PriceListPrice::factory()->create([
+        'product_id' => $eligibleProduct->getKey(),
+        'price_list_id' => $eligiblePriceList->getKey(),
+        'price' => 100,
+        'price_includes_tax' => false,
+        'is_default' => true,
+    ]);
+
+    $discountModel = config('venditio.models.discount');
+    $discountModel::query()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'MIXED10',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => true,
+    ]);
+
+    $cart = CartCreationPipeline::make()->run(
+        CartDto::fromArray([
+            'discount_code' => 'MIXED10',
+            'lines' => [
+                [
+                    'product_id' => $protectedProduct->getKey(),
+                    'qty' => 1,
+                ],
+                [
+                    'product_id' => $eligibleProduct->getKey(),
+                    'qty' => 1,
+                ],
+            ],
+        ])
+    )->load('lines');
+
+    expect($cart->discount_code)->toBe('MIXED10')
+        ->and((float) $cart->sub_total)->toBe(244.0)
+        ->and((float) $cart->discount_amount)->toBe(12.2)
+        ->and((float) $cart->total_final)->toBe(231.8);
+});
+
+it('rejects cart total discount codes when all lines come from price lists that disallow discounts', function () {
+    config()->set('venditio.price_lists.enabled', true);
+
+    $taxClass = TaxClass::factory()->create();
+    setupTaxEnvironment($taxClass);
+
+    $product = createProduct(150, $taxClass);
+    $priceList = PriceList::factory()->create([
+        'name' => 'Protected',
+        'allow_discounts' => false,
+    ]);
+
+    PriceListPrice::factory()->create([
+        'product_id' => $product->getKey(),
+        'price_list_id' => $priceList->getKey(),
+        'price' => 100,
+        'price_includes_tax' => false,
+        'is_default' => true,
+    ]);
+
+    $discountModel = config('venditio.models.discount');
+    $discountModel::query()->create([
+        'discountable_type' => null,
+        'discountable_id' => null,
+        'type' => DiscountType::Percentage,
+        'value' => 10,
+        'code' => 'PROTECTED10',
+        'active' => true,
+        'starts_at' => now()->subDay(),
+        'ends_at' => now()->addDay(),
+        'apply_to_cart_total' => true,
+    ]);
+
+    $exception = null;
+
+    try {
+        CartCreationPipeline::make()->run(
+            CartDto::fromArray([
+                'discount_code' => 'PROTECTED10',
+                'lines' => [
+                    [
+                        'product_id' => $product->getKey(),
+                        'qty' => 1,
+                    ],
+                ],
+            ])
+        );
+    } catch (ValidationException $thrownException) {
+        $exception = $thrownException;
+    }
+
+    expect($exception)->toBeInstanceOf(ValidationException::class)
+        ->and($exception?->errors()['discount_code'][0] ?? null)
+        ->toBe('The discount code [PROTECTED10] is invalid or not eligible for cart total discounts.');
 });
 
 it('applies discounts only to the configured user', function () {

@@ -26,6 +26,7 @@ class DefaultProductPriceResolver implements ProductPriceResolverInterface
             ? [
                 'id' => $priceList->getKey(),
                 'name' => (string) $priceList->getAttribute('name'),
+                'allow_discounts' => (bool) ($priceList->getAttribute('allow_discounts') ?? true),
             ]
             : null;
 
@@ -52,6 +53,7 @@ class DefaultProductPriceResolver implements ProductPriceResolverInterface
                         'name' => (string) $priceList->getAttribute('name'),
                         'code' => $priceList->getAttribute('code'),
                         'active' => (bool) ($priceList->getAttribute('active') ?? true),
+                        'allow_discounts' => (bool) ($priceList->getAttribute('allow_discounts') ?? true),
                         'description' => $priceList->getAttribute('description'),
                         'metadata' => $priceList->getAttribute('metadata'),
                     ]
@@ -88,6 +90,7 @@ class DefaultProductPriceResolver implements ProductPriceResolverInterface
                     'unit_price' => 0.0,
                     'purchase_price' => null,
                     'price_includes_tax' => true,
+                    'allow_discounts' => true,
                 ],
             ];
         }
@@ -111,6 +114,7 @@ class DefaultProductPriceResolver implements ProductPriceResolverInterface
                     ? null
                     : (float) $inventory?->getAttribute('purchase_price'),
                 'price_includes_tax' => (bool) ($inventory?->getAttribute('price_includes_tax') ?? true),
+                'allow_discounts' => true,
             ],
         ];
     }

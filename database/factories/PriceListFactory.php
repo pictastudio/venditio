@@ -15,6 +15,7 @@ class PriceListFactory extends Factory
             'name' => fake()->words(2, true),
             'code' => fake()->unique()->bothify('PL-###??'),
             'active' => true,
+            'allow_discounts' => true,
             'description' => fake()->optional()->sentence(),
             'metadata' => null,
         ];

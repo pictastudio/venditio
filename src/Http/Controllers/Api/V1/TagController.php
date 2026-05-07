@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\{Rule, ValidationException};
 use PictaStudio\Venditio\Actions\CatalogImages\DeleteCatalogImage;
 use PictaStudio\Venditio\Actions\Tags\{CreateTag, UpdateMultipleTags, UpdateTag};
+use PictaStudio\Venditio\Actions\Tree\RebuildTreePaths;
 use PictaStudio\Venditio\Http\Controllers\Api\Controller;
 use PictaStudio\Venditio\Http\Requests\V1\Tag\{StoreTagRequest, UpdateMultipleTagRequest, UpdateTagRequest};
 use PictaStudio\Venditio\Http\Resources\V1\TagResource;
@@ -118,7 +119,7 @@ class TagController extends Controller
         return TagResource::collection($updatedTags);
     }
 
-    public function destroy(Tag $tag): Response
+    public function destroy(Tag $tag, RebuildTreePaths $treePaths): Response
     {
         $this->authorizeIfConfigured('delete', $tag);
 
@@ -130,7 +131,7 @@ class TagController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($tag): void {
+        DB::transaction(function () use ($tag, $treePaths): void {
             $tagKey = $tag->getKey();
             $tagMorphClass = $tag->getMorphClass();
 
@@ -142,10 +143,7 @@ class TagController extends Controller
                 })
                 ->delete();
 
-            query('tag')
-                ->withoutGlobalScopes()
-                ->where('parent_id', $tagKey)
-                ->update(['parent_id' => null]);
+            $treePaths->releaseChildrenToRoot($tag);
 
             $tag->delete();
         });

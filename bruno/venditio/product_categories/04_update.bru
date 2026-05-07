@@ -94,5 +94,6 @@ docs {
   - {locale}.abstract / abstract:{locale}
   - {locale}.description / description:{locale}
   - Note: for image upload use multipart/form-data with fields like `images[0][file]` and `images[0][type]=thumb`.
+  - Note: uploaded catalog images are stored under date subfolders (`YYYY/MM/DD`) inside their image type folder.
   - Note: existing images may be updated by id; only one `thumb` and one `cover` are allowed. A request can replace the current `thumb` or `cover` when it also releases the old typed image in the same `images` payload. `type=null` can be repeated for generic images.
 }

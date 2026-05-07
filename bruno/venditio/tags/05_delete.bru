@@ -35,7 +35,7 @@ docs {
   query params:
   - force (boolean): Optional. When true, deletes even if products are connected and clears related taggable rows.
   - Without force, deleting a tag with connected products returns a validation error on `products`.
-  - Note: deleting a tag clears taggable associations and releases direct child tags from the deleted parent.
+  - Note: deleting a tag clears taggable associations, releases direct child tags from the deleted parent, and rebuilds their tree paths.
 
   path params:
   - id-or-slug: Replace with target resource identifier.

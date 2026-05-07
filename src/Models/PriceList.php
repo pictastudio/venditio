@@ -27,6 +27,7 @@ class PriceList extends Model
     {
         return [
             'active' => 'boolean',
+            'allow_discounts' => 'boolean',
             'metadata' => 'array',
         ];
     }

@@ -91,6 +91,7 @@ class VenditioServiceProvider extends PackageServiceProvider
                 'create_inventories_table',
                 'update_inventories_add_reorder_fields',
                 'create_price_lists_table',
+                'update_price_lists_add_allow_discounts',
                 'create_price_list_prices_table',
                 'create_wishlists_table',
                 'create_wishlist_items_table',

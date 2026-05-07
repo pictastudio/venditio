@@ -702,6 +702,7 @@ class Controller extends BaseController
                 'name' => 'string',
                 'code' => 'string',
                 'active' => 'boolean',
+                'allow_discounts' => 'boolean',
                 'description' => 'string',
                 'created_at' => 'date',
                 'updated_at' => 'date',

@@ -229,6 +229,7 @@ it('uploads product collection images as a typed images collection on update', f
         'visible_from' => null,
         'visible_until' => null,
     ]);
+    $uploadDatePath = now()->format('Y/m/d');
 
     patch(
         config('venditio.routes.api.v1.prefix') . '/product_collections/' . $collection->getKey(),
@@ -261,9 +262,9 @@ it('uploads product collection images as a typed images collection on update', f
     expect($collection->images)->toBeArray()->toHaveCount(2)
         ->and(data_get($thumb, 'type'))->toBe('thumb')
         ->and(data_get($cover, 'type'))->toBe('cover')
-        ->and(str_starts_with((string) data_get($thumb, 'src'), 'product_collections/' . $collection->getKey() . '/thumb/'))
+        ->and(str_starts_with((string) data_get($thumb, 'src'), 'product_collections/' . $collection->getKey() . '/thumb/' . $uploadDatePath . '/'))
         ->toBeTrue()
-        ->and(str_starts_with((string) data_get($cover, 'src'), 'product_collections/' . $collection->getKey() . '/cover/'))
+        ->and(str_starts_with((string) data_get($cover, 'src'), 'product_collections/' . $collection->getKey() . '/cover/' . $uploadDatePath . '/'))
         ->toBeTrue();
 
     Storage::disk('public')->assertExists((string) data_get($thumb, 'src'));
@@ -318,6 +319,7 @@ it('allows multiple product collection images with null type', function () {
         'visible_from' => null,
         'visible_until' => null,
     ]);
+    $uploadDatePath = now()->format('Y/m/d');
 
     patch(
         config('venditio.routes.api.v1.prefix') . '/product_collections/' . $collection->getKey(),
@@ -343,8 +345,8 @@ it('allows multiple product collection images with null type', function () {
     $collection->refresh();
 
     expect($collection->images)->toHaveCount(2)
-        ->and(str_starts_with((string) data_get($collection->images, '0.src'), 'product_collections/' . $collection->getKey() . '/images/'))->toBeTrue()
-        ->and(str_starts_with((string) data_get($collection->images, '1.src'), 'product_collections/' . $collection->getKey() . '/images/'))->toBeTrue();
+        ->and(str_starts_with((string) data_get($collection->images, '0.src'), 'product_collections/' . $collection->getKey() . '/images/' . $uploadDatePath . '/'))->toBeTrue()
+        ->and(str_starts_with((string) data_get($collection->images, '1.src'), 'product_collections/' . $collection->getKey() . '/images/' . $uploadDatePath . '/'))->toBeTrue();
 });
 
 it('updates product collection image sort_order without requiring a new upload', function () {

@@ -21,6 +21,7 @@ class PriceListValidation implements PriceListValidationRules
             ],
             'code' => ['nullable', 'string', 'max:255', Rule::unique($this->tableFor('price_list'), 'code')->withoutTrashed()],
             'active' => ['sometimes', 'boolean'],
+            'allow_discounts' => ['sometimes', 'boolean'],
             'description' => ['nullable', 'string', 'max:255'],
             'metadata' => ['nullable', 'array'],
         ];
@@ -42,6 +43,7 @@ class PriceListValidation implements PriceListValidationRules
             ],
             'code' => ['nullable', 'string', 'max:255', Rule::unique($this->tableFor('price_list'), 'code')->withoutTrashed()->ignore($priceListId)],
             'active' => ['sometimes', 'boolean'],
+            'allow_discounts' => ['sometimes', 'boolean'],
             'description' => ['nullable', 'string', 'max:255'],
             'metadata' => ['nullable', 'array'],
         ];
